@@ -1,12 +1,50 @@
 import * as React from 'react';
+import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
+import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start';
+import { ConvexQueryClient } from '@convex-dev/react-query';
 import { QueryClient } from '@tanstack/react-query';
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
+import {
+	createRootRouteWithContext,
+	HeadContent,
+	Outlet,
+	ScriptOnce,
+	Scripts,
+	useRouteContext,
+} from '@tanstack/react-router';
+import { createServerFn } from '@tanstack/react-start';
+import { getCookie, getWebRequest } from '@tanstack/react-start/server';
+import { ConvexReactClient } from 'convex/react';
 
-import appCss from '~/styles/app.css?url';
+import { authClient } from '@/lib/auth-client';
+import appCss from '@/styles/app.css?url';
+
+const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
+	const { createAuth } = await import('../../convex/auth');
+	const { session } = await fetchSession(getWebRequest());
+	const sessionCookieName = getCookieName(createAuth);
+	const token = getCookie(sessionCookieName);
+	return {
+		userId: session?.user.id,
+		token,
+	};
+});
 
 export const Route = createRootRouteWithContext<{
 	queryClient: QueryClient;
+	convexClient: ConvexReactClient;
+	convexQueryClient: ConvexQueryClient;
 }>()({
+	beforeLoad: async (ctx) => {
+		// all queries, mutations and action made with TanStack Query will be
+		// authenticated by an identity token.
+		const { userId, token } = await fetchAuth();
+		// During SSR only (the only time serverHttpClient exists),
+		// set the auth token to make HTTP queries with.
+		if (token) {
+			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+		}
+		return { userId, token };
+	},
 	head: () => ({
 		meta: [
 			{
@@ -48,21 +86,32 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent() {
+	const context = useRouteContext({ from: Route.id });
 	return (
-		<RootDocument>
-			<Outlet />
-		</RootDocument>
+		<ConvexBetterAuthProvider client={context.convexClient} authClient={authClient}>
+			<RootDocument>
+				<Outlet />
+			</RootDocument>
+		</ConvexBetterAuthProvider>
 	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
-		<html>
+		<html suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
+				<ScriptOnce>
+					{`document.documentElement.classList.toggle(
+						'dark',
+						localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+					)`}
+				</ScriptOnce>
 				{children}
+				{/* <TanStackRouterDevtools position='bottom-right' /> */}
+				{/* <ReactQueryDevtools buttonPosition='bottom-left' /> */}
 				<Scripts />
 			</body>
 		</html>
