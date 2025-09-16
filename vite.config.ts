@@ -14,9 +14,9 @@ export default defineConfig({
 		}),
 		tailwindcss(),
 		tanstackStart({
-			tsr: {
-				srcDirectory: 'src',
-			},
+			// tsr: {
+			// 	srcDirectory: 'src',
+			// },
 			target: 'cloudflare-module',
 			customViteReactPlugin: true,
 		}),
