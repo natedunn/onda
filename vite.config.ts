@@ -31,4 +31,12 @@ export default defineConfig({
 			'@': path.resolve(__dirname, './src'),
 		},
 	},
+	ssr: {
+		external: ['path', 'node:path'],
+	},
+	build: {
+		rollupOptions: {
+			external: ['path', 'node:path'],
+		},
+	},
 });
