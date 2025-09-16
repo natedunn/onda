@@ -13,6 +13,8 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AnotherPageRouteImport } from './routes/anotherPage'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlankSignInRouteImport } from './routes/_blank/sign-in'
+import { Route as BlankAuthCheckRouteImport } from './routes/_blank/auth-check'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -27,6 +29,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlankSignInRoute = BlankSignInRouteImport.update({
+  id: '/_blank/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlankAuthCheckRoute = BlankAuthCheckRouteImport.update({
+  id: '/_blank/auth-check',
+  path: '/auth-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -36,27 +48,40 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/anotherPage': typeof AnotherPageRoute
+  '/auth-check': typeof BlankAuthCheckRoute
+  '/sign-in': typeof BlankSignInRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/anotherPage': typeof AnotherPageRoute
+  '/auth-check': typeof BlankAuthCheckRoute
+  '/sign-in': typeof BlankSignInRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/anotherPage': typeof AnotherPageRoute
+  '/_blank/auth-check': typeof BlankAuthCheckRoute
+  '/_blank/sign-in': typeof BlankSignInRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/anotherPage'
+  fullPaths: '/' | '/anotherPage' | '/auth-check' | '/sign-in'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/anotherPage'
-  id: '__root__' | '/' | '/anotherPage'
+  to: '/' | '/anotherPage' | '/auth-check' | '/sign-in'
+  id:
+    | '__root__'
+    | '/'
+    | '/anotherPage'
+    | '/_blank/auth-check'
+    | '/_blank/sign-in'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnotherPageRoute: typeof AnotherPageRoute
+  BlankAuthCheckRoute: typeof BlankAuthCheckRoute
+  BlankSignInRoute: typeof BlankSignInRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
@@ -96,6 +121,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_blank/sign-in': {
+      id: '/_blank/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof BlankSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_blank/auth-check': {
+      id: '/_blank/auth-check'
+      path: '/auth-check'
+      fullPath: '/auth-check'
+      preLoaderRoute: typeof BlankAuthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -113,6 +152,8 @@ declare module '@tanstack/react-start/server' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnotherPageRoute: AnotherPageRoute,
+  BlankAuthCheckRoute: BlankAuthCheckRoute,
+  BlankSignInRoute: BlankSignInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
