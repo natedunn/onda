@@ -2,7 +2,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "onda",
 	"compatibility_flags": ["nodejs_compat"],
-	"compatibility_date": "2025-04-03",
+	"compatibility_date": "2024-09-23",
 	"main": ".output/server/index.mjs",
 	"assets": {
 		"directory": "./.output/public/",

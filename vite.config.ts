@@ -31,12 +31,4 @@ export default defineConfig({
 			'@': path.resolve(__dirname, './src'),
 		},
 	},
-	ssr: {
-		external: ['node:path', 'node:fs', 'node:os'],
-		noExternal: ['path', 'fs', 'os'],
-	},
-	define: {
-		'import("path")': 'import("node:path")',
-		'require("path")': 'require("node:path")',
-	},
 });
