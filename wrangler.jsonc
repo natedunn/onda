@@ -11,7 +11,4 @@
 	"observability": {
 		"enabled": true,
 	},
-	"bundle": {
-		"platform": "node",
-	},
 }
