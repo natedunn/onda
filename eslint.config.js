@@ -6,7 +6,7 @@ import { defineConfig } from 'eslint/config';
 export default defineConfig([
 	{
 		ignores: [
-			'src/convex/_generated/**/*.{ts,tsx,js}',
+			'convex/_generated/**/*.{ts,tsx,js}',
 			'.nitro/**/*.{ts,tsx,js}',
 			'**/*/routeTree.gen.ts',
 		],

@@ -12,7 +12,7 @@ import {
 	useRouteContext,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import { getCookie, getWebRequest } from '@tanstack/react-start/server';
+// import { getCookie, getWebRequest } from '@tanstack/react-start/server';
 import { ConvexReactClient } from 'convex/react';
 
 import { authClient } from '@/lib/auth-client';
@@ -20,6 +20,7 @@ import appCss from '@/styles/app.css?url';
 
 const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
 	const { createAuth } = await import('../../convex/auth');
+	const { getCookie, getWebRequest } = await import('@tanstack/react-start/server');
 	const { session } = await fetchSession(getWebRequest());
 	const sessionCookieName = getCookieName(createAuth);
 	const token = getCookie(sessionCookieName);
