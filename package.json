@@ -4,14 +4,15 @@
 	"sideEffects": false,
 	"type": "module",
 	"scripts": {
-		"dev": "npx convex dev --once && concurrently -r npm:dev:web npm:dev:convex",
-		"dev:web": "vite dev",
+		"dev": "npx convex dev --once && npm-run-all --parallel dev:convex dev:web",
+		"dev:web": "vite dev --port 3000 --host",
+		"dev:convex": "convex dev",
+		"build:deploy": "convex deploy --cmd 'vite build'",
 		"dev:ts": "tsc -b -w",
-		"dev:convex": "npx convex dev",
 		"build": "vite build && tsc --noEmit",
 		"start": "node .output/server/index.mjs",
 		"shadcn": "pnpm dlx shadcn@canary",
-		"format": "prettier --write ."
+		"prettier": "prettier --write ."
 	},
 	"dependencies": {
 		"@cloudflare/unenv-preset": "^2.7.3",
@@ -39,7 +40,8 @@
 		"rollup": "^4.50.2",
 		"tailwind-merge": "^3.3.1",
 		"unenv": "^1.10.0",
-		"zod": "^4.1.8"
+		"vite-plugin-restart": "^1.0.0",
+		"zod": "3.25.76"
 	},
 	"devDependencies": {
 		"@tailwindcss/vite": "^4.1.13",

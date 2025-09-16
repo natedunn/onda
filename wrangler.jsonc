@@ -1,0 +1,17 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "onda",
+	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_date": "2025-04-03",
+	"main": ".output/server/index.mjs",
+	"assets": {
+		"directory": "./.output/public/",
+		"binding": "ASSETS",
+	},
+	"observability": {
+		"enabled": true,
+	},
+	"bundle": {
+		"platform": "node",
+	},
+}

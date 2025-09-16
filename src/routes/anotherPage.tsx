@@ -3,7 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useAction } from 'convex/react';
 
-import { api } from '../../convex/_generated/api';
+import { api } from '../convex/_generated/api';
 
 export const Route = createFileRoute('/anotherPage')({
 	component: AnotherPage,
