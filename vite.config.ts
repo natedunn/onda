@@ -10,7 +10,6 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
 	plugins: [
 		ViteRestart({
-			// Due to hydration issues, we need to restart the server on changes to the following files
 			restart: ['./src/styles/**/*.css'],
 		}),
 		tsConfigPaths({
@@ -29,14 +28,16 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'@': path.resolve(__dirname, './src'),
+			// Force node: prefix for built-ins
+			path: 'node:path',
+			fs: 'node:fs',
+			os: 'node:os',
+			crypto: 'node:crypto',
 		},
 	},
 	ssr: {
-		external: ['path', 'node:path'],
-	},
-	build: {
-		rollupOptions: {
-			external: ['path', 'node:path'],
-		},
+		external: ['node:path', 'node:fs', 'node:os', 'node:crypto'],
+		// Don't externalize these without node: prefix
+		noExternal: ['path', 'fs', 'os', 'crypto'],
 	},
 });
