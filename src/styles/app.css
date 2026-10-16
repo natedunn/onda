@@ -12,8 +12,8 @@
 	--visited: #6a2db0;
 	--mark: #fff1a0;
 	--danger: #c22a1d;
-	--dither-a: #00000030;
-	--dither-b: #00000060;
+	--dither-a: #00000055;
+	--dither-b: #000000a0;
 	color-scheme: light;
 }
 
@@ -29,7 +29,7 @@
 		--mark: #4a4216;
 		--danger: #ff7a6b;
 		--dither-a: #00000075;
-		--dither-b: #ffffff45;
+		--dither-b: #ffffff70;
 		color-scheme: dark;
 	}
 }
@@ -162,7 +162,7 @@
 	   stacking context (wrap in .isolate if it does), or the dots end up
 	   hidden behind it. */
 	.halftone {
-		--halftone-offset: 7px;
+		--halftone-offset: 8px;
 		position: relative;
 	}
 	.halftone::before {
@@ -172,8 +172,8 @@
 		z-index: -1;
 		transform: translate(var(--halftone-offset), var(--halftone-offset));
 		background-image:
-			radial-gradient(circle at center, var(--dither-a) 0.05rem, transparent 0),
-			radial-gradient(circle at center, var(--dither-b) 0.05rem, transparent 0);
+			radial-gradient(circle at center, var(--dither-a) 0.06rem, transparent 0),
+			radial-gradient(circle at center, var(--dither-b) 0.06rem, transparent 0);
 		background-size: 0.2rem 0.2rem;
 		background-position:
 			0 0,
