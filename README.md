@@ -37,11 +37,14 @@ convex/
   schema.ts           users, lists, items, records (media cache), ogImages
   auth.ts             Convex Auth v2 setup: GitHub (+ dev-only guest)
   users.ts lists.ts items.ts
-  media.ts            search: TMDB, Open Library, MusicBrainz/Cover Art Archive, IGDB
+  providers.ts        source APIs: TMDB, Open Library, MusicBrainz/Cover Art Archive, IGDB
+  media.ts            search + record cache upserts
+  records.ts          public item pages; details fetched on first visit, refreshed every 30 days
   og.ts ogRender.ts   OG images: satori + resvg in a Node action, cached in storage
   shared/             code shared with the frontend (themes, gradient, limits)
 src/
   routes/             /, /sign-in, /@{username}, /settings, /l/{slug}, /l/{slug}/edit,
+                      /{kind}/{sourceId} (item pages, e.g. /movie/603),
                       /og/l/{slug}.png, /auth/* (auth proxy)
   lib/convex-auth-start/  stopgap TanStack Start adapter for Convex Auth (see its README)
 ```

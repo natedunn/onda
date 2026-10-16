@@ -44,13 +44,15 @@ function Profile() {
 	return (
 		<div>
 			<header className="flex items-center gap-5">
-				{user.image ? (
-					<img src={user.image} alt="" className="size-20 border border-ink object-cover shadow-[3px_3px_0_var(--ink)]" />
-				) : (
-					<div className="grid size-20 place-items-center border border-ink bg-paper-2 font-serif text-4xl shadow-[3px_3px_0_var(--ink)]">
-						{user.username[0]?.toUpperCase()}
-					</div>
-				)}
+				<div className="halftone halftone-sm size-20 shrink-0">
+					{user.image ? (
+						<img src={user.image} alt="" className="size-full border border-ink object-cover" />
+					) : (
+						<div className="grid size-full place-items-center border border-ink bg-paper-2 font-serif text-4xl">
+							{user.username[0]?.toUpperCase()}
+						</div>
+					)}
+				</div>
 				<div className="min-w-0">
 					<h1 className="font-serif text-5xl leading-none">@{user.username}</h1>
 					{user.name && <p className="mt-1 text-muted">{user.name}</p>}

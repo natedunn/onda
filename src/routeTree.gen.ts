@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123usernameChar125RouteImport } from './routes/@{$username}'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as KindIdRouteImport } from './routes/$kind.$id'
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
@@ -39,6 +40,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KindIdRoute = KindIdRouteImport.update({
+  id: '/$kind/$id',
+  path: '/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRefreshRoute = AuthRefreshRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/@{$username}': typeof AtChar123usernameChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/@{$username}': typeof AtChar123usernameChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/@{$username}': typeof AtChar123usernameChar125Route
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/@{$username}'
     | '/settings'
     | '/sign-in'
+    | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/@{$username}'
     | '/settings'
     | '/sign-in'
+    | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/@{$username}'
     | '/settings'
     | '/sign-in'
+    | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   AtChar123usernameChar125Route: typeof AtChar123usernameChar125Route
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  KindIdRoute: typeof KindIdRoute
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
@@ -190,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$kind/$id': {
+      id: '/$kind/$id'
+      path: '/$kind/$id'
+      fullPath: '/$kind/$id'
+      preLoaderRoute: typeof KindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/refresh': {
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   AtChar123usernameChar125Route: AtChar123usernameChar125Route,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  KindIdRoute: KindIdRoute,
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,

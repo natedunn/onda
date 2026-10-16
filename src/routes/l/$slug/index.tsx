@@ -82,8 +82,9 @@ function ListPage() {
 					theme={list.theme}
 					seed={list.seed}
 					emoji={list.emoji}
-					className="w-36 border border-ink shadow-[4px_4px_0_var(--ink)] sm:w-44"
-					emojiClassName="text-6xl"
+					framed
+					className="w-28 sm:w-32"
+					emojiClassName="text-[3.25rem]"
 				/>
 				<div className="min-w-0">
 					<h1 className="font-serif text-[clamp(2.4rem,6vw,3.6rem)] leading-[0.95] tracking-tight [overflow-wrap:anywhere]">
@@ -193,12 +194,10 @@ function Meta({ record }: { record: Doc<"records"> }) {
 
 function Title({ record }: { record: Doc<"records"> }) {
 	const text = record.subtitle && record.kind === "book" ? `${record.title}: ${record.subtitle}` : record.title;
-	return record.url ? (
-		<a href={record.url} target="_blank" rel="noopener noreferrer" className="plain hover:underline">
+	return (
+		<Link to="/$kind/$id" params={{ kind: record.kind, id: record.sourceId }} className="plain hover:underline">
 			{text}
-		</a>
-	) : (
-		<>{text}</>
+		</Link>
 	);
 }
 

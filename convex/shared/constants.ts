@@ -25,3 +25,11 @@ export const VISIBILITIES = ["public", "unlisted", "private"] as const;
 export type Visibility = (typeof VISIBILITIES)[number];
 
 export const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9_-]{1,28}[a-z0-9])?$/;
+
+export const SOURCE_LABELS = {
+	tmdb: "TMDB",
+	openlibrary: "Open Library",
+	musicbrainz: "MusicBrainz",
+	igdb: "IGDB",
+} as const;
+

@@ -80,7 +80,8 @@ function RootComponent() {
 	return (
 		<ConvexAuthStartProvider client={convex} initialToken={token}>
 			<AuthSync />
-			<div className="mx-auto max-w-[46rem] px-5 sm:ml-[max(1.25rem,calc((100vw-46rem)/4))]">
+			{/* One column, centered. For a flush-left page, swap mx-auto for ml-0. */}
+			<div className="mx-auto w-full max-w-[50rem] px-5 sm:px-8">
 				<SiteHeader />
 				<main>
 					<Outlet />

@@ -62,76 +62,78 @@ export function AddItem({
 	}, [query, kind, search]);
 
 	return (
-		<div className="border border-ink bg-paper p-4 shadow-[3px_3px_0_var(--ink)]">
-			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-				<span className="label">Add a</span>
-				{kinds.map((k) => (
-					<button
-						key={k}
-						type="button"
-						onClick={() => {
-							setKind(k);
-							localStorage.setItem(KIND_KEY, k);
-						}}
-						className={cn(
-							"linkish",
-							k === kind && "bg-ink px-1 text-paper no-underline hover:bg-ink hover:text-paper",
-						)}
-					>
-						{KIND_LABELS[k].one}
-					</button>
-				))}
+		<div className="halftone halftone-sm">
+			<div className="border border-ink bg-paper p-4">
+				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+					<span className="label">Add a</span>
+					{kinds.map((k) => (
+						<button
+							key={k}
+							type="button"
+							onClick={() => {
+								setKind(k);
+								localStorage.setItem(KIND_KEY, k);
+							}}
+							className={cn(
+								"linkish",
+								k === kind && "bg-ink px-1 text-paper no-underline hover:bg-ink hover:text-paper",
+							)}
+						>
+							{KIND_LABELS[k].one}
+						</button>
+					))}
+				</div>
+				<input
+					autoFocus
+					className="field mt-3"
+					placeholder={`Search ${KIND_LABELS[kind].many}…`}
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+				/>
+				<div className="mt-2 min-h-6 text-[12px]">
+					{status === "searching" && <p className="text-muted">Searching…</p>}
+					{status === "error" && <p className="text-danger">{error}</p>}
+					{status === "idle" && results?.length === 0 && <p className="text-muted">Nothing found.</p>}
+				</div>
+				{results && results.length > 0 && (
+					<ul className="mt-1 max-h-[26rem] overflow-y-auto border-t border-rule">
+						{results.map((r) => {
+							const already = existing.has(r._id);
+							return (
+								<li key={r._id} className="flex items-center gap-3 border-b border-rule py-2">
+									<Art src={r.image} kind={r.kind} alt="" className="w-10" />
+									<div className="min-w-0 flex-1">
+										<p className="truncate font-bold">
+											{r.title}
+											{r.year && <span className="font-normal text-muted"> ({r.year})</span>}
+										</p>
+										<p className="truncate text-[11px] text-muted">
+											{[r.subtitle, r.creators.join(", ")].filter(Boolean).join(" · ")}
+										</p>
+									</div>
+									<button
+										type="button"
+										className="btn"
+										disabled={already || adding === r._id}
+										onClick={async () => {
+											setAdding(r._id);
+											try {
+												await add({ listId, recordId: r._id });
+											} catch (e) {
+												alert(errorMessage(e));
+											} finally {
+												setAdding(null);
+											}
+										}}
+									>
+										{already ? "added" : adding === r._id ? "…" : "add"}
+									</button>
+								</li>
+							);
+						})}
+					</ul>
+				)}
 			</div>
-			<input
-				autoFocus
-				className="field mt-3"
-				placeholder={`Search ${KIND_LABELS[kind].many}…`}
-				value={query}
-				onChange={(e) => setQuery(e.target.value)}
-			/>
-			<div className="mt-2 min-h-6 text-[12px]">
-				{status === "searching" && <p className="text-muted">Searching…</p>}
-				{status === "error" && <p className="text-danger">{error}</p>}
-				{status === "idle" && results?.length === 0 && <p className="text-muted">Nothing found.</p>}
-			</div>
-			{results && results.length > 0 && (
-				<ul className="mt-1 max-h-[26rem] overflow-y-auto border-t border-rule">
-					{results.map((r) => {
-						const already = existing.has(r._id);
-						return (
-							<li key={r._id} className="flex items-center gap-3 border-b border-rule py-2">
-								<Art src={r.image} kind={r.kind} alt="" className="w-10" />
-								<div className="min-w-0 flex-1">
-									<p className="truncate font-bold">
-										{r.title}
-										{r.year && <span className="font-normal text-muted"> ({r.year})</span>}
-									</p>
-									<p className="truncate text-[11px] text-muted">
-										{[r.subtitle, r.creators.join(", ")].filter(Boolean).join(" · ")}
-									</p>
-								</div>
-								<button
-									type="button"
-									className="btn"
-									disabled={already || adding === r._id}
-									onClick={async () => {
-										setAdding(r._id);
-										try {
-											await add({ listId, recordId: r._id });
-										} catch (e) {
-											alert(errorMessage(e));
-										} finally {
-											setAdding(null);
-										}
-									}}
-								>
-									{already ? "added" : adding === r._id ? "…" : "add"}
-								</button>
-							</li>
-						);
-					})}
-				</ul>
-			)}
 		</div>
 	);
 }

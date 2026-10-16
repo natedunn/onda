@@ -1,0 +1,355 @@
+// Source APIs, one per kind. Search returns lightweight records; details()
+// returns the fuller record shown on an item's own page.
+import type { Doc } from "./_generated/dataModel";
+import type { Kind } from "./shared/constants";
+
+export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime">;
+export type Provider = {
+	search: (query: string) => Promise<RecordInput[]>;
+	details: (sourceId: string) => Promise<RecordInput | null>;
+	/** Shape check for ids arriving from URLs. */
+	idPattern: RegExp;
+};
+
+const USER_AGENT = "Onda/0.1 (https://github.com/natedunn/onda)";
+
+function yearOf(date: string | number | undefined | null) {
+	if (!date) return undefined;
+	// Numbers are either a bare year (Open Library) or unix seconds (IGDB).
+	const year =
+		typeof date === "number"
+			? date < 10_000
+				? date
+				: new Date(date * 1000).getUTCFullYear()
+			: Number(String(date).slice(0, 4));
+	return Number.isFinite(year) && year > 0 ? year : undefined;
+}
+
+class NotFound extends Error {}
+
+async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
+	const res = await fetch(url, {
+		// Free APIs go down; fail fast rather than holding the action open.
+		signal: AbortSignal.timeout(8000),
+		...init,
+		headers: { "User-Agent": USER_AGENT, Accept: "application/json", ...init?.headers },
+	});
+	if (res.status === 404) throw new NotFound();
+	if (!res.ok) throw new Error(`${new URL(url).host} responded ${res.status}`);
+	return (await res.json()) as T;
+}
+
+/** Runs a details fetch, mapping a 404 from the source to null. */
+async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
+	try {
+		return await fn();
+	} catch (error) {
+		if (error instanceof NotFound) return null;
+		throw error;
+	}
+}
+
+const clean = (text?: string | null) => text?.replace(/\r\n/g, "\n").trim() || undefined;
+
+// --- TMDB (movies + shows) -------------------------------------------------
+
+function tmdb(path: string, params: Record<string, string> = {}) {
+	const key = process.env.TMDB_API_KEY!;
+	const url = new URL(`https://api.themoviedb.org/3${path}`);
+	for (const [k, val] of Object.entries(params)) url.searchParams.set(k, val);
+	// Long keys are v4 read-access tokens; short ones are v3 api keys.
+	const isBearer = key.length > 40;
+	if (!isBearer) url.searchParams.set("api_key", key);
+	return getJson<any>(url.toString(), {
+		headers: isBearer ? { Authorization: `Bearer ${key}` } : {},
+	});
+}
+
+const poster = (path?: string | null) => (path ? `https://image.tmdb.org/t/p/w500${path}` : undefined);
+
+function movieRecord(m: any, creators: string[]): RecordInput {
+	return {
+		kind: "movie",
+		source: "tmdb",
+		sourceId: String(m.id),
+		title: m.title,
+		creators,
+		year: yearOf(m.release_date),
+		image: poster(m.poster_path),
+		url: `https://www.themoviedb.org/movie/${m.id}`,
+	};
+}
+
+function showRecord(s: any, creators: string[]): RecordInput {
+	return {
+		kind: "show",
+		source: "tmdb",
+		sourceId: String(s.id),
+		title: s.name,
+		creators,
+		year: yearOf(s.first_air_date),
+		image: poster(s.poster_path),
+		url: `https://www.themoviedb.org/tv/${s.id}`,
+	};
+}
+
+const directors = (credits: any) =>
+	(credits?.crew ?? [])
+		.filter((c: any) => c.job === "Director")
+		.map((c: any) => c.name)
+		.slice(0, 2);
+
+const movies: Provider = {
+	idPattern: /^\d{1,10}$/,
+	async search(query) {
+		const { results = [] } = await tmdb("/search/movie", { query, include_adult: "false" });
+		return await Promise.all(
+			results.slice(0, 8).map(async (m: any, i: number) => {
+				// Directors need a second call; only worth it for the top hits.
+				const credits = i < 5 ? await tmdb(`/movie/${m.id}/credits`).catch(() => null) : null;
+				return movieRecord(m, directors(credits));
+			}),
+		);
+	},
+	details: (id) =>
+		orNull(async () => {
+			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits" });
+			return {
+				...movieRecord(m, directors(m.credits)),
+				description: clean(m.overview),
+				genres: (m.genres ?? []).map((g: any) => g.name),
+				facts: [
+					m.runtime ? { label: "Runtime", value: `${m.runtime} min` } : null,
+					m.release_date ? { label: "Released", value: m.release_date } : null,
+					m.credits?.cast?.length
+						? {
+								label: "Starring",
+								value: m.credits.cast
+									.slice(0, 4)
+									.map((c: any) => c.name)
+									.join(", "),
+							}
+						: null,
+				].filter((f) => f !== null),
+				detailsFetchedAt: Date.now(),
+			};
+		}),
+};
+
+const shows: Provider = {
+	idPattern: /^\d{1,10}$/,
+	async search(query) {
+		const { results = [] } = await tmdb("/search/tv", { query, include_adult: "false" });
+		return await Promise.all(
+			results.slice(0, 8).map(async (s: any, i: number) => {
+				const detail = i < 5 ? await tmdb(`/tv/${s.id}`).catch(() => null) : null;
+				return showRecord(s, (detail?.created_by ?? []).map((c: any) => c.name).slice(0, 2));
+			}),
+		);
+	},
+	details: (id) =>
+		orNull(async () => {
+			const s = await tmdb(`/tv/${id}`);
+			return {
+				...showRecord(s, (s.created_by ?? []).map((c: any) => c.name).slice(0, 2)),
+				description: clean(s.overview),
+				genres: (s.genres ?? []).map((g: any) => g.name),
+				facts: [
+					s.number_of_seasons
+						? { label: "Seasons", value: String(s.number_of_seasons) }
+						: null,
+					s.first_air_date ? { label: "First aired", value: s.first_air_date } : null,
+					s.networks?.length
+						? { label: "Network", value: s.networks.map((n: any) => n.name).join(", ") }
+						: null,
+					s.status ? { label: "Status", value: s.status } : null,
+				].filter((f) => f !== null),
+				detailsFetchedAt: Date.now(),
+			};
+		}),
+};
+
+// --- Open Library (books) --------------------------------------------------
+
+const books: Provider = {
+	idPattern: /^OL\d+W$/,
+	async search(query) {
+		const url = new URL("https://openlibrary.org/search.json");
+		url.searchParams.set("q", query);
+		url.searchParams.set("limit", "8");
+		url.searchParams.set("fields", "key,title,subtitle,author_name,first_publish_year,cover_i");
+		const { docs = [] } = await getJson<any>(url.toString());
+		return docs.map(
+			(b: any): RecordInput => ({
+				kind: "book",
+				source: "openlibrary",
+				sourceId: String(b.key).replace("/works/", ""),
+				title: b.title,
+				subtitle: b.subtitle,
+				creators: (b.author_name ?? []).slice(0, 3),
+				year: yearOf(b.first_publish_year),
+				image: b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg` : undefined,
+				url: `https://openlibrary.org${b.key}`,
+			}),
+		);
+	},
+	details: (id) =>
+		orNull(async () => {
+			const work = await getJson<any>(`https://openlibrary.org/works/${id}.json`);
+			const authors = await Promise.all(
+				(work.authors ?? []).slice(0, 3).map(async (a: any) => {
+					const author = await getJson<any>(`https://openlibrary.org${a.author.key}.json`).catch(() => null);
+					return author?.name as string | undefined;
+				}),
+			);
+			const description = typeof work.description === "string" ? work.description : work.description?.value;
+			const cover = (work.covers ?? []).find((c: number) => c > 0);
+			return {
+				kind: "book",
+				source: "openlibrary",
+				sourceId: id,
+				title: work.title,
+				subtitle: work.subtitle,
+				creators: authors.filter((a): a is string => Boolean(a)),
+				year: yearOf(work.first_publish_date),
+				image: cover ? `https://covers.openlibrary.org/b/id/${cover}-L.jpg` : undefined,
+				url: `https://openlibrary.org/works/${id}`,
+				// Open Library descriptions often carry a trailing source/link block.
+				description: clean(description?.split(/\n-{3,}/)[0]),
+				genres: (work.subjects ?? []).slice(0, 6),
+				facts: [
+					work.first_publish_date ? { label: "First published", value: work.first_publish_date } : null,
+				].filter((f) => f !== null),
+				detailsFetchedAt: Date.now(),
+			};
+		}),
+};
+
+// --- MusicBrainz + Cover Art Archive (albums) ------------------------------
+
+const artistCredit = (credit: any[] = []) => credit.map((a) => `${a.name}${a.joinphrase ?? ""}`).join("");
+
+function albumRecord(g: any): RecordInput {
+	return {
+		kind: "album",
+		source: "musicbrainz",
+		sourceId: g.id,
+		title: g.title,
+		subtitle: g["primary-type"] === "EP" ? "EP" : undefined,
+		creators: [artistCredit(g["artist-credit"])].filter(Boolean),
+		year: yearOf(g["first-release-date"]),
+		image: `https://coverartarchive.org/release-group/${g.id}/front-500`,
+		url: `https://musicbrainz.org/release-group/${g.id}`,
+	};
+}
+
+const albums: Provider = {
+	idPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+	async search(query) {
+		const url = new URL("https://musicbrainz.org/ws/2/release-group/");
+		url.searchParams.set("query", query);
+		url.searchParams.set("dismax", "true");
+		url.searchParams.set("limit", "15");
+		url.searchParams.set("fmt", "json");
+		const { "release-groups": groups = [] } = await getJson<any>(url.toString());
+		return groups
+			.filter((g: any) => ["Album", "EP"].includes(g["primary-type"]))
+			.slice(0, 8)
+			.map(albumRecord);
+	},
+	details: (id) =>
+		orNull(async () => {
+			const g = await getJson<any>(
+				`https://musicbrainz.org/ws/2/release-group/${id}?inc=artist-credits+genres+releases&fmt=json`,
+			);
+			return {
+				...albumRecord(g),
+				genres: (g.genres ?? [])
+					.sort((a: any, b: any) => b.count - a.count)
+					.slice(0, 6)
+					.map((x: any) => x.name),
+				facts: [
+					g["primary-type"] ? { label: "Type", value: g["primary-type"] } : null,
+					g["first-release-date"] ? { label: "Released", value: g["first-release-date"] } : null,
+					g.releases?.length ? { label: "Editions", value: String(g.releases.length) } : null,
+				].filter((f) => f !== null),
+				detailsFetchedAt: Date.now(),
+			};
+		}),
+};
+
+// --- IGDB (games) ----------------------------------------------------------
+
+let igdbToken: { value: string; expiresAt: number } | null = null;
+
+async function igdb(body: string) {
+	const clientId = process.env.IGDB_CLIENT_ID!;
+	if (!igdbToken || igdbToken.expiresAt < Date.now() + 60_000) {
+		const url = new URL("https://id.twitch.tv/oauth2/token");
+		url.searchParams.set("client_id", clientId);
+		url.searchParams.set("client_secret", process.env.IGDB_CLIENT_SECRET!);
+		url.searchParams.set("grant_type", "client_credentials");
+		const token = await getJson<any>(url.toString(), { method: "POST" });
+		igdbToken = { value: token.access_token, expiresAt: Date.now() + token.expires_in * 1000 };
+	}
+	return getJson<any[]>("https://api.igdb.com/v4/games", {
+		method: "POST",
+		headers: { "Client-ID": clientId, Authorization: `Bearer ${igdbToken.value}` },
+		body,
+	});
+}
+
+const GAME_FIELDS =
+	"name,first_release_date,url,summary,cover.image_id,genres.name,platforms.abbreviation,involved_companies.developer,involved_companies.company.name";
+
+function gameRecord(g: any): RecordInput {
+	return {
+		kind: "game",
+		source: "igdb",
+		sourceId: String(g.id),
+		title: g.name,
+		creators: (g.involved_companies ?? [])
+			.filter((c: any) => c.developer)
+			.map((c: any) => c.company?.name)
+			.filter(Boolean)
+			.slice(0, 2),
+		year: yearOf(g.first_release_date),
+		image: g.cover?.image_id
+			? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${g.cover.image_id}.jpg`
+			: undefined,
+		url: g.url,
+	};
+}
+
+const games: Provider = {
+	idPattern: /^\d{1,10}$/,
+	async search(query) {
+		const results = await igdb(`search ${JSON.stringify(query)}; fields ${GAME_FIELDS}; limit 8;`);
+		return results.map(gameRecord);
+	},
+	async details(id) {
+		const [g] = await igdb(`fields ${GAME_FIELDS}; where id = ${Number(id)};`);
+		if (!g) return null;
+		return {
+			...gameRecord(g),
+			description: clean(g.summary),
+			genres: (g.genres ?? []).map((x: any) => x.name),
+			facts: [
+				g.platforms?.length
+					? { label: "Platforms", value: g.platforms.map((p: any) => p.abbreviation).filter(Boolean).join(", ") }
+					: null,
+			].filter((f) => f !== null),
+			detailsFetchedAt: Date.now(),
+		};
+	},
+};
+
+export const PROVIDERS: Record<Kind, Provider> = { movie: movies, show: shows, book: books, album: albums, game: games };
+
+export function enabledKinds(): Kind[] {
+	const kinds: Kind[] = [];
+	if (process.env.TMDB_API_KEY) kinds.push("movie", "show");
+	kinds.push("book", "album");
+	if (process.env.IGDB_CLIENT_ID && process.env.IGDB_CLIENT_SECRET) kinds.push("game");
+	return kinds;
+}

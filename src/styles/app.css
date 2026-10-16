@@ -90,55 +90,89 @@
 }
 
 @layer components {
-	/* A chunky, slightly retro button with an offset shadow. */
+	/* A chunky, slightly retro button with a hard offset shadow. Hover lifts
+	   it, pressing pushes it into its shadow. */
 	.btn {
+		--btn-bg: var(--paper);
+		--btn-fg: var(--ink);
+		--btn-edge: var(--ink);
+		--btn-lift: 2px;
 		display: inline-flex;
 		align-items: center;
 		gap: 0.4em;
-		border: 1px solid var(--ink);
-		background: var(--paper);
-		color: var(--ink);
+		border: 1px solid var(--btn-edge);
+		background: var(--btn-bg);
+		color: var(--btn-fg);
 		padding: 0.2em 0.75em;
 		font: inherit;
 		font-size: 12px;
 		line-height: 1.6;
-		box-shadow: 2px 2px 0 var(--ink);
+		box-shadow: var(--btn-lift) var(--btn-lift) 0 var(--btn-edge);
 		cursor: pointer;
 		text-decoration: none;
 		white-space: nowrap;
+		transition:
+			transform 90ms ease-out,
+			box-shadow 90ms ease-out,
+			background-color 90ms ease-out;
 	}
 	.btn:visited {
-		color: var(--ink);
+		color: var(--btn-fg);
 	}
 	.btn:hover {
-		background: var(--mark);
-		color: var(--ink);
+		--btn-lift: 3px;
+		background: var(--btn-hover-bg, color-mix(in oklab, var(--ink) 7%, var(--paper)));
+		color: var(--btn-fg);
+		transform: translate(-1px, -1px);
+	}
+	.btn:focus-visible {
+		outline: 2px solid var(--link);
+		outline-offset: 3px;
 	}
 	.btn:active {
+		--btn-lift: 0px;
 		transform: translate(2px, 2px);
-		box-shadow: none;
 	}
 	.btn:disabled {
+		--btn-lift: 2px;
 		opacity: 0.5;
 		cursor: default;
 		transform: none;
-		box-shadow: 2px 2px 0 var(--ink);
+		background: var(--btn-bg);
 	}
 	.btn-primary {
-		background: var(--ink);
-		color: var(--paper);
-	}
-	.btn-primary:visited {
-		color: var(--paper);
-	}
-	.btn-primary:hover {
-		background: var(--ink);
-		color: var(--mark);
+		--btn-bg: var(--ink);
+		--btn-fg: var(--paper);
+		/* An ink shadow would just read as a bigger button; use a softer grey. */
+		box-shadow: var(--btn-lift) var(--btn-lift) 0 color-mix(in oklab, var(--ink) 45%, var(--paper));
+		--btn-hover-bg: color-mix(in oklab, var(--ink) 85%, var(--link));
 	}
 	.btn-danger {
-		border-color: var(--danger);
-		color: var(--danger);
-		box-shadow: 2px 2px 0 var(--danger);
+		--btn-fg: var(--danger);
+		--btn-edge: var(--danger);
+		--btn-hover-bg: color-mix(in oklab, var(--danger) 10%, var(--paper));
+	}
+
+	/* Halftone drop shadow: a dot screen offset behind the element. The parent
+	   must not paint an opaque background in the same stacking context (wrap in
+	   .isolate if it does), or the dots end up hidden behind it. */
+	.halftone {
+		--halftone-offset: 6px;
+		--halftone-dot: var(--ink);
+		position: relative;
+	}
+	.halftone::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		transform: translate(var(--halftone-offset), var(--halftone-offset));
+		background-image: radial-gradient(circle, var(--halftone-dot) 0.9px, transparent 1.3px);
+		background-size: 4px 4px;
+		pointer-events: none;
+	}
+	.halftone-sm {
+		--halftone-offset: 4px;
 	}
 
 	/* Text-style button that looks like a link. */

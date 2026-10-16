@@ -209,3 +209,26 @@ export const remove = mutation({
 		await ctx.db.delete(listId);
 	},
 });
+
+/** The viewer's lists, for "add to list" pickers; flags ones already holding `recordId`. */
+export const mine = query({
+	args: { recordId: v.optional(v.id("records")) },
+	handler: async (ctx, { recordId }) => {
+		const userId = await getAuthUserId(ctx);
+		if (userId === null) return [];
+		const lists = await ctx.db
+			.query("lists")
+			.withIndex("by_owner", (q) => q.eq("ownerId", userId as Id<"users">))
+			.order("desc")
+			.collect();
+		const holding = new Set<string>();
+		if (recordId) {
+			const items = await ctx.db
+				.query("items")
+				.withIndex("by_record", (q) => q.eq("recordId", recordId))
+				.collect();
+			for (const item of items) holding.add(item.listId);
+		}
+		return lists.map((l) => ({ _id: l._id, slug: l.slug, name: l.name, emoji: l.emoji, has: holding.has(l._id) }));
+	},
+});

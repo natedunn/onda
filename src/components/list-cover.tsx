@@ -8,16 +8,22 @@ export function ListCover({
 	emoji,
 	className,
 	emojiClassName,
+	framed = false,
 }: {
 	theme: string;
 	seed: number;
 	emoji?: string;
 	className?: string;
 	emojiClassName?: string;
+	/** Ink border with a halftone drop shadow, for the larger "hero" tiles. */
+	framed?: boolean;
 }) {
-	return (
+	const tile = (
 		<div
-			className={cn("grain grid aspect-square shrink-0 place-items-center overflow-hidden", className)}
+			className={cn(
+				"grain grid aspect-square shrink-0 place-items-center overflow-hidden",
+				framed ? "w-full border border-ink" : className,
+			)}
 			style={meshGradient(theme, seed)}
 		>
 			{emoji && (
@@ -27,4 +33,6 @@ export function ListCover({
 			)}
 		</div>
 	);
+	// The tile isolates itself for the grain overlay, so the shadow lives on a wrapper.
+	return framed ? <div className={cn("halftone shrink-0", className)}>{tile}</div> : tile;
 }

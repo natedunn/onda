@@ -91,8 +91,9 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 					theme={form.theme}
 					seed={form.seed}
 					emoji={form.emoji}
-					className="w-28 border border-ink shadow-[4px_4px_0_var(--ink)]"
-					emojiClassName="text-5xl"
+					framed
+					className="w-24"
+					emojiClassName="text-[2.75rem]"
 				/>
 				<div>
 					<p className="label">{isNew ? "A new list" : "Editing"}</p>

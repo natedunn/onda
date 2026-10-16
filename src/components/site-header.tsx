@@ -11,11 +11,11 @@ export function SiteHeader() {
 	const router = useRouter();
 
 	return (
-		<header className="flex flex-wrap items-baseline gap-x-5 gap-y-2 pt-6 pb-8">
+		<header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 pt-7 pb-10">
 			<Link to="/" className="plain font-serif text-[2rem] leading-none italic">
 				onda<span className="text-muted not-italic">∿</span>
 			</Link>
-			<nav className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[12px]">
+			<nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
 				{viewer ? (
 					<>
 						<NewListButton className="linkish">new list</NewListButton>

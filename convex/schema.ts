@@ -28,6 +28,24 @@ export const vLayout = v.union(
 	v.literal("grid"),
 );
 
+export const recordFields = {
+	kind: vKind,
+	source: vSource,
+	// The source's own id; unique per kind (each kind has one source).
+	sourceId: v.string(),
+	title: v.string(),
+	subtitle: v.optional(v.string()),
+	creators: v.array(v.string()),
+	year: v.optional(v.number()),
+	image: v.optional(v.string()),
+	url: v.optional(v.string()),
+	// Filled in the first time someone opens the item's page.
+	description: v.optional(v.string()),
+	genres: v.optional(v.array(v.string())),
+	facts: v.optional(v.array(v.object({ label: v.string(), value: v.string() }))),
+	detailsFetchedAt: v.optional(v.number()),
+};
+
 export default defineSchema({
 	// Auth accounts/sessions live in the auth component; this is the app's user.
 	users: defineTable({
@@ -58,19 +76,10 @@ export default defineSchema({
 		.index("by_owner", ["ownerId", "updatedAt"])
 		.index("by_visibility", ["visibility", "updatedAt"]),
 
-	// Shared metadata cache. Only written by server-side fetches from the
-	// source APIs, never from client-supplied data.
-	records: defineTable({
-		kind: vKind,
-		source: vSource,
-		sourceId: v.string(),
-		title: v.string(),
-		subtitle: v.optional(v.string()),
-		creators: v.array(v.string()),
-		year: v.optional(v.number()),
-		image: v.optional(v.string()),
-		url: v.optional(v.string()),
-	}).index("by_source", ["source", "sourceId"]),
+	// Shared metadata cache, and the backing data for public item pages. Only
+	// written from server-side fetches to the source APIs, never from client data.
+	records: defineTable(recordFields)
+		.index("by_kind", ["kind", "sourceId"]),
 
 	items: defineTable({
 		listId: v.id("lists"),
@@ -78,7 +87,9 @@ export default defineSchema({
 		// Fractional ordering: insert/move by picking a number between neighbors.
 		position: v.number(),
 		note: v.optional(v.string()),
-	}).index("by_list", ["listId", "position"]),
+	})
+		.index("by_list", ["listId", "position"])
+		.index("by_record", ["recordId"]),
 
 	ogImages: defineTable({
 		listId: v.id("lists"),

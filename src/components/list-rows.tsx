@@ -56,9 +56,9 @@ export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNo
 							{list.visibility !== "public" && <> · <span className="bg-mark px-1 text-ink">{list.visibility}</span></>}
 						</p>
 					</div>
-					<div className="hidden shrink-0 items-end gap-1 sm:flex">
+					<div className="hidden shrink-0 items-center gap-1 sm:flex">
 						{list.covers.slice(0, 4).map((cover, i) => (
-							<Art key={i} src={cover.image} kind={cover.kind} alt="" className="w-8" />
+							<Art key={i} src={cover.image} kind={cover.kind} alt="" className="aspect-square w-9" />
 						))}
 					</div>
 				</li>
