@@ -1,0 +1,8 @@
+{
+	"node": {
+		"externalPackages": [
+			"@resvg/resvg-js",
+			"satori"
+		]
+	}
+}

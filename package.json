@@ -1,0 +1,51 @@
+{
+	"name": "onda",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "convex dev --once && run-p dev:convex dev:web",
+		"dev:web": "vite dev --port 3030 --strictPort",
+		"dev:convex": "convex dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"deploy": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'vite build' && wrangler deploy",
+		"check": "tsc --noEmit",
+		"cf-typegen": "wrangler types"
+	},
+	"dependencies": {
+		"@convex-dev/auth": "2.0.0-beta.0",
+		"@convex-dev/react-query": "^0.1.0",
+		"@resvg/resvg-js": "^2.6.2",
+		"@tailwindcss/vite": "^4.3.3",
+		"@tanstack/react-query": "^5.104.3",
+		"@tanstack/react-router": "^1.170.44",
+		"@tanstack/react-router-ssr-query": "^1.167.3",
+		"@tanstack/react-start": "^1.169.2",
+		"clsx": "^2.1.1",
+		"convex": "^1.47.0",
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1",
+		"satori": "^0.62.0",
+		"tailwind-merge": "^3.7.0",
+		"tailwindcss": "^4.3.3"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "^1.64.0",
+		"@types/node": "^26.6.5",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"@vitejs/plugin-react": "^6.1.2",
+		"npm-run-all2": "^9.0.3",
+		"typescript": "^5.9.3",
+		"vite": "^8.3.4",
+		"wrangler": "^4.151.1"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@resvg/resvg-js",
+			"esbuild",
+			"sharp",
+			"workerd"
+		]
+	}
+}
