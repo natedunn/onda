@@ -69,7 +69,8 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
 
 ## Upstream tracking
 
-Last checked: **2026-10-18** against `2.0.0-beta.0` (npm `beta` tag).
+Last checked: **2026-10-19** against `2.0.0-beta.0` (npm `beta` tag; no newer
+release). No commits on `reboot` since 2026-10-16 (`56367bb8`, #753).
 
 | Item | Link | Status | Affects |
 |---|---|---|---|
@@ -81,7 +82,8 @@ Last checked: **2026-10-18** against `2.0.0-beta.0` (npm `beta` tag).
 | Ignore unrequested `id_token` | PR #746 | draft | Google/OAuth |
 | Authorization params / provider tokens (`state`, `redirect_uri` reserved) | PR #751 | draft, WIP | gateway patch |
 | Expired-token `isAuthenticated` docs | PR #723 | draft | SSR checks |
-| "provider" → "sign-in method" renames | PRs #696, #749, #750 | open | our wiring (expect breaking renames) |
+| "provider" → "sign-in method" renames | PRs #696, #749 | open | our wiring (expect breaking renames) |
+| `ambientSignIns` prop internal; **`oauth` no longer exported from `methods/oauth/react`** | PR #750 | open | adapter `provider.tsx` imports `oauth` from there — would need an internal alias like `#convex-auth-react-internal` (to `dist/methods/oauth/client.js`) |
 | OAuth redirect proxy / configurable callback | issue #1 | open, dormant | gateway patch |
 | Framework-agnostic SSR adapter | issues #350, #126 | open | adapter |
 | Account linking prototype | PR #429 | draft, stale | linking |
