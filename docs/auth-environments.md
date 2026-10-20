@@ -57,41 +57,38 @@ section, you're on the GitHub App form.) Create one for each tier.
 
 ## Google (Google Auth Platform)
 
-console.cloud.google.com → create a project **Onda** (both tiers' clients can
-live in it). Then open **Google Auth Platform** (APIs & Services → OAuth
-consent screen redirects there).
+We only request `openid`, `email` and `profile`. Google treats those as basic
+sign-in scopes: no API needs enabling, no scopes need configuring, and Google's
+basic-scope exception means any Google account can sign in even while the app
+is in **Testing** (no test-user list, no warning screen, no 7-day expiry).
 
-**Branding** (shared by both clients)
-- App name: `Onda`
-- User support email: yours
-- App logo: optional. Uploading one requires Google to verify the brand
-  before it's shown; skip it until launch.
-- App domain → Application home page: `https://onda.club`; privacy policy and
-  terms links: add when those pages exist (needed for brand verification).
-- Authorized domains: `onda.club`
-- Developer contact email: yours
+1. **Project.** console.cloud.google.com → project picker → **New project** →
+   name it `Onda`. Both tiers' clients live in this one project.
+2. **Start the auth setup.** Search for **Google Auth Platform** (or APIs &
+   Services → OAuth consent screen) → **Get started**. The wizard asks:
+   - **App Information**: App name `Onda`; User support email: your address.
+   - **Audience**: **External** (Internal is only for a Google Workspace org).
+   - **Contact Information**: your email (Google's notices about the project).
+   - **Finish**: agree to the Google API Services User Data Policy → **Create**.
+3. **Create the dev client.** **Clients** → **Create client**:
+   - Application type: **Web application**
+   - Name: `Onda Dev` (only you see this)
+   - Authorized JavaScript origins: leave empty
+   - Authorized redirect URIs → **Add URI**:
+     `https://gateway-dev.onda.club/oauth/google/callback`
+   - **Create** → copy the **Client ID** and **Client secret** now (or
+     **Download JSON**). The secret can't be viewed again later.
+4. **Create the prod client.** Same again: Name `Onda Prod`, redirect URI
+   `https://gateway.onda.club/oauth/google/callback`.
+5. **Publish (when launching).** **Audience** → **Publish app** moves the
+   project from Testing to In production. Not required for sign-in to work with
+   our scopes, but it's the normal state for a live app.
 
-**Audience**
-- User type: **External**
-- Publishing status: starts in **Testing** — only listed **Test users** can
-  sign in (add your own Google accounts). Click **Publish app** when ready for
-  real users; with only non-sensitive scopes, publishing doesn't need Google's
-  app verification.
-
-**Data Access** → Add or remove scopes: `openid`,
-`.../auth/userinfo.email`, `.../auth/userinfo.profile`. Nothing else.
-
-**Clients** → Create client, once per tier:
-
-| Field | Dev | Prod |
-|---|---|---|
-| Application type | Web application | Web application |
-| Name | `Onda Dev` | `Onda Prod` |
-| Authorized JavaScript origins | leave empty | leave empty |
-| Authorized redirect URIs | dev callback | prod callback |
-
-Copy the Client ID and **Client secret** when the dialog shows them (or
-download the JSON) — newer projects only show the secret at creation.
+Later, optional — **brand verification**: until it's done, Google won't show
+the app name/logo on the consent screen. It needs a homepage on `onda.club`
+that identifies the app, a privacy policy linked from that homepage and from
+**Branding**, `onda.club` verified in Google Search Console, and `onda.club`
+under **Branding → Authorized domains**. Do this once those pages exist.
 
 ## Discord (Developer Portal)
 
