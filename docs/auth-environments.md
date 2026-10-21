@@ -135,3 +135,16 @@ npx convex env list --deployment $D   # check
 Prod credentials go on the prod deployment (`--prod`) once it exists; keep
 them in the password manager until then. The gateways don't hold provider
 credentials — only the tier routing secret.
+
+## Before launch (Google)
+
+Google stays in **Testing** until onda.club is live — sign-in still works for
+any account because we only use basic scopes. To publish and get the name/logo
+on the consent screen:
+
+- [ ] onda.club serving the app, with `/privacy` and `/terms` pages
+- [ ] Verify `onda.club` in Google Search Console
+- [ ] Branding: home page `https://onda.club`, privacy `https://onda.club/privacy`,
+      terms `https://onda.club/terms`, authorized domain `onda.club`, logo
+      (`onda-logo-120.png`)
+- [ ] Audience → **Publish app**; then brand verification in Verification Center
