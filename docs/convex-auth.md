@@ -69,11 +69,30 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
 
 ## Upstream tracking
 
-Last checked: **2026-10-19** against `2.0.0-beta.0` (npm `beta` tag; no newer
-release). No commits on `reboot` since 2026-10-16 (`56367bb8`, #753).
+Last checked: **2026-10-22** against `2.0.0-beta.0` (npm `beta` tag; no newer
+release). `reboot` head `0fdc1bac` (2026-10-21). CHANGELOG/KNOWN_ISSUES
+unchanged since the last check.
+
+**Merged since 2026-10-19 (land in the next beta):**
+
+| Item | Link | Affects |
+|---|---|---|
+| Remove `sessions.lastRefreshedAt` — **schema-breaking: clear the sessions table before upgrading** | PR #758 | upgrade step (everyone signed out once) |
+| Remove `accessTokenExpiresAt` from the token bundle | PR #777 | none (adapter only reads `accessToken`) |
+| Remove `authAction` from auth-method helpers | PR #776 | none (custom methods only) |
+| Log OAuth cancel at info; TOTP component internal; doc/example fixes | #747, #766, #762–#773 | none |
+
+**Open — tracked:**
 
 | Item | Link | Status | Affects |
 |---|---|---|---|
+| **Stateful sessions**: JWT `sub` becomes the session id; `getAuthUserId` checks for a live session (optional component ref arg) | PR #757 | open, ready | `requireUserId`/`getAuthUserId` (API compatible); revocation becomes immediate |
+| **Session revocation**: `ctx.convexAuth.revokeOtherSessions`, component `listSessions`/`revokeSessions` | PR #759 | open, ready | Deferred "sign out everywhere" — likely no patch needed |
+| `sessionState` query + `getSession` helper | PR #760 | draft | SSR auth checks, route guards |
+| Sign clients out reactively on revocation | PR #761 | draft | adapter (client) |
+| Revoke sessions on password reset/recovery | PRs #775, #779 | draft | n/a (password only) |
+| Export `ConvexAuthNextjsProvider` (`ssr/nextjs/client`); apps own the Convex client | PR #780 | open, ready | possible model for slimming our `provider.tsx` |
+| Component args instead of `.attachUserCallbacks` (exploration, "do not review") | PR #778 | draft | would change `convex/auth.ts` wiring if adopted |
 | `getToken` stops throwing on refresh failure | PR #729 | draft | adapter `try/catch` |
 | Generic OAuth / Discord docs | PR #731 | draft | Discord setup |
 | Shared `createUser` across providers | PR #733 | draft | email linking |
@@ -85,9 +104,9 @@ release). No commits on `reboot` since 2026-10-16 (`56367bb8`, #753).
 | "provider" → "sign-in method" renames | PRs #696, #749 | open | our wiring (expect breaking renames) |
 | `ambientSignIns` prop internal; **`oauth` no longer exported from `methods/oauth/react`** | PR #750 | open | adapter `provider.tsx` imports `oauth` from there — would need an internal alias like `#convex-auth-react-internal` (to `dist/methods/oauth/client.js`) |
 | OAuth redirect proxy / configurable callback | issue #1 | open, dormant | gateway patch |
-| Framework-agnostic SSR adapter | issues #350, #126 | open | adapter |
+| Framework-agnostic SSR adapter | issues #350, #126 | open, no activity | adapter |
 | Account linking prototype | PR #429 | draft, stale | linking |
-| KNOWN_ISSUES: rate limiting, OAuth doc cleanup, one pending flow per browser | `KNOWN_ISSUES.md` on `reboot` | open | rate limiting, cleanup |
+| KNOWN_ISSUES: rate limiting, OAuth flow cleanup, one pending flow per browser | `KNOWN_ISSUES.md` on `reboot` | open | rate limiting, cleanup |
 
 ### How to run the check
 
