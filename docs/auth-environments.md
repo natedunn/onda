@@ -92,27 +92,60 @@ under **Branding → Authorized domains**. Do this once those pages exist.
 
 ## Discord (Developer Portal)
 
-discord.com/developers/applications → **New Application**, once per tier:
-`Onda Dev` and `Onda`. The name is what users see on the consent screen.
+A Discord "application" is a bot/app container; we only use its OAuth2 part
+for sign-in. Everything bot-related gets switched off. Do the steps in this
+order: Discord refuses to make the bot private while an install link exists.
 
-**General Information**: app icon and description optional (shown on the
-consent screen). Terms/privacy URLs: add when those pages exist. Leave
-Interactions Endpoint URL, Linked Roles and the rest empty.
+1. **Create** — discord.com/developers/applications → **New Application**.
+   Name: `Onda Dev` (dev tier) or `Onda` (prod). The name is what users see on
+   the consent screen ("Onda wants to access your account"). Agree to the
+   terms → **Create**. It lands in your personal account. (Optional: create
+   a **Team** first under Teams and create the app inside it, so it isn't tied
+   to your personal account. Teams require 2FA on your account.)
+2. **General Information**
+   - **App Icon**: upload `onda-logo-512.png` (shown on the consent screen).
+   - **Description**: optional, e.g. "Lists of the things you love."
+   - **Tags**: leave empty.
+   - **Interactions Endpoint URL**, **Linked Roles Verification URL**: leave
+     empty.
+   - **Terms of Service URL** / **Privacy Policy URL**: leave empty until
+     `onda.club/terms` and `onda.club/privacy` exist; then fill in on the prod
+     app (and dev, if you like).
+   - **Save Changes**. Application ID = Client ID; ignore the Public Key.
+3. **Installation** (sidebar) — no one should be able to "add" Onda anywhere.
+   - **Install Link**: **None**. Save.
+   - **Installation Contexts**: uncheck **User Install** and **Guild
+     Install** if it lets you; if it insists on one, leave **Guild Install**
+     — with no install link and a private bot it does nothing.
+4. **Bot** (sidebar) — new apps get a bot user automatically. We don't use it.
+   - **Public Bot**: **off** (only you could add it to a server). If it errors
+     about an install link, step 3 wasn't saved.
+   - **Requires OAuth2 Code Grant**: off.
+   - **Presence / Server Members / Message Content Intent**: all off.
+   - Don't **Reset Token**; we never need a bot token.
+5. **OAuth2** (sidebar)
+   - **Client ID**: copy it.
+   - **Client Secret** → **Reset Secret** → copy it immediately (shown once;
+     resetting again invalidates the old one).
+   - **Redirects** → **Add Redirect** → the tier callback (exact match, no
+     trailing slash):
+     `https://gateway-dev.onda.club/oauth/discord/callback` (dev) or
+     `https://gateway.onda.club/oauth/discord/callback` (prod). Only that one.
+     **Save Changes** (the yellow bar at the bottom — easy to miss).
+   - **Public Client**: **off**. We exchange the code server-side with the
+     secret (plus PKCE); a public client is for apps that can't keep a secret.
+   - **OAuth2 URL Generator**: ignore — we build the authorize URL in code
+     (scopes `identify email`).
+6. **Leave alone**: Emojis, Webhooks, Rich Presence, App Testers, Activities,
+   Social SDK, Monetization, **App Verification** (that's for bots in 75+
+   servers; sign-in apps don't need it).
 
-**OAuth2**
-- Copy the **Client ID**; **Reset Secret** and copy the **Client Secret**.
-- **Redirects** → Add Redirect: the tier callback. Save changes.
-- **Public Client**: **off** (we use the secret server-side).
-- Ignore the OAuth2 URL Generator — we build the URL in code.
-
-**Installation**: we only use Discord for sign-in, not as a bot.
-- Install Link: **None**
-- Installation contexts: uncheck both (User Install, Guild Install) if the
-  portal allows it.
-
-**Bot**: if the app has a bot user, turn **Public Bot** off (so nobody can add
-it to a server) and leave Privileged Gateway Intents off. Don't create a bot
-token.
+What users can deny or lack, handled in code: a Discord account may have no
+email (phone-only signup) or an unverified one (`verified: false`) — we only
+link accounts by email when `verified` is true. Display name comes from
+`global_name`, falling back to `username`; avatar from
+`cdn.discordapp.com/avatars/<id>/<hash>.png`, or Discord's default avatar
+when `avatar` is null.
 
 ## Credentials
 
