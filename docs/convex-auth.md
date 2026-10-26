@@ -16,30 +16,34 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
 | `#convex-auth-react-internal` alias + `optimizeDeps` exclude | `tsconfig.json`, `vite.config.ts` | `AuthProvider`/`useAuth` aren't exported | Package exports them |
 | `try/catch` around `ServerAuthSession.getToken` | `src/lib/convex-auth-start/server.ts` | Throws when a refresh fails | PR #729 lands |
 | Dev-only guest sign-in | `convex/auth.ts`, `convex/users.ts` | Exercise the app without an OAuth app | Keep (gated by `AUTH_DEV_GUEST`) |
+| **Patch**: optional `CALLBACK_URL` component env | `patches/@convex-dev__auth.patch` (`lib/oauth/dbHelpers.js`, `components/{github,google,oauth}/convex.config.*`) | Callback is hardwired to the deployment's own URL; we need the gateway's | Configurable callback / redirect proxy upstream (#1) |
+| `viaGateway` wrapper around each `startSignIn*` | `convex/authGateway.ts` | Puts the signed routing prefix on `state`; calls the package's mutation through `_handler` (undocumented) | Same as above |
+| Discord catalog + profile | `convex/authDiscord.ts` | No built-in Discord method | Keep (or built-in Discord method) |
+| OAuth gateway Worker | `workers/gateway` | One callback per provider per tier, shared by every deployment | Same as the patch |
 
 ## Plan — this round
 
-- [ ] **OAuth gateway Worker** (`workers/gateway`, standalone package, own lockfile).
+- [x] **OAuth gateway Worker** (`workers/gateway`, standalone package, own lockfile).
       Tiers: `gateway-dev.onda.club` (local worktrees, previews, cloud dev) and
       `gateway.onda.club` (prod). One OAuth app per provider per tier; the
       provider redirects to `<gateway>/oauth/<provider>/callback`, the gateway
       verifies the routing info in `state` (HMAC, tier secret) against an
       allowlist and 302s to `<deployment CONVEX_SITE_URL>/oauth/<provider>/callback`
       with the query string unchanged. Per-IP rate limit on the callback.
-- [ ] **Patch: configurable callback URL** (`pnpm patch @convex-dev/auth`).
+- [x] **Patch: configurable callback URL** (`pnpm patch @convex-dev/auth`).
       Optional `CALLBACK_URL` component env on `components/{github,google,oauth}`
       and `process.env.CALLBACK_URL ?? <stock>` in `lib/oauth/dbHelpers`.
       Wired per provider in `convex/convex.config.ts`. Unset = stock behavior.
-- [ ] **State routing without a patch**: app-side wrapper prefixes `state` in
+- [x] **State routing without a patch**: app-side wrapper prefixes `state` in
       the authorize URL with `<b64url(CONVEX_SITE_URL)>.<hmac>.`; the gateway
       strips it before forwarding (the deployment stores only the hash of the
       original state).
-- [ ] **Providers**: GitHub (have), Google (`setupGoogle`), Discord (generic
+- [x] **Providers**: GitHub (have), Google (`setupGoogle`), Discord (generic
       `setupOauth` + `components/oauth`, our own profile validator).
-- [ ] **One user across providers**: add `email` (+ index) to `users`; a shared
+- [x] **One user across providers**: add `email` (+ index) to `users`; a shared
       `createUser` returns the existing user when a *verified* email matches.
-      Mirror `(provider, accountId)` into our own table for a future
-      "connected accounts" view.
+      (Not done: mirroring `(provider, accountId)` into our own table for a
+      "connected accounts" view — add it with that view.)
 - [ ] **Per-environment `SITE_URL`** (allowed redirect origins are exact-match):
       dev script sets it per worktree; CI sets it per preview deployment; prod
       `https://onda.club`.
@@ -52,10 +56,30 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
         package's original isn't exported.
       - Global token bucket in Convex (`@convex-dev/rate-limiter`) as a backstop.
 - [ ] **Account deletion policy**: anonymize users instead of deleting (deleting
-      leaves auth accounts behind and locks the person out). Make `onSignIn`
-      tolerate a missing user.
-- [ ] **Docs**: `docs/auth-environments.md` — OAuth app setup per tier and
+      leaves auth accounts behind and locks the person out). `onSignIn` already
+      tolerates a missing user; there's no delete-account feature yet.
+- [x] **Docs**: `docs/auth-environments.md` — OAuth app setup per tier and
       provider, env vars, verification steps.
+
+- [ ] **Deploy**: `gateway-dev` Worker + tier secret; set the gateway env
+      vars on `grandiose-yak-969` (see `docs/auth-environments.md`).
+
+### How the gateway flow works
+
+1. `startSignInWith<Provider>` (`viaGateway`) runs the package's start, then
+   rewrites `state` in the provider URL to
+   `<b64url(CONVEX_SITE_URL)>.<b64url(HMAC(secret, provider + "\n" + site))>.<state>`.
+   The client keeps the plain state. `redirect_uri` is the gateway (patch).
+2. The provider redirects to `<gateway>/oauth/<provider>/callback`.
+3. The gateway verifies the HMAC with `ROUTING_SECRET`, checks the target
+   against `ALLOWED_TARGETS`, and 302s to
+   `<target>/oauth/<provider>/callback` with the plain state.
+4. The deployment's stock callback finishes; the code exchange sends the
+   gateway URL as `redirect_uri`, matching step 1.
+
+Env per deployment: `AUTH_GATEWAY_SECRET` (= the tier's `ROUTING_SECRET`)
+and `AUTH_{GITHUB,GOOGLE,DISCORD}_CALLBACK_URL`. Leave them all unset to use
+the deployment's own callbacks.
 
 ## Deferred
 

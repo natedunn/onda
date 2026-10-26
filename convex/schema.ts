@@ -54,7 +54,11 @@ export default defineSchema({
 		image: v.optional(v.string()),
 		bio: v.optional(v.string()),
 		isPrivate: v.boolean(),
-	}).index("by_username", ["username"]),
+		// Verified email from a sign-in provider, lowercased; links providers to one user.
+		email: v.optional(v.string()),
+	})
+		.index("by_username", ["username"])
+		.index("by_email", ["email"]),
 
 	lists: defineTable({
 		ownerId: v.id("users"),

@@ -46,6 +46,9 @@
 			"esbuild",
 			"sharp",
 			"workerd"
-		]
+		],
+		"patchedDependencies": {
+			"@convex-dev/auth": "patches/@convex-dev__auth.patch"
+		}
 	}
 }

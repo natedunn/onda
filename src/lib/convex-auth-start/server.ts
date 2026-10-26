@@ -11,7 +11,12 @@ export const authServer = setupConvexAuthServer({
 	refreshSession: api.auth.refreshSession,
 	signOut: api.auth.signOut,
 	// Allowlist: every function that mints a session, and nothing else.
-	signIn: [api.auth.completeSignInWithGithub, api.auth.signInAsGuest],
+	signIn: [
+		api.auth.completeSignInWithGithub,
+		api.auth.completeSignInWithGoogle,
+		api.auth.completeSignInWithDiscord,
+		api.auth.signInAsGuest,
+	],
 	cookieOptions,
 });
 

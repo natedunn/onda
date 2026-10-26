@@ -169,6 +169,29 @@ Prod credentials go on the prod deployment (`--prod`) once it exists; keep
 them in the password manager until then. The gateways don't hold provider
 credentials — only the tier routing secret.
 
+### Gateway settings
+
+Each tier has one routing secret, shared by its gateway Worker and every
+deployment in the tier. Generate it once per tier (`openssl rand -base64 32`)
+and keep it in the password manager.
+
+```sh
+# Gateway (from workers/gateway)
+pnpm wrangler secret put ROUTING_SECRET -c wrangler.jsonc --env dev
+pnpm deploy:dev
+
+# Each dev-tier deployment
+D=grandiose-yak-969
+npx convex env set --deployment $D AUTH_GATEWAY_SECRET …
+npx convex env set --deployment $D AUTH_GITHUB_CALLBACK_URL https://gateway-dev.onda.club/oauth/github/callback
+npx convex env set --deployment $D AUTH_GOOGLE_CALLBACK_URL https://gateway-dev.onda.club/oauth/google/callback
+npx convex env set --deployment $D AUTH_DISCORD_CALLBACK_URL https://gateway-dev.onda.club/oauth/discord/callback
+npx convex env set --deployment $D SITE_URL http://localhost:3030
+```
+
+`SITE_URL` is the app's exact origin (comma-separate several); sign-in
+refuses to return anywhere else.
+
 ## Before launch (Google)
 
 Google stays in **Testing** until onda.club is live — sign-in still works for

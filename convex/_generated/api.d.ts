@@ -9,6 +9,8 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authDiscord from "../authDiscord.js";
+import type * as authGateway from "../authGateway.js";
 import type * as items from "../items.js";
 import type * as lists from "../lists.js";
 import type * as media from "../media.js";
@@ -28,6 +30,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  authDiscord: typeof authDiscord;
+  authGateway: typeof authGateway;
   items: typeof items;
   lists: typeof lists;
   media: typeof media;
@@ -69,5 +73,7 @@ export declare const internal: FilterApi<
 export declare const components: {
   auth: import("@convex-dev/auth/_generated/component.js").ComponentApi<"auth">;
   authGithub: import("@convex-dev/auth/components/github/_generated/component.js").ComponentApi<"authGithub">;
+  authGoogle: import("@convex-dev/auth/components/google/_generated/component.js").ComponentApi<"authGoogle">;
+  authDiscord: import("@convex-dev/auth/components/oauth/_generated/component.js").ComponentApi<"authDiscord">;
   authAnonymous: import("@convex-dev/auth/components/anonymous/_generated/component.js").ComponentApi<"authAnonymous">;
 };

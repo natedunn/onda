@@ -1,6 +1,8 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { vGithubProfile } from "@convex-dev/auth/methods/github/server";
-import { ConvexError, v } from "convex/values";
+import { vGoogleProfile } from "@convex-dev/auth/methods/google/server";
+import { ConvexError, type Validator, v } from "convex/values";
+import { vDiscordProfile } from "./authDiscord";
 import type { Id } from "./_generated/dataModel";
 import {
 	internalMutation,
@@ -35,38 +37,110 @@ async function uniqueUsername(ctx: MutationCtx, wanted: string) {
 	return `${base}${Math.floor(Math.random() * 1e6)}`;
 }
 
+type NewUser = {
+	username: string;
+	name?: string;
+	image?: string;
+	email?: string;
+	emailVerified: boolean;
+};
+
+/**
+ * First sign-in with a provider account. One person, one onda user: when the
+ * provider vouches for the email and a user already has it, sign them into
+ * that user instead of making a second one.
+ */
+async function createOrLink(ctx: MutationCtx, profile: NewUser) {
+	const email = profile.emailVerified ? profile.email?.toLowerCase() : undefined;
+	if (email) {
+		const existing = await ctx.db
+			.query("users")
+			.withIndex("by_email", (q) => q.eq("email", email))
+			.first();
+		if (existing) return existing._id;
+	}
+	return await ctx.db.insert("users", {
+		username: await uniqueUsername(ctx, profile.username),
+		name: profile.name,
+		image: profile.image,
+		email,
+		isPrivate: false,
+	});
+}
+
+/** Later sign-ins: keep the avatar fresh. Username and name are the user's to edit. */
+async function refreshOnSignIn(ctx: MutationCtx, userId: Id<"users">, image: string | undefined) {
+	const user = await ctx.db.get(userId);
+	// Tolerate a user row that's gone; the sign-in itself still succeeds.
+	if (user && image && user.image !== image) await ctx.db.patch(userId, { image });
+}
+
+const providerArgs = <Name extends string, P extends Validator<any, "required", any>>(name: Name, profile: P) =>
+	v.object({ name: v.literal(name), accountId: v.string(), profile });
+
 export const createFromGithub = internalMutation({
-	args: {
-		provider: v.object({
-			name: v.literal("github"),
-			accountId: v.string(),
-			profile: vGithubProfile,
-		}),
-	},
+	args: { provider: providerArgs("github", vGithubProfile) },
 	returns: v.id("users"),
-	handler: async (ctx, { provider: { profile } }) => {
-		return await ctx.db.insert("users", {
-			username: await uniqueUsername(ctx, profile.login),
+	handler: async (ctx, { provider: { profile } }) =>
+		await createOrLink(ctx, {
+			username: profile.login,
 			name: profile.name,
 			image: profile.avatarUrl,
-			isPrivate: false,
-		});
-	},
+			email: profile.email,
+			emailVerified: profile.emailVerified,
+		}),
 });
 
 export const onGithubSignIn = internalMutation({
-	args: {
-		provider: v.object({
-			name: v.literal("github"),
-			accountId: v.string(),
-			profile: vGithubProfile,
-		}),
-		userId: v.id("users"),
-	},
+	args: { provider: providerArgs("github", vGithubProfile), userId: v.id("users") },
 	returns: v.null(),
 	handler: async (ctx, { provider: { profile }, userId }) => {
-		// Keep the avatar fresh; the username/name are the user's to edit.
-		if (profile.avatarUrl) await ctx.db.patch(userId, { image: profile.avatarUrl });
+		await refreshOnSignIn(ctx, userId, profile.avatarUrl);
+		return null;
+	},
+});
+
+export const createFromGoogle = internalMutation({
+	args: { provider: providerArgs("google", vGoogleProfile) },
+	returns: v.id("users"),
+	handler: async (ctx, { provider: { profile } }) =>
+		await createOrLink(ctx, {
+			// Google has no handle; start from the email's local part.
+			username: profile.email?.split("@")[0] ?? profile.name ?? "user",
+			name: profile.name,
+			image: profile.picture,
+			email: profile.email,
+			emailVerified: profile.emailVerified,
+		}),
+});
+
+export const onGoogleSignIn = internalMutation({
+	args: { provider: providerArgs("google", vGoogleProfile), userId: v.id("users") },
+	returns: v.null(),
+	handler: async (ctx, { provider: { profile }, userId }) => {
+		await refreshOnSignIn(ctx, userId, profile.picture);
+		return null;
+	},
+});
+
+export const createFromDiscord = internalMutation({
+	args: { provider: providerArgs("discord", vDiscordProfile) },
+	returns: v.id("users"),
+	handler: async (ctx, { provider: { profile } }) =>
+		await createOrLink(ctx, {
+			username: profile.username,
+			name: profile.name,
+			image: profile.avatarUrl,
+			email: profile.email,
+			emailVerified: profile.emailVerified,
+		}),
+});
+
+export const onDiscordSignIn = internalMutation({
+	args: { provider: providerArgs("discord", vDiscordProfile), userId: v.id("users") },
+	returns: v.null(),
+	handler: async (ctx, { provider: { profile }, userId }) => {
+		await refreshOnSignIn(ctx, userId, profile.avatarUrl);
 		return null;
 	},
 });
