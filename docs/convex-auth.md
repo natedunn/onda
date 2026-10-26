@@ -69,29 +69,34 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
 
 ## Upstream tracking
 
-Last checked: **2026-10-22** against `2.0.0-beta.0` (npm `beta` tag; no newer
-release). `reboot` head `0fdc1bac` (2026-10-21). CHANGELOG/KNOWN_ISSUES
-unchanged since the last check.
+Last checked: **2026-10-26** against `2.0.0-beta.0` (npm `beta` tag; no newer
+release). `reboot` head `4943dd19` (2026-10-22; only #774 since last check,
+passkey-only). CHANGELOG/KNOWN_ISSUES unchanged.
 
-**Merged since 2026-10-19 (land in the next beta):**
+**Merged since beta.0 (land in the next beta):**
 
 | Item | Link | Affects |
 |---|---|---|
 | Remove `sessions.lastRefreshedAt` — **schema-breaking: clear the sessions table before upgrading** | PR #758 | upgrade step (everyone signed out once) |
 | Remove `accessTokenExpiresAt` from the token bundle | PR #777 | none (adapter only reads `accessToken`) |
 | Remove `authAction` from auth-method helpers | PR #776 | none (custom methods only) |
-| Log OAuth cancel at info; TOTP component internal; doc/example fixes | #747, #766, #762–#773 | none |
+| Log OAuth cancel at info; TOTP component internal; passkey fixes; doc/example fixes | #747, #766, #762–#774 | none |
 
 **Open — tracked:**
 
 | Item | Link | Status | Affects |
 |---|---|---|---|
+| **Deployment-issued JWTs**: no more `AUTH_PRIVATE_KEY`/`AUTH_JWKS`; JWKS served by the deployment; needs `convex@1.48` | PR #787 | open, ready | `convex/convex.config.ts` env declarations, `convex/auth.config.ts`, env setup docs; expect a re-sign-in |
+| `convexAuthProvider()` helper for `auth.config.ts` | PR #788 | open, ready | `convex/auth.config.ts` (replace hand-written provider) |
+| Erase expired sessions with a batch-worker loop | PR #785 | draft | Deferred "cleanup" — covers sessions/refresh tokens (not OAuth flow rows) |
+| Cap sessions per user at 100 | PR #783 | draft | none |
+| Re-run the Convex auth handshake when the signed-in user changes | PR #789 | draft | adapter uses the same `AuthProvider` — fixes guest→GitHub switching running as the old user |
 | **Stateful sessions**: JWT `sub` becomes the session id; `getAuthUserId` checks for a live session (optional component ref arg) | PR #757 | open, ready | `requireUserId`/`getAuthUserId` (API compatible); revocation becomes immediate |
 | **Session revocation**: `ctx.convexAuth.revokeOtherSessions`, component `listSessions`/`revokeSessions` | PR #759 | open, ready | Deferred "sign out everywhere" — likely no patch needed |
-| `sessionState` query + `getSession` helper | PR #760 | draft | SSR auth checks, route guards |
-| Sign clients out reactively on revocation | PR #761 | draft | adapter (client) |
-| Revoke sessions on password reset/recovery | PRs #775, #779 | draft | n/a (password only) |
-| Export `ConvexAuthNextjsProvider` (`ssr/nextjs/client`); apps own the Convex client | PR #780 | open, ready | possible model for slimming our `provider.tsx` |
+| `isAuthenticated` reads from the session (`sessionState`/`getSession`) | PR #760 | open, ready | SSR auth checks, route guards |
+| Sign clients out reactively on revocation | PR #761 | open, ready | adapter (client) |
+| Revoke sessions on password reset/recovery | PRs #775, #779 | open, ready | n/a (password only) |
+| Export `ConvexAuthNextjsProvider` (`ssr/nextjs/client`); apps own the Convex client | PR #780 | draft | possible model for slimming our `provider.tsx` |
 | Component args instead of `.attachUserCallbacks` (exploration, "do not review") | PR #778 | draft | would change `convex/auth.ts` wiring if adopted |
 | `getToken` stops throwing on refresh failure | PR #729 | draft | adapter `try/catch` |
 | Generic OAuth / Discord docs | PR #731 | draft | Discord setup |
