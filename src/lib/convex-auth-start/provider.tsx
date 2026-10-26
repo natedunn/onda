@@ -62,7 +62,11 @@ export function ConvexAuthStartProvider({
 				signIns: [oauth()],
 				signInApi,
 				convex: { mutation: (fn, args) => client.mutation(fn, args) },
-				replaceUrl: (url) => router.history.replace(url),
+				// Gets an absolute URL; the router's history takes a path.
+				replaceUrl: (url) => {
+					const { pathname, search, hash } = new URL(url, window.location.href);
+					router.history.replace(pathname + search + hash);
+				},
 			},
 		});
 		return { authClient, signInApi };
