@@ -13,7 +13,7 @@
 	"env": {
 		"dev": {
 			"name": "onda-gateway-dev",
-			"routes": [{ "pattern": "gateway-dev.onda.club", "custom_domain": true }],
+			"routes": [{ "pattern": "gateway-dev.onda.club", "zone_name": "onda.club", "custom_domain": true }],
 			// Local worktrees (the browser follows the redirect, so loopback works),
 			// previews and the shared cloud dev deployment.
 			"vars": { "ALLOWED_TARGETS": "https://*.convex.site,http://127.0.0.1:*,http://localhost:*" },
@@ -21,7 +21,7 @@
 		},
 		"prod": {
 			"name": "onda-gateway",
-			"routes": [{ "pattern": "gateway.onda.club", "custom_domain": true }],
+			"routes": [{ "pattern": "gateway.onda.club", "zone_name": "onda.club", "custom_domain": true }],
 			// Only the prod deployment. Fill in its CONVEX_SITE_URL once it exists.
 			"vars": { "ALLOWED_TARGETS": "" },
 			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }]
