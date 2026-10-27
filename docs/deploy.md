@@ -38,8 +38,9 @@ Workers & Pages → `onda` → Settings → Builds:
 - Git repository: `natedunn/onda`, production branch `main`
 - Build command: *(empty)*
 - Deploy command: `sh scripts/cloudflare-deploy.sh`
-- Non-production branch deploy command: `sh scripts/cloudflare-deploy.sh`
-- Builds for non-production branches: **on**
+- Preview command: `sh scripts/cloudflare-deploy.sh` (the script builds,
+  then deploys or previews by branch; Cloudflare's defaults would deploy twice)
+- Enable Preview builds: **on**
 - Build variables and secrets (encrypted):
   - `CONVEX_PROD_DEPLOY_KEY`: Convex dashboard → prod deployment → Settings →
     Deploy keys → Generate production deploy key
