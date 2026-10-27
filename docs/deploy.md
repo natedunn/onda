@@ -1,7 +1,8 @@
 # Deploying
 
-Cloudflare Workers Builds deploys every push to `natedunn/onda` with
-`scripts/cloudflare-deploy.sh`:
+Cloudflare Workers Builds deploys every push to `natedunn/onda`:
+`scripts/cloudflare-deploy.sh` for `main`, `scripts/preview-build.sh` then
+`wrangler preview` for any other branch.
 
 | Branch | Convex | Worker | URL |
 |---|---|---|---|
@@ -38,9 +39,12 @@ Workers & Pages → `onda` → Settings → Builds:
 - Git repository: `natedunn/onda`, production branch `main`
 - Build command: *(empty)*
 - Deploy command: `sh scripts/cloudflare-deploy.sh`
-- Preview command: `sh scripts/cloudflare-deploy.sh` (the script builds,
-  then deploys or previews by branch; Cloudflare's defaults would deploy twice)
-- Enable Preview builds: **on**
+- Preview command (Cloudflare requires it to call `npx wrangler preview`
+  itself):
+  `sh scripts/preview-build.sh && npx wrangler preview --name "$(sh scripts/preview-name.sh)"`
+- Enable Preview builds: **on**. The Worker uses Worker Previews (the
+  "Switch to Worker Previews" dialog), not the older preview versions that ran
+  with production settings.
 - Build variables and secrets (encrypted):
   - `CONVEX_PROD_DEPLOY_KEY`: Convex dashboard → prod deployment → Settings →
     Deploy keys → Generate production deploy key
@@ -59,7 +63,8 @@ Workers & Pages → `onda` → Settings → Builds:
 
 ## Deploying by hand
 
-`pnpm release` runs the same script for the current git branch. It needs
-`CONVEX_PROD_DEPLOY_KEY` or `CONVEX_PREVIEW_DEPLOY_KEY` in the environment.
+`pnpm release` deploys prod (needs `CONVEX_PROD_DEPLOY_KEY`);
+`pnpm release:preview` previews the current branch (needs
+`CONVEX_PREVIEW_DEPLOY_KEY`).
 
 The gateways deploy separately and rarely: see `docs/auth-environments.md`.

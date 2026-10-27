@@ -9,6 +9,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"release": "sh scripts/cloudflare-deploy.sh",
+		"release:preview": "sh scripts/preview-build.sh && wrangler preview --name \"$(sh scripts/preview-name.sh)\"",
 		"check": "tsc --noEmit",
 		"cf-typegen": "wrangler types"
 	},
