@@ -45,11 +45,13 @@ Workers & Pages → `onda` → Settings → Builds:
 - Enable Preview builds: **on**. The Worker uses Worker Previews (the
   "Switch to Worker Previews" dialog), not the older preview versions that ran
   with production settings.
-- Build variables and secrets (encrypted):
-  - `CONVEX_PROD_DEPLOY_KEY`: Convex dashboard → prod deployment → Settings →
-    Deploy keys → Generate production deploy key
-  - `CONVEX_PREVIEW_DEPLOY_KEY`: Convex dashboard → project Settings →
-    Preview deploy keys → Generate
+- Build secret `CONVEX_DEPLOY_KEY`, set on each tab (Production and Previews
+  Base keep separate secrets, so preview builds never see the prod key):
+  - Production: the prod deploy key (`laudable-gecko-621` → Settings → Deploy
+    keys), permission `deployment:deploy` only
+  - Previews Base: a preview deploy key (project Settings → Preview deploy
+    keys), permissions `deployment:deploy`, `deployment:env:view`,
+    `deployment:env:write`
 
 ## Changing settings
 
@@ -63,8 +65,7 @@ Workers & Pages → `onda` → Settings → Builds:
 
 ## Deploying by hand
 
-`pnpm release` deploys prod (needs `CONVEX_PROD_DEPLOY_KEY`);
-`pnpm release:preview` previews the current branch (needs
-`CONVEX_PREVIEW_DEPLOY_KEY`).
+`pnpm release` deploys prod and `pnpm release:preview` previews the current
+branch; each needs the matching key in `CONVEX_DEPLOY_KEY`.
 
 The gateways deploy separately and rarely: see `docs/auth-environments.md`.

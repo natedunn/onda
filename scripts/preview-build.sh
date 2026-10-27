@@ -10,7 +10,7 @@ set -eu
 name="$(sh scripts/preview-name.sh)"
 site="https://$name.preview.onda.club"
 
-export CONVEX_DEPLOY_KEY="${CONVEX_PREVIEW_DEPLOY_KEY:?CONVEX_PREVIEW_DEPLOY_KEY is not set}"
+: "${CONVEX_DEPLOY_KEY:?CONVEX_DEPLOY_KEY (the preview deploy key) is not set}"
 export VITE_SITE_URL="$site"
 npx convex deploy --preview-name "$name" --cmd "vite build" --cmd-url-env-var-name VITE_CONVEX_URL
 npx convex env --preview-name "$name" set SITE_URL "$site"
