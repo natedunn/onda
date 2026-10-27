@@ -58,8 +58,8 @@ Workers & Pages → `onda` → Settings → Builds:
 - **Preview defaults:** `CONVEX_DEPLOYMENT=dev:grandiose-yak-969 npx convex
   env default set --type preview NAME value`. Only new previews get the
   change; for an existing one, delete it or set it there.
-- **New `VITE_*` value:** export it in `scripts/cloudflare-deploy.sh` for the
-  branch(es) that need it.
+- **New `VITE_*` value:** export it in `scripts/cloudflare-deploy.sh` (prod)
+  and/or `scripts/preview-build.sh` (previews).
 
 ## Deploying by hand
 
