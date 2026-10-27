@@ -36,10 +36,28 @@ printf 'CONVEX_DEPLOYMENT=anonymous:anonymous-agent\nVITE_CONVEX_URL=http://127.
 	"$cloud" "$site" >> .env.tmp.local
 if cmp -s .env.tmp.local .env.local; then rm .env.tmp.local; else mv .env.tmp.local .env.local; fi
 
+# This checkout's backends, found by the data folder in their command line.
+backend_pids() { pgrep -f "convex-local-backend .*--local-storage $root/\.convex/local/default/" || true; }
+
+# A backend whose parent is gone (pid 1) was left behind by a run that crashed:
+# stop it. One with a live parent is another `pnpm dev` of this checkout.
+for pid in $(backend_pids); do
+	if [ "$(ps -o ppid= -p "$pid" | tr -d ' ')" != 1 ]; then
+		echo "dev: this checkout is already running (Convex backend pid $pid). Stop that pnpm dev first." >&2
+		exit 1
+	fi
+	kill "$pid"
+	echo "dev: stopped a Convex backend left over from an earlier run (pid $pid)"
+done
+i=0
+while [ -n "$(backend_pids)" ] && [ "$i" -lt 20 ]; do i=$((i + 1)); sleep 0.5; done
+
 export CONVEX_AGENT_MODE=anonymous
 npx convex dev --local-cloud-port "$cloud" --local-site-port "$site" &
 convex_pid=$!
-trap 'kill "$convex_pid" 2>/dev/null' EXIT INT TERM
+# Stop the backend too: if `convex dev` dies first, its backend outlives it.
+trap 'kill "$convex_pid" 2>/dev/null; for pid in $(backend_pids); do kill "$pid" 2>/dev/null; done' EXIT
+trap 'exit 130' INT TERM
 
 # Settings first, then the app.
 sh scripts/dev-seed.sh "$cloud" "$url"

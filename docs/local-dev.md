@@ -53,4 +53,8 @@ checkout's `.convex/local` to reseed, which also wipes its data.
   `VITE_CONVEX_*` into `.env.local` before starting anything; other lines are
   kept. (If Convex wrote them later, Vite would restart, and the Cloudflare
   plugin can crash on that restart.)
+- A checkout's backend is recognised by its data folder (`--local-storage
+  <checkout>/.convex/local/default/…` in its command line). `pnpm dev` stops
+  one left behind by a crashed run, refuses to start if the checkout is
+  already running elsewhere, and stops its backend when it exits.
 - Removing a worktree (`git worktree remove`) removes its data with it.
