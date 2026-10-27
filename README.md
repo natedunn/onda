@@ -9,26 +9,12 @@ TanStack Query · Tailwind CSS v4.
 ## Develop
 
 ```sh
-pnpm install
-pnpm dev            # convex dev + vite on http://localhost:3030
+pnpm dev            # local Convex backend + the app at https://onda.localhost:1355
 ```
 
-First run against a fresh deployment:
-
-```sh
-npx convex dev --once                       # create/link a deployment, write .env.local
-npx @convex-dev/auth                        # generate + set AUTH_PRIVATE_KEY / AUTH_JWKS
-npx convex env set SITE_URL http://localhost:3030
-npx convex env set AUTH_GITHUB_CLIENT_ID …  # GitHub OAuth app
-npx convex env set AUTH_GITHUB_CLIENT_SECRET …
-npx convex env set TMDB_API_KEY …           # optional: movies + shows
-npx convex env set AUTH_DEV_GUEST true      # optional, dev only: guest sign-in button
-```
-
-The GitHub OAuth app's callback URL is `<CONVEX_SITE_URL>/oauth/github/callback`
-(e.g. `https://<deployment>.convex.site/oauth/github/callback`), not the app's URL.
-
-See `.env.example` for every variable.
+Works the same in any git worktree, each with its own URL and data; see
+`docs/local-dev.md`. Deploys: `docs/deploy.md`. Sign-in setup:
+`docs/auth-environments.md`.
 
 ## Layout
 

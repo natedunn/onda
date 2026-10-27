@@ -17,7 +17,7 @@ const auth = setupConvexAuth({
 export const { signOut, refreshSession, isAuthenticated } = auth;
 
 // Exact origins (comma-separated SITE_URL): each worktree and preview sets its own.
-const allowedRedirectOrigins = (process.env.SITE_URL ?? "http://localhost:3030")
+const allowedRedirectOrigins = (process.env.SITE_URL ?? "https://onda.localhost:1355")
 	.split(",")
 	.map((origin) => origin.trim());
 

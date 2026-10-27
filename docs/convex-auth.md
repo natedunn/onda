@@ -44,9 +44,9 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
       `createUser` returns the existing user when a *verified* email matches.
       (Not done: mirroring `(provider, accountId)` into our own table for a
       "connected accounts" view — add it with that view.)
-- [ ] **Per-environment `SITE_URL`** (allowed redirect origins are exact-match):
-      dev script sets it per worktree; CI sets it per preview deployment; prod
-      `https://onda.club`.
+- [x] **Per-environment `SITE_URL`** (allowed redirect origins are exact-match):
+      `scripts/dev-seed.sh` sets it per checkout (`docs/local-dev.md`); CI per
+      preview deployment; prod `https://onda.club`.
 - [ ] **Rate limiting** (no package patch):
       - Worker routes `/auth/signin|refresh|signout` behind Cloudflare
         `ratelimits` (per IP).

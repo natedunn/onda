@@ -151,8 +151,8 @@ when `avatar` is null.
 
 Never commit or paste them. The Convex CLI targets the deployment in
 `.env.local` (`CONVEX_DEPLOYMENT`), so name the deployment explicitly. Dev
-credentials go on the shared cloud dev deployment (`grandiose-yak-969`); the
-per-worktree setup copies them into local backends.
+credentials go on the shared cloud dev deployment (`grandiose-yak-969`);
+`pnpm dev` copies them into each new local backend (`docs/local-dev.md`).
 
 ```sh
 D=grandiose-yak-969
@@ -193,8 +193,9 @@ npx convex env set --deployment $D AUTH_GATEWAY_SECRET …
 npx convex env set --deployment $D AUTH_GITHUB_CALLBACK_URL https://gateway-dev.onda.club/oauth/github/callback
 npx convex env set --deployment $D AUTH_GOOGLE_CALLBACK_URL https://gateway-dev.onda.club/oauth/google/callback
 npx convex env set --deployment $D AUTH_DISCORD_CALLBACK_URL https://gateway-dev.onda.club/oauth/discord/callback
-npx convex env set --deployment $D SITE_URL http://localhost:3030
 ```
+
+Local checkouts get their own `SITE_URL` from `pnpm dev`.
 
 `SITE_URL` is the app's exact origin (comma-separate several); sign-in
 refuses to return anywhere else.
