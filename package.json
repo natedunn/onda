@@ -2,6 +2,7 @@
 	"name": "onda",
 	"private": true,
 	"type": "module",
+	"packageManager": "pnpm@10.28.2",
 	"scripts": {
 		"dev": "convex dev --once && run-p dev:convex dev:web",
 		"dev:web": "vite dev --port 3030 --strictPort",
