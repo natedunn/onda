@@ -18,6 +18,9 @@ export const authServer = setupConvexAuthServer({
 		api.auth.signInAsGuest,
 	],
 	cookieOptions,
+	// Portless forwards requests with `Host: 127.0.0.1:<port>`, so the CSRF
+	// check also needs the app's public origin.
+	allowedOrigins: [import.meta.env.VITE_SITE_URL as string].filter(Boolean),
 });
 
 const requestCookies: CookieStore = {
