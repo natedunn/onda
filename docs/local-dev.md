@@ -49,6 +49,8 @@ checkout's `.convex/local` to reseed, which also wipes its data.
 - Portless's proxy runs on port 1355, shared with other projects (Kino). It
   starts on its own and needs no sudo. If the browser warns about the
   certificate, run `portless trust` once.
-- The `.env.local` written by Convex is only for running `npx convex …` by
-  hand in that checkout. The dev server gets its URLs from `scripts/dev.sh`.
+- `scripts/dev.sh` writes the checkout's `CONVEX_DEPLOYMENT` and
+  `VITE_CONVEX_*` into `.env.local` before starting anything; other lines are
+  kept. (If Convex wrote them later, Vite would restart, and the Cloudflare
+  plugin can crash on that restart.)
 - Removing a worktree (`git worktree remove`) removes its data with it.

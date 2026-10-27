@@ -26,17 +26,22 @@ export PORTLESS_PORT="${PORTLESS_PORT:-1355}"
 url="https://$name.localhost:$PORTLESS_PORT"
 
 [ -d node_modules ] || pnpm install --frozen-lockfile
-# A new checkout: point the Convex CLI at this checkout's own local backend.
-[ -f .env.local ] || printf 'CONVEX_DEPLOYMENT=anonymous:anonymous-agent\n' > .env.local
+
+# Give .env.local its final values up front. Convex would otherwise write them
+# once its backend is up, which restarts Vite, and the Cloudflare plugin can
+# crash on that restart.
+touch .env.local
+grep -vE '^(CONVEX_DEPLOYMENT|VITE_CONVEX_URL|VITE_CONVEX_SITE_URL)=' .env.local > .env.tmp.local || true
+printf 'CONVEX_DEPLOYMENT=anonymous:anonymous-agent\nVITE_CONVEX_URL=http://127.0.0.1:%s\nVITE_CONVEX_SITE_URL=http://127.0.0.1:%s\n' \
+	"$cloud" "$site" >> .env.tmp.local
+if cmp -s .env.tmp.local .env.local; then rm .env.tmp.local; else mv .env.tmp.local .env.local; fi
 
 export CONVEX_AGENT_MODE=anonymous
 npx convex dev --local-cloud-port "$cloud" --local-site-port "$site" &
 convex_pid=$!
 trap 'kill "$convex_pid" 2>/dev/null' EXIT INT TERM
 
-sh scripts/dev-seed.sh "$cloud" "$url" &
+# Settings first, then the app.
+sh scripts/dev-seed.sh "$cloud" "$url"
 
-# Passed in rather than read from .env.local, which a new checkout only gets
-# once Convex is up.
-VITE_CONVEX_URL="http://127.0.0.1:$cloud" VITE_CONVEX_SITE_URL="http://127.0.0.1:$site" VITE_SITE_URL="$url" \
-	portless "$name" --force vite dev
+VITE_SITE_URL="$url" portless "$name" --force vite dev
