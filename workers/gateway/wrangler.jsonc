@@ -24,8 +24,8 @@
 		"prod": {
 			"name": "onda-gateway",
 			"routes": [{ "pattern": "gateway.onda.club", "zone_name": "onda.club", "custom_domain": true }],
-			// Only the prod deployment. Fill in its CONVEX_SITE_URL once it exists.
-			"vars": { "ALLOWED_TARGETS": "" },
+			// Only the prod deployment (laudable-gecko-621).
+			"vars": { "ALLOWED_TARGETS": "https://laudable-gecko-621.convex.site" },
 			"ratelimits": [{ "name": "CALLBACK_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }]
 		}
 	}

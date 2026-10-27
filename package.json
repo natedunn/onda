@@ -8,7 +8,7 @@
 		"dev:convex": "convex dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"deploy": "convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd 'vite build' && wrangler deploy",
+		"release": "sh scripts/cloudflare-deploy.sh",
 		"check": "tsc --noEmit",
 		"cf-typegen": "wrangler types"
 	},

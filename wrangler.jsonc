@@ -1,10 +1,25 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "onda",
+	"account_id": "fc87b44f5832b25053fec2efb19fc208",
 	"compatibility_date": "2026-10-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "@tanstack/react-start/server-entry",
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": false,
+	"routes": [
+		{ "pattern": "onda.club", "zone_name": "onda.club", "custom_domain": true },
+		// Branch previews at <branch>.preview.onda.club; serves no production traffic.
+		{
+			"pattern": "preview.onda.club",
+			"zone_name": "onda.club",
+			"custom_domain": true,
+			"previews_enabled": true,
+			"enabled": false
+		}
+	],
+	// Everything the app needs is baked in at build (VITE_*), so previews
+	// need no vars of their own. See scripts/cloudflare-deploy.sh.
+	"previews": {},
 	"observability": { "enabled": true }
 }

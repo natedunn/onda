@@ -61,8 +61,9 @@ scheduled upstream check reads and updates the "Upstream tracking" section.
 - [x] **Docs**: `docs/auth-environments.md` — OAuth app setup per tier and
       provider, env vars, verification steps.
 
-- [ ] **Deploy**: `gateway-dev` Worker + tier secret; set the gateway env
-      vars on `grandiose-yak-969` (see `docs/auth-environments.md`).
+- [x] **Deploy**: both gateways (`gateway-dev`, `gateway`) with their tier
+      secrets; gateway env on `grandiose-yak-969`, prod (`laudable-gecko-621`)
+      and the Convex preview defaults. App deploys: `docs/deploy.md`.
 
 ### How the gateway flow works
 

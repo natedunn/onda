@@ -165,9 +165,16 @@ npx convex env set --deployment $D AUTH_DISCORD_CLIENT_SECRET …
 npx convex env list --deployment $D   # check
 ```
 
-Prod credentials go on the prod deployment (`--prod`) once it exists; keep
-them in the password manager until then. The gateways don't hold provider
-credentials — only the tier routing secret.
+Prod credentials go on the prod deployment, `laudable-gecko-621`. Pipe each
+value in, so it stays out of your shell history:
+
+```sh
+pbpaste | npx convex env set --deployment laudable-gecko-621 AUTH_GITHUB_CLIENT_ID
+```
+
+Previews get the dev credentials from the project's preview defaults (see
+`docs/deploy.md`). The gateways don't hold provider credentials — only the
+tier routing secret.
 
 ### Gateway settings
 
@@ -191,6 +198,11 @@ npx convex env set --deployment $D SITE_URL http://localhost:3030
 
 `SITE_URL` is the app's exact origin (comma-separate several); sign-in
 refuses to return anywhere else.
+
+Prod is the same with `--env prod` / `pnpm deploy:prod`, the prod secret, and
+`gateway.onda.club` callbacks on `laudable-gecko-621` (`SITE_URL` is
+`https://onda.club`). The prod gateway only forwards to
+`https://laudable-gecko-621.convex.site` (`workers/gateway/wrangler.jsonc`).
 
 ## Before launch (Google)
 
