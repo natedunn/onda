@@ -12,6 +12,9 @@ export function SiteFooter() {
 				<a href="https://www.themoviedb.org">TMDB</a>, <a href="https://openlibrary.org">Open Library</a>,{" "}
 				<a href="https://musicbrainz.org">MusicBrainz</a> &amp; <a href="https://www.igdb.com">IGDB</a>.
 			</p>
+			<p className="mt-2">
+				<Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link>
+			</p>
 		</footer>
 	);
 }

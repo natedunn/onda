@@ -31,7 +31,7 @@ convex/
 src/
   routes/             /, /sign-in, /@{username}, /settings, /l/{slug}, /l/{slug}/edit,
                       /{kind}/{sourceId} (item pages, e.g. /movie/603),
-                      /og/l/{slug}.png, /auth/* (auth proxy)
+                      /privacy, /terms, /og/l/{slug}.png, /auth/* (auth proxy)
   lib/convex-auth-start/  stopgap TanStack Start adapter for Convex Auth (see its README)
 ```
 
