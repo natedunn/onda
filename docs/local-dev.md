@@ -32,6 +32,26 @@ Sign-in works in every checkout. Providers send everyone to
 sign-in (it allows `http://127.0.0.1:*`), and that backend returns you to its
 own `SITE_URL`.
 
+## Seed data
+
+With `pnpm dev` running:
+
+```sh
+pnpm seed                          # lists for natedunn plus test users
+pnpm seed '{"owner":"someone","email":"them@example.com"}'
+```
+
+`convex/seed.ts` looks up real records through the providers (about a minute,
+MusicBrainz is slow), then writes lists across every visibility, layout, theme
+and length, plus test users `maya`, `theo`, `juniper` (private profile) and
+`sam` (empty). Re-running replaces the previous seed: lists with a `seed-` slug
+and users with an `@seed.onda.test` email. It refuses to run unless `SITE_URL`
+is a localhost URL.
+
+The owner is created if missing, with their email (`hello@natedunn.net` for
+`natedunn`), so signing in with a provider that verifies that email links to
+the seeded user instead of making a new one.
+
 ## Changing dev settings
 
 Set them on cloud dev, and new worktrees pick them up:
