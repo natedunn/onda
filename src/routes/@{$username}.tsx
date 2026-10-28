@@ -5,6 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ListRows } from "@/components/list-rows";
 import { NewListButton } from "@/components/new-list-button";
+import { ControlStrip, PageHero } from "@/components/page-hero";
 import { plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/@{$username}")({
@@ -43,44 +44,52 @@ function Profile() {
 
 	return (
 		<div>
-			<header className="flex items-center gap-5">
-				<div className="halftone halftone-sm size-20 shrink-0">
-					{user.image ? (
-						<img src={user.image} alt="" className="size-full border border-ink object-cover" />
-					) : (
-						<div className="grid size-full place-items-center border border-ink bg-paper-2 font-serif text-4xl">
-							{user.username[0]?.toUpperCase()}
-						</div>
-					)}
-				</div>
-				<div className="min-w-0">
-					<h1 className="font-serif text-5xl leading-none">@{user.username}</h1>
-					{user.name && <p className="mt-1 text-muted">{user.name}</p>}
-				</div>
-			</header>
+			<PageHero>
+				<header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-7">
+					<div className="halftone size-28 shrink-0 sm:size-32">
+						{user.image ? (
+							<img src={user.image} alt="" className="size-full border border-ink object-cover" />
+						) : (
+							<div className="grid size-full place-items-center border border-ink bg-paper-2 font-serif text-6xl">
+								{user.username[0]?.toUpperCase()}
+							</div>
+						)}
+					</div>
+					<div className="min-w-0">
+						<h1 className="font-serif text-[clamp(2.4rem,6vw,3.6rem)] leading-[0.95] tracking-tight [overflow-wrap:anywhere]">
+							@{user.username}
+						</h1>
+						<p className="mt-2 text-[11px] text-muted">
+							{user.name && <>{user.name} · </>}
+							{plural(stats.items, "item")}
+							{breakdown.length > 0 && <> ({breakdown.join(", ")})</>} · joined{" "}
+							{new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+							{isOwner && user.isPrivate && (
+								<>
+									{" · "}
+									<span className="bg-mark px-1 text-ink">private profile</span>
+								</>
+							)}
+						</p>
+					</div>
+				</header>
 
-			{user.bio && <p className="mt-5 max-w-[32rem] font-serif text-xl leading-snug italic">{user.bio}</p>}
+				{user.bio && <p className="mt-6 font-serif text-xl leading-snug italic">{user.bio}</p>}
+			</PageHero>
 
-			<p className="mt-5 text-[12px] text-muted">
-				{plural(stats.lists, "list")} · {plural(stats.items, "item")}
-				{breakdown.length > 0 && <> ({breakdown.join(", ")})</>} · joined{" "}
-				{new Date(user._creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+			<ControlStrip>
+				<span className="label">{plural(stats.lists, "list")}</span>
 				{isOwner && (
-					<>
-						{" · "}
+					<span className="flex gap-3">
+						<NewListButton className="linkish">+ new list</NewListButton>
 						<Link to="/settings">edit profile</Link>
-						{user.isPrivate && <span className="ml-2 bg-mark px-1 text-ink">private profile</span>}
-					</>
+					</span>
 				)}
-			</p>
+			</ControlStrip>
 
-			<section className="mt-10">
-				<div className="mb-2 flex items-baseline justify-between">
-					<h2 className="label">Lists</h2>
-					{isOwner && <NewListButton className="linkish text-[12px]">+ new list</NewListButton>}
-				</div>
+			<div className="mt-8">
 				<ListRows lists={lists} empty={isOwner ? "You haven't made any lists yet." : "No public lists yet."} />
-			</section>
+			</div>
 		</div>
 	);
 }

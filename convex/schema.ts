@@ -25,7 +25,9 @@ export const vVisibility = v.union(
 export const vLayout = v.union(
 	v.literal("list"),
 	v.literal("compact"),
+	v.literal("grid-sm"),
 	v.literal("grid"),
+	v.literal("grid-lg"),
 );
 
 export const recordFields = {

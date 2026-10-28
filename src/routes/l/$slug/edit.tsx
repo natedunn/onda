@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
-import { LIMITS, type Layout, type Visibility } from "@convex/shared/constants";
+import { LAYOUT_LABELS, LIMITS, type Layout, type Visibility } from "@convex/shared/constants";
 import { meshGradient, randomSeed, THEMES } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
@@ -39,7 +39,9 @@ const VISIBILITY_HELP: Record<Visibility, string> = {
 const LAYOUT_HELP: Record<Layout, string> = {
 	list: "Artwork, details and notes.",
 	compact: "One tidy line per item.",
+	"grid-sm": "A dense cover wall.",
 	grid: "Cover wall.",
+	"grid-lg": "Big covers, a few to a row.",
 };
 
 function EditList() {
@@ -169,7 +171,13 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 					options={VISIBILITY_HELP}
 					onChange={(v) => set("visibility", v)}
 				/>
-				<RadioGroup label="Default view" value={form.layout} options={LAYOUT_HELP} onChange={(v) => set("layout", v)} />
+				<RadioGroup
+					label="Default view"
+					value={form.layout}
+					options={LAYOUT_HELP}
+					labels={LAYOUT_LABELS}
+					onChange={(v) => set("layout", v)}
+				/>
 				<label className="flex items-baseline gap-2">
 					<input type="checkbox" checked={form.ranked} onChange={(e) => set("ranked", e.target.checked)} />
 					<span>
@@ -243,11 +251,13 @@ function RadioGroup<T extends string>({
 	label,
 	value,
 	options,
+	labels,
 	onChange,
 }: {
 	label: string;
 	value: T;
 	options: Record<T, string>;
+	labels?: Record<T, string>;
 	onChange: (value: T) => void;
 }) {
 	return (
@@ -258,7 +268,7 @@ function RadioGroup<T extends string>({
 					<label key={key} className="flex items-baseline gap-2">
 						<input type="radio" checked={value === key} onChange={() => onChange(key)} />
 						<span>
-							<b className="capitalize">{key}</b> <span className="text-muted">— {options[key]}</span>
+							<b className="capitalize">{labels?.[key] ?? key}</b> <span className="text-muted">— {options[key]}</span>
 						</span>
 					</label>
 				))}

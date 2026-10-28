@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { vLayout, vVisibility } from "./schema";
-import { LIMITS } from "./shared/constants";
+import { LIMITS, PEEK } from "./shared/constants";
 import { DEFAULT_THEME, isThemeId, randomSeed, THEMES } from "./shared/themes";
 import { requireUserId } from "./users";
 
@@ -93,14 +93,14 @@ export const recent = query({
 				const first = await ctx.db
 					.query("items")
 					.withIndex("by_list", (q) => q.eq("listId", list._id))
-					.take(4);
+					.take(PEEK);
 				const records = await Promise.all(first.map((i) => ctx.db.get(i.recordId)));
 				return {
 					...list,
 					owner: owner && { username: owner.username },
 					covers: records
 						.filter((r) => r?.image)
-						.map((r) => ({ image: r!.image!, kind: r!.kind })),
+						.map((r) => ({ image: r!.image!, kind: r!.kind, title: r!.title })),
 				};
 			}),
 		).then((rows) => rows.filter((r) => r !== null));

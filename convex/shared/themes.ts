@@ -47,20 +47,36 @@ export function randomSeed() {
 	return Math.floor(Math.random() * 2 ** 31);
 }
 
+export const MESH_BLOBS = 6;
+
+/**
+ * The shape of a mesh: a base color and blobs, as indexes into a theme's colors.
+ * Every theme has four colors, so one seed lays out the same mesh in any theme.
+ */
+export function meshLayout(seed: number) {
+	const rand = rng(seed);
+	const pick = () => Math.floor(rand() * 4);
+	const base = pick();
+	const blobs = Array.from({ length: MESH_BLOBS }, () => {
+		const x = Math.round(rand() * 100);
+		const y = Math.round(rand() * 100);
+		const size = 45 + Math.round(rand() * 35);
+		return { x, y, size, color: pick() };
+	});
+	return { base, blobs };
+}
+
 /**
  * A mesh-ish gradient built from stacked radial gradients. Plain CSS so the
  * same output works in the browser and in the OG image renderer.
  */
 export function meshGradient(themeId: string, seed: number) {
 	const { colors } = getTheme(themeId);
-	const rand = rng(seed);
-	const pick = () => colors[Math.floor(rand() * colors.length)];
-	const base = pick();
-	const blobs = Array.from({ length: 6 }, () => {
-		const x = Math.round(rand() * 100);
-		const y = Math.round(rand() * 100);
-		const size = 45 + Math.round(rand() * 35);
-		return `radial-gradient(circle at ${x}% ${y}%, ${pick()} 0%, transparent ${size}%)`;
-	});
-	return { backgroundColor: base, backgroundImage: blobs.join(", ") };
+	const { base, blobs } = meshLayout(seed);
+	return {
+		backgroundColor: colors[base],
+		backgroundImage: blobs
+			.map((b) => `radial-gradient(circle at ${b.x}% ${b.y}%, ${colors[b.color]} 0%, transparent ${b.size}%)`)
+			.join(", "),
+	};
 }

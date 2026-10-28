@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export function SiteFooter() {
 	return (
-		<footer className="mt-24 border-t border-rule pt-4 pb-10 text-[11px] text-muted">
+		<footer className="-mx-5 mt-24 border-t border-rule px-5 pt-4 pb-10 text-[11px] text-muted sm:-mx-8 sm:px-8">
 			<p>
 				<Link to="/" className="plain font-serif text-base italic">
 					onda∿

@@ -12,6 +12,7 @@ import { type ConvexReactClient, useConvexAuth } from "convex/react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { TopStrip } from "@/components/top-strip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";
 import { ConvexAuthStartProvider } from "@/lib/convex-auth-start/provider";
 import { siteUrl } from "@/lib/utils";
@@ -80,10 +81,11 @@ function RootComponent() {
 	return (
 		<ConvexAuthStartProvider client={convex} initialToken={token}>
 			<AuthSync />
-			{/* One column, centered. For a flush-left page, swap mx-auto for ml-0. */}
-			<div className="mx-auto w-full max-w-[50rem] px-5 sm:px-8">
+			<TopStrip />
+			{/* One column, centered, ruled on both sides down the full height of the window. main grows so the footer sits at the bottom on short pages. */}
+			<div className="mx-auto flex min-h-dvh w-full max-w-[80rem] flex-col border-rule px-5 sm:border-x sm:px-8">
 				<SiteHeader />
-				<main>
+				<main className="flex-1">
 					<Outlet />
 				</main>
 				<SiteFooter />

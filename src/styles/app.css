@@ -34,6 +34,36 @@
 	}
 }
 
+/* The strip across the top of the window (TopStrip). Registered so the browser can tween between meshes. */
+@property --mesh-base { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x0 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y0 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s0 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c0 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x1 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y1 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s1 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c1 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x2 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y2 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s2 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c2 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x3 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y3 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s3 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c3 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x4 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y4 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s4 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c4 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+@property --mesh-x5 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-y5 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-s5 { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --mesh-c5 { syntax: "<color>"; inherits: false; initial-value: transparent; }
+
+/* How far .halftone-glow's dots reach from its center; registered so it can animate. */
+@property --glow-reach { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
+
 @theme inline {
 	--color-paper: var(--paper);
 	--color-paper-2: var(--paper-2);
@@ -184,6 +214,121 @@
 		--halftone-offset: 4px;
 	}
 
+	/* The same dot screen as .halftone's shadow, kept faint, for filling empty space. */
+	.halftone-fill {
+		opacity: 0.3;
+		background-image:
+			radial-gradient(circle at center, var(--dither-a) 0.06rem, transparent 0),
+			radial-gradient(circle at center, var(--dither-b) 0.06rem, transparent 0);
+		background-size: 0.2rem 0.2rem;
+		background-position:
+			0 0,
+			0.1rem 0.1rem;
+	}
+
+	/* A halftone print of a gradient (layers from halftoneWash): the dot screen is multiplied
+	   over the greys, then contrast thresholds it so each dot grows with how dark the gradient
+	   is there. Kept faint so text reads over it. */
+	.halftone-wash {
+		filter: grayscale(1) contrast(30);
+		opacity: 0.14;
+	}
+	@media (prefers-color-scheme: dark) {
+		.halftone-wash {
+			filter: grayscale(1) contrast(30) invert(1);
+		}
+	}
+
+	/* A soft halftone blot behind a word, in --word-color. The dots come from the same
+	   contrast-threshold trick as .halftone-wash, with the screen's centre just lighter than
+	   the threshold so plain white (outside the blot) prints no dots at all. ::after tints
+	   them, and the whole blot
+	   multiplies onto the page so only the colored dots show (screen in dark mode). */
+	.halftone-glow {
+		position: absolute;
+		inset: -0.6em -1.4em -0.74em;
+		z-index: -1;
+		pointer-events: none;
+		mix-blend-mode: multiply;
+		opacity: 0.18;
+		/* Fade the dots out too, so the oval has no visible edge where they stop. */
+		mask-image: radial-gradient(closest-side, #000 25%, transparent);
+	}
+	.halftone-glow::before,
+	.halftone-glow::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+	}
+	.halftone-glow::before {
+		background-image:
+			radial-gradient(circle, #888, #fff),
+			radial-gradient(closest-side, #8c8c8c, #fff var(--glow-reach));
+		background-size:
+			6px 6px,
+			100% 100%;
+		background-blend-mode: multiply, normal;
+		filter: grayscale(1) contrast(30);
+		animation: halftone-grow 0.3s ease-out both;
+	}
+	.halftone-glow::after {
+		background: var(--word-color);
+		mix-blend-mode: lighten;
+	}
+	@media (prefers-color-scheme: dark) {
+		.halftone-glow {
+			mix-blend-mode: screen;
+			opacity: 0.26;
+		}
+		.halftone-glow::before {
+			filter: grayscale(1) contrast(30) invert(1);
+		}
+		.halftone-glow::after {
+			mix-blend-mode: darken;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.halftone-glow::before {
+			animation: none;
+		}
+	}
+
+	/* Text that a rainbow sweeps across once each time its .group is hovered. At rest the
+	   gradient shows only its plain end, so the text just looks like --shimmer-base. */
+	.shimmer {
+		--shimmer-base: var(--ink);
+		/* How much rainbow shows through the base color at the band's peak. */
+		--shimmer-strength: 55%;
+		/* Room for italic overhangs, which background-clip would otherwise cut off. */
+		padding-inline: 0.12em;
+		margin-inline: -0.12em;
+		background-image: linear-gradient(
+			100deg,
+			var(--shimmer-base) 0 34%,
+			color-mix(in oklab, #ff5a5a var(--shimmer-strength), var(--shimmer-base)) 40%,
+			color-mix(in oklab, #ffae42 var(--shimmer-strength), var(--shimmer-base)) 44%,
+			color-mix(in oklab, #f2e15b var(--shimmer-strength), var(--shimmer-base)) 48%,
+			color-mix(in oklab, #4fd68c var(--shimmer-strength), var(--shimmer-base)) 52%,
+			color-mix(in oklab, #4bb4ff var(--shimmer-strength), var(--shimmer-base)) 56%,
+			color-mix(in oklab, #9d6bff var(--shimmer-strength), var(--shimmer-base)) 60%,
+			var(--shimmer-base) 66% 100%
+		);
+		background-size: 300% 100%;
+		background-position: 100% 0;
+		background-clip: text;
+		-webkit-background-clip: text;
+		color: transparent;
+	}
+	/* --shimmer-delay lets a later piece of text pick the sweep up where an earlier one leaves it. */
+	.group:hover .shimmer {
+		animation: shimmer 0.9s ease-out var(--shimmer-delay, 0s) both;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.group:hover .shimmer {
+			animation: none;
+		}
+	}
+
 	/* Text-style button that looks like a link. */
 	.linkish {
 		color: var(--link);
@@ -216,8 +361,19 @@
 		outline-offset: -1px;
 		border-color: transparent;
 	}
+	/* Our own chevron, inset from the edge like the text, instead of the native one. */
 	select.field {
 		width: auto;
+		appearance: none;
+		padding-right: 1.9em;
+		background-image:
+			linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+			linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+		background-position:
+			calc(100% - 0.95em) 55%,
+			calc(100% - 0.6em) 55%;
+		background-size: 0.35em 0.35em;
+		background-repeat: no-repeat;
 	}
 
 	fieldset.box {
@@ -274,6 +430,22 @@
 	}
 	.legal li + li {
 		margin-top: 0.4em;
+	}
+}
+
+/* Grows .halftone-glow from its center out: the dots appear in the middle first and spread. */
+@keyframes halftone-grow {
+	from {
+		--glow-reach: 0%;
+	}
+}
+
+@keyframes shimmer {
+	from {
+		background-position: 100% 0;
+	}
+	to {
+		background-position: 0 0;
 	}
 }
 
