@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123usernameChar125RouteImport } from './routes/@{$username}'
+import { Route as ExperimentalRouteImport } from './routes/experimental'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
@@ -34,6 +35,11 @@ const AtChar123usernameChar125Route =
     path: '/@{$username}',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ExperimentalRoute = ExperimentalRouteImport.update({
+  id: '/experimental',
+  path: '/experimental',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -94,6 +100,7 @@ const OgLChar123slugChar125DotpngRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/@{$username}'
+    | '/experimental'
     | '/privacy'
     | '/settings'
     | '/sign-in'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/@{$username}'
+    | '/experimental'
     | '/privacy'
     | '/settings'
     | '/sign-in'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$username}'
+    | '/experimental'
     | '/privacy'
     | '/settings'
     | '/sign-in'
@@ -188,6 +200,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123usernameChar125Route: typeof AtChar123usernameChar125Route
+  ExperimentalRoute: typeof ExperimentalRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/@{$username}'
       fullPath: '/@{$username}'
       preLoaderRoute: typeof AtChar123usernameChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experimental': {
+      id: '/experimental'
+      path: '/experimental'
+      fullPath: '/experimental'
+      preLoaderRoute: typeof ExperimentalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -300,6 +320,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123usernameChar125Route: AtChar123usernameChar125Route,
+  ExperimentalRoute: ExperimentalRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,

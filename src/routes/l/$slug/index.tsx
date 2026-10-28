@@ -7,7 +7,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { AddItem } from "@/components/add-item";
+import { AddItemDialog } from "@/components/add-item";
 import { Art } from "@/components/art";
 import { ListCover } from "@/components/list-cover";
 import { Markdown, stripMarkdown } from "@/components/markdown";
@@ -123,7 +123,7 @@ function ListPage() {
 				<label className="flex items-center gap-3">
 					<span className="label">View</span>
 					<select
-						className="field py-1 pl-2.5 text-[13px] leading-6"
+						className="field py-1 pl-2.5 text-[13px] leading-6 pointer-coarse:text-[16px]"
 						value={layout}
 						onChange={(e) => {
 							const view = e.target.value as Layout;
@@ -143,8 +143,8 @@ function ListPage() {
 				</label>
 				{isOwner && (
 					<span className="flex gap-3">
-						<button type="button" className="linkish" onClick={() => setAdding((a) => !a)}>
-							{adding ? "done adding" : "+ add"}
+						<button type="button" className="linkish" onClick={() => setAdding(true)}>
+							+ add
 						</button>
 						<Link to="." search={(prev) => ({ ...prev, arrange: arrange ? undefined : true })} replace resetScroll={false}>
 							{arrange ? "done arranging" : "arrange"}
@@ -156,10 +156,13 @@ function ListPage() {
 				)}
 			</ControlStrip>
 
-			{adding && (
-				<div className="mt-5">
-					<AddItem listId={list._id} existing={new Set(items.map((i) => i.recordId))} />
-				</div>
+			{isOwner && (
+				<AddItemDialog
+					open={adding}
+					onClose={() => setAdding(false)}
+					listId={list._id}
+					existing={new Set(items.map((i) => i.recordId))}
+				/>
 			)}
 
 			<div className="mt-6" style={{ "--accent": theme.colors[0] } as React.CSSProperties}>
@@ -369,7 +372,7 @@ function ArrangeItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
 								}}
 							>
 								<textarea
-									className="field font-serif text-[1.05rem] italic"
+									className="field font-serif text-[1.05rem] italic pointer-coarse:text-[16px]"
 									rows={3}
 									maxLength={500}
 									value={draft}

@@ -13,12 +13,13 @@ export const PEEK = 6;
 export const KINDS = ["movie", "show", "book", "album", "game"] as const;
 export type Kind = (typeof KINDS)[number];
 
-export const KIND_LABELS: Record<Kind, { one: string; many: string }> = {
-	movie: { one: "movie", many: "movies" },
-	show: { one: "show", many: "shows" },
-	book: { one: "book", many: "books" },
-	album: { one: "album", many: "albums" },
-	game: { one: "game", many: "games" },
+// `one`/`many` are for use mid-sentence; `title` is for standalone places like a select.
+export const KIND_LABELS: Record<Kind, { one: string; many: string; title: string }> = {
+	movie: { one: "movie", many: "movies", title: "Movie" },
+	show: { one: "show", many: "shows", title: "Show" },
+	book: { one: "book", many: "books", title: "Book" },
+	album: { one: "album", many: "albums", title: "Album" },
+	game: { one: "game", many: "games", title: "Game" },
 };
 
 // "grid" is the medium grid; it kept its name when the small and large ones arrived.

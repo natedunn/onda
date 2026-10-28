@@ -231,11 +231,15 @@
 	   is there. Kept faint so text reads over it. */
 	.halftone-wash {
 		filter: grayscale(1) contrast(30);
-		opacity: 0.14;
+		/* Dark dots on paper read much stronger than light dots on ink, so light mode runs fainter. */
+		opacity: 0.05;
+		/* Fades out toward the right. */
+		mask-image: linear-gradient(to right, #000 15%, transparent 95%);
 	}
 	@media (prefers-color-scheme: dark) {
 		.halftone-wash {
 			filter: grayscale(1) contrast(30) invert(1);
+			opacity: 0.14;
 		}
 	}
 
@@ -329,6 +333,50 @@
 		}
 	}
 
+	/* The add-to-list modal (AddItemDialog). The page behind it is washed back and screened
+	   with a halftone whose dots swell toward the edges, the same contrast-threshold trick as
+	   .halftone-wash, so the panel sits in a clearing in the middle. */
+	.add-dialog::backdrop {
+		background: transparent;
+	}
+	.add-backdrop {
+		background: color-mix(in oklab, var(--paper) 72%, transparent);
+		backdrop-filter: grayscale(0.6);
+		animation: fade-in 160ms ease-out both;
+	}
+	.add-backdrop-dots {
+		mix-blend-mode: multiply;
+		opacity: 0.18;
+		background-image:
+			radial-gradient(circle, #888, #fff),
+			radial-gradient(ellipse 75% 70% at 50% 38%, #fff 30%, #9a9a9a 100%);
+		background-size:
+			6px 6px,
+			100% 100%;
+		background-blend-mode: multiply, normal;
+		filter: grayscale(1) contrast(30);
+	}
+	@media (prefers-color-scheme: dark) {
+		.add-backdrop-dots {
+			mix-blend-mode: screen;
+			opacity: 0.12;
+			filter: grayscale(1) contrast(30) invert(1);
+		}
+	}
+	.add-panel {
+		animation: rise 180ms ease-out both;
+	}
+	/* Keep the page from scrolling under an open modal. */
+	html:has(dialog[open]) {
+		overflow: hidden;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.add-backdrop,
+		.add-panel {
+			animation: none;
+		}
+	}
+
 	/* Text-style button that looks like a link. */
 	.linkish {
 		color: var(--link);
@@ -360,6 +408,13 @@
 		outline: 2px solid var(--link);
 		outline-offset: -1px;
 		border-color: transparent;
+	}
+	/* iOS zooms the page into any field under 16px when it's focused. A field that sets a
+	   smaller size of its own needs pointer-coarse:text-[16px] too. */
+	@media (pointer: coarse) {
+		.field {
+			font-size: 16px;
+		}
 	}
 	/* Our own chevron, inset from the edge like the text, instead of the native one. */
 	select.field {
@@ -453,5 +508,11 @@
 	from {
 		opacity: 0;
 		transform: translateY(0.25em);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
 	}
 }
