@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123usernameChar125RouteImport } from './routes/@{$username}'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as KindIdRouteImport } from './routes/$kind.$id'
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
@@ -32,6 +34,11 @@ const AtChar123usernameChar125Route =
     path: '/@{$username}',
     getParentRoute: () => rootRouteImport,
   } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -40,6 +47,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KindIdRoute = KindIdRouteImport.update({
@@ -82,8 +94,10 @@ const OgLChar123slugChar125DotpngRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/terms': typeof TermsRoute
   '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -95,8 +109,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/terms': typeof TermsRoute
   '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -109,8 +125,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/sign-in': typeof SignInRoute
+  '/terms': typeof TermsRoute
   '/$kind/$id': typeof KindIdRoute
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
@@ -124,8 +142,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/@{$username}'
+    | '/privacy'
     | '/settings'
     | '/sign-in'
+    | '/terms'
     | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
@@ -137,8 +157,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/@{$username}'
+    | '/privacy'
     | '/settings'
     | '/sign-in'
+    | '/terms'
     | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
@@ -150,8 +172,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$username}'
+    | '/privacy'
     | '/settings'
     | '/sign-in'
+    | '/terms'
     | '/$kind/$id'
     | '/auth/refresh'
     | '/auth/signin'
@@ -164,8 +188,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123usernameChar125Route: typeof AtChar123usernameChar125Route
+  PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
   SignInRoute: typeof SignInRoute
+  TermsRoute: typeof TermsRoute
   KindIdRoute: typeof KindIdRoute
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
@@ -191,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AtChar123usernameChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -203,6 +236,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$kind/$id': {
@@ -260,8 +300,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123usernameChar125Route: AtChar123usernameChar125Route,
+  PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
   SignInRoute: SignInRoute,
+  TermsRoute: TermsRoute,
   KindIdRoute: KindIdRoute,
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,

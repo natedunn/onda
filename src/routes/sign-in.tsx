@@ -5,7 +5,7 @@ import { useSignInAnonymously } from "@convex-dev/auth/methods/anonymous/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
 export const Route = createFileRoute("/sign-in")({
@@ -67,6 +67,10 @@ function SignIn() {
 			</div>
 			<p className="mt-3 text-[11px] text-muted">
 				Same email on two of these? They sign you into the same account.
+			</p>
+			<p className="mt-3 text-[11px] text-muted">
+				By continuing, you agree to the <Link to="/terms">terms</Link> and{" "}
+				<Link to="/privacy">privacy policy</Link>.
 			</p>
 			{(flowError || startError) && (
 				<p className="mt-4 text-danger">
