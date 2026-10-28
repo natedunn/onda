@@ -7,6 +7,9 @@ export const LIMITS = {
 	bio: 160,
 } as const;
 
+/** How many of a list's first items list rows show as a peek at what's inside. */
+export const PEEK = 6;
+
 export const KINDS = ["movie", "show", "book", "album", "game"] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -18,8 +21,17 @@ export const KIND_LABELS: Record<Kind, { one: string; many: string }> = {
 	game: { one: "game", many: "games" },
 };
 
-export const LAYOUTS = ["list", "compact", "grid"] as const;
+// "grid" is the medium grid; it kept its name when the small and large ones arrived.
+export const LAYOUTS = ["list", "compact", "grid-sm", "grid", "grid-lg"] as const;
 export type Layout = (typeof LAYOUTS)[number];
+
+export const LAYOUT_LABELS: Record<Layout, string> = {
+	list: "List",
+	compact: "Compact",
+	"grid-sm": "Grid — Small",
+	grid: "Grid — Medium",
+	"grid-lg": "Grid — Large",
+};
 
 export const VISIBILITIES = ["public", "unlisted", "private"] as const;
 export type Visibility = (typeof VISIBILITIES)[number];

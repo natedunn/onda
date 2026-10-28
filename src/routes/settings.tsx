@@ -1,9 +1,10 @@
+import { useAuthActions } from "@convex-dev/auth/react";
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
 import { LIMITS } from "@convex/shared/constants";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { errorMessage } from "@/lib/utils";
@@ -25,6 +26,8 @@ function Settings() {
 function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 	const update = useMutation(api.users.updateProfile);
 	const navigate = useNavigate();
+	const router = useRouter();
+	const { signOut } = useAuthActions();
 	const [form, setForm] = useState({
 		username: viewer.username,
 		name: viewer.name ?? "",
@@ -115,6 +118,22 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 				</button>
 				{status && <span className={status.kind === "error" ? "text-danger" : "text-muted"}>{status.text}</span>}
 			</div>
+
+			<fieldset className="box flex flex-wrap items-center justify-between gap-3">
+				<legend>Account</legend>
+				<p className="text-[12px] text-muted">Signed in as @{viewer.username}.</p>
+				<button
+					type="button"
+					className="btn"
+					onClick={async () => {
+						await signOut();
+						await router.invalidate();
+						await router.navigate({ to: "/" });
+					}}
+				>
+					Sign out
+				</button>
+			</fieldset>
 		</form>
 	);
 }

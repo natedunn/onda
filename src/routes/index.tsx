@@ -13,7 +13,15 @@ export const Route = createFileRoute("/")({
 	component: Home,
 });
 
-const WORDS = ["movies", "books", "albums", "shows", "games", "favorites"];
+// Each word keeps its own color, picked to read on paper and in dark mode.
+const WORDS = [
+	{ word: "movies", color: "#e0532f" },
+	{ word: "books", color: "#2e9e6e" },
+	{ word: "albums", color: "#8b5cf6" },
+	{ word: "shows", color: "#3b82f6" },
+	{ word: "games", color: "#e64980" },
+	{ word: "favorites", color: "#d4930b" },
+];
 
 function RotatingWord() {
 	const [i, setI] = useState(0);
@@ -21,10 +29,12 @@ function RotatingWord() {
 		const id = setInterval(() => setI((n) => (n + 1) % WORDS.length), 2200);
 		return () => clearInterval(id);
 	}, []);
+	const { word, color } = WORDS[i];
 	return (
-		<em key={i} className="inline-block animate-[rise_.5s_ease-out] whitespace-nowrap">
-			{WORDS[i]}.
-		</em>
+		<span key={i} className="relative inline-block" style={{ "--word-color": color } as React.CSSProperties}>
+			<span aria-hidden className="halftone-glow" />
+			<em className="inline-block animate-[rise_.5s_ease-out] motion-reduce:animate-none whitespace-nowrap text-(--word-color)">{word}.</em>
+		</span>
 	);
 }
 

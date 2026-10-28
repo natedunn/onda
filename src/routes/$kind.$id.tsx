@@ -122,7 +122,7 @@ function ItemPage() {
 			)}
 
 			{record.description ? (
-				<div className="mt-6 max-w-[36rem] space-y-3 text-[14px]">
+				<div className="mt-6 space-y-3 text-[14px]">
 					{record.description.split(/\n{2,}/).map((para, i) => (
 						<p key={i}>{para}</p>
 					))}
@@ -132,7 +132,7 @@ function ItemPage() {
 			)}
 
 			{record.facts && record.facts.length > 0 && (
-				<dl className="mt-6 grid max-w-[36rem] grid-cols-[8rem_1fr] border-t border-rule text-[12px]">
+				<dl className="mt-6 grid grid-cols-[8rem_1fr] border-t border-rule text-[12px]">
 					{record.facts.map((fact) => (
 						<div key={fact.label} className="contents">
 							<dt className="border-b border-rule py-1.5 text-muted">{fact.label}</dt>
@@ -195,7 +195,7 @@ function AddToList({ record }: { record: Doc<"records"> }) {
 
 	return (
 		<form
-			className="mt-8 flex flex-wrap items-center gap-2 border-y border-rule py-3 text-[12px]"
+			className="-mx-5 mt-8 flex flex-wrap items-center gap-2 border-y border-rule px-5 py-3 text-[12px] sm:-mx-8 sm:px-8"
 			onSubmit={async (e) => {
 				e.preventDefault();
 				if (!listId) return;
