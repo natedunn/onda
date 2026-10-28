@@ -41,8 +41,6 @@ function Privacy() {
 				lists are visible to anyone with the link. Private lists are only visible to you. Making
 				your profile private hides your profile page and keeps your lists out of public listings,
 				but any public or unlisted list you share still shows your username, name and picture.
-				After you make a list private, a preview image that was already shared may take up to a
-				day to disappear.
 			</p>
 
 			<h2>Cookies</h2>
