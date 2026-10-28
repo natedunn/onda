@@ -226,10 +226,23 @@
 			0.1rem 0.1rem;
 	}
 
-	/* A soft halftone blot behind a word, in --word-color. ::before multiplies a soft dot
-	   screen over a radial grey, then contrast thresholds it so each dot grows with how dark
-	   the grey is; the screen's centre sits just lighter than the threshold, so plain white
-	   (outside the blot) prints no dots at all. ::after tints the dots, and the whole blot
+	/* A halftone print of a gradient (layers from halftoneWash): the dot screen is multiplied
+	   over the greys, then contrast thresholds it so each dot grows with how dark the gradient
+	   is there. Kept faint so text reads over it. */
+	.halftone-wash {
+		filter: grayscale(1) contrast(30);
+		opacity: 0.14;
+	}
+	@media (prefers-color-scheme: dark) {
+		.halftone-wash {
+			filter: grayscale(1) contrast(30) invert(1);
+		}
+	}
+
+	/* A soft halftone blot behind a word, in --word-color. The dots come from the same
+	   contrast-threshold trick as .halftone-wash, with the screen's centre just lighter than
+	   the threshold so plain white (outside the blot) prints no dots at all. ::after tints
+	   them, and the whole blot
 	   multiplies onto the page so only the colored dots show (screen in dark mode). */
 	.halftone-glow {
 		position: absolute;
