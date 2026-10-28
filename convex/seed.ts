@@ -408,6 +408,19 @@ function score(pick: SeedPick, r: RecordInput) {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Both functions ship with the app, so each checks it's running locally. */
+function requireLocal() {
+	const site = process.env.SITE_URL ?? "";
+	let host = "";
+	try {
+		const url = new URL(site.split(",")[0]!.trim());
+		if (url.protocol === "http:" || url.protocol === "https:") host = url.hostname;
+	} catch {}
+	if (host !== "localhost" && !host.endsWith(".localhost")) {
+		throw new ConvexError(`Seeding is for local dev only (SITE_URL is ${site || "unset"}).`);
+	}
+}
+
 const vSeedList = v.object({
 	slug: v.string(),
 	name: v.string(),
@@ -426,11 +439,7 @@ export const run = internalAction({
 		ctx,
 		{ owner = "natedunn", email = owner === "natedunn" ? "hello@natedunn.net" : undefined },
 	): Promise<{ users: number; lists: number; items: number; records: number; missed: string[] }> => {
-		const site = process.env.SITE_URL ?? "";
-		if (!/^https?:\/\/([^/]*\.)?localhost(:\d+)?/.test(site)) {
-			throw new ConvexError(`Seeding is for local dev only (SITE_URL is ${site || "unset"}).`);
-		}
-
+		requireLocal();
 		const kinds = enabledKinds();
 		const users: SeedUser[] = [
 			{ username: owner, isPrivate: false, lists: OWNER_LISTS },
@@ -512,6 +521,7 @@ export const write = internalMutation({
 		),
 	},
 	handler: async (ctx, { users }) => {
+		requireLocal();
 		// Clear the previous seed.
 		const deleteList = async (list: Doc<"lists">) => {
 			const items = await ctx.db
@@ -550,17 +560,24 @@ export const write = internalMutation({
 		for (const u of users) {
 			let userId: Id<"users">;
 			if (u.isOwner) {
-				const owner =
-					(await ctx.db
-						.query("users")
-						.withIndex("by_username", (q) => q.eq("username", u.username))
-						.unique()) ??
-					(u.email
-						? await ctx.db
-								.query("users")
-								.withIndex("by_email", (q) => q.eq("email", u.email))
-								.first()
-						: null);
+				const byName = await ctx.db
+					.query("users")
+					.withIndex("by_username", (q) => q.eq("username", u.username))
+					.unique();
+				const byEmail = u.email
+					? await ctx.db
+							.query("users")
+							.withIndex("by_email", (q) => q.eq("email", u.email))
+							.first()
+					: null;
+				// Seeding one user while sign-in links the email to another would hide the lists.
+				if (
+					(byName && byEmail && byName._id !== byEmail._id) ||
+					(byName?.email && u.email && byName.email !== u.email)
+				) {
+					throw new ConvexError(`"${u.username}" and ${u.email} belong to different users here.`);
+				}
+				const owner = byName ?? byEmail;
 				if (owner) {
 					userId = owner._id;
 					// Signing in links to a user by verified email, so make sure it's there.
