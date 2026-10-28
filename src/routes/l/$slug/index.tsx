@@ -249,7 +249,12 @@ function CompactItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 						{item.record.year && <span className="text-muted">({item.record.year})</span>}
 					</span>
 					<span className="hidden max-w-[40%] truncate text-muted sm:inline">{item.record.creators.join(", ")}</span>
-					{mixed && <span className="w-12 shrink-0 text-right text-muted">{KIND_LABELS[item.record.kind].one}</span>}
+					{mixed && (
+						<span className="shrink-0 text-muted">
+							{item.record.creators.length > 0 && <span className="hidden sm:inline">· </span>}
+							<span className="inline-block w-[5ch]">{KIND_LABELS[item.record.kind].one}</span>
+						</span>
+					)}
 				</li>
 			))}
 		</ol>

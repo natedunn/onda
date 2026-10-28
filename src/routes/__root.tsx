@@ -83,7 +83,7 @@ function RootComponent() {
 			<AuthSync />
 			<TopStrip />
 			{/* One column, centered, ruled on both sides down the full height of the window. main grows so the footer sits at the bottom on short pages. */}
-			<div className="mx-auto flex min-h-dvh w-full max-w-[80rem] flex-col border-rule px-5 sm:border-x sm:px-8">
+			<div className="mx-auto flex min-h-dvh w-full max-w-[72rem] flex-col border-rule px-5 sm:border-x sm:px-8">
 				<SiteHeader />
 				<main className="flex-1">
 					<Outlet />
