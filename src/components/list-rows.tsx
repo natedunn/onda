@@ -89,7 +89,8 @@ export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNo
 										kind={cover.kind}
 										alt={cover.title}
 										// Posters and albums share a width, so albums sit shorter on the shelf.
-										className="w-11 lg:w-14"
+										// They may shrink so six still fit on the narrowest phones.
+										className="w-11 min-w-0 shrink lg:w-14"
 									/>
 								))}
 								{more > 0 && <span className="pb-0.5 pl-1 text-[11px] whitespace-nowrap text-muted">+{more}</span>}

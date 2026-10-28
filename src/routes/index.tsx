@@ -33,7 +33,7 @@ function RotatingWord() {
 	return (
 		<span key={i} className="relative inline-block" style={{ "--word-color": color } as React.CSSProperties}>
 			<span aria-hidden className="halftone-glow" />
-			<em className="inline-block animate-[rise_.5s_ease-out] whitespace-nowrap text-(--word-color)">{word}.</em>
+			<em className="inline-block animate-[rise_.5s_ease-out] motion-reduce:animate-none whitespace-nowrap text-(--word-color)">{word}.</em>
 		</span>
 	);
 }
