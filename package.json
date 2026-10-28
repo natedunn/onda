@@ -9,6 +9,7 @@
 		"preview": "vite preview",
 		"release": "sh scripts/cloudflare-deploy.sh",
 		"release:preview": "sh scripts/preview-build.sh && wrangler preview --name \"$(sh scripts/preview-name.sh)\"",
+		"seed": "CONVEX_AGENT_MODE=anonymous convex run seed:run",
 		"check": "tsc --noEmit",
 		"cf-typegen": "wrangler types"
 	},
