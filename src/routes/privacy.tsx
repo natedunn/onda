@@ -19,8 +19,11 @@ function Privacy() {
 			<ul>
 				<li>
 					<strong>From your sign-in provider</strong> (GitHub, Google or Discord): your name,
-					email address, profile picture and username. The email is only used to recognize you
-					when you sign in and to link accounts that share it. It's never shown publicly.
+					email address, profile picture and username. Your name and picture start out as your
+					public profile, and your username comes from your provider username or, for Google, the
+					part of your email before the @. You can change your username and name in settings.
+					Otherwise, your email is only used to recognize you when you sign in and to link
+					accounts that share it, and the full address is never shown publicly.
 				</li>
 				<li>
 					<strong>What you add</strong>: your username, display name, bio, lists and the items in
@@ -35,8 +38,11 @@ function Privacy() {
 			<h2>What's public</h2>
 			<p>
 				Your profile and public lists can be seen by anyone, including search engines. Unlisted
-				lists are visible to anyone with the link. Private lists, and a private profile, are only
-				visible to you.
+				lists are visible to anyone with the link. Private lists are only visible to you. Making
+				your profile private hides your profile page and keeps your lists out of public listings,
+				but any public or unlisted list you share still shows your username, name and picture.
+				After you make a list private, a preview image that was already shared may take up to a
+				day to disappear.
 			</p>
 
 			<h2>Cookies</h2>
