@@ -12,3 +12,5 @@ Rewrite of RAD (superrad.app) — see README.md.
   `useSuspenseQuery`. Writes: `useMutation` from `convex/react`.
 - Design: left-aligned single column, paper/ink palette, Instrument Serif display, Verdana UI,
   underlined links, `.btn` with offset shadow, `fieldset.box` forms. Keep it minimal.
+- Page content fills the layout column (`__root.tsx` sets the width). Don't add `max-w-*` to a page
+  or copy one from a neighboring page; existing narrow caps are leftovers, not the pattern.
