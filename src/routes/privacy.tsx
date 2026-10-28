@@ -40,7 +40,7 @@ function Privacy() {
 				Your profile and public lists can be seen by anyone, including search engines. Unlisted
 				lists are visible to anyone with the link. Private lists are only visible to you. Making
 				your profile private hides your profile page and keeps your lists out of public listings,
-				but any public or unlisted list you share still shows your username, name and picture.
+				but any public or unlisted list you share still shows your username.
 			</p>
 
 			<h2>Cookies</h2>

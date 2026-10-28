@@ -68,7 +68,7 @@ export const get = query({
 
 		return {
 			list,
-			owner: owner && { username: owner.username, name: owner.name, image: owner.image },
+			owner: owner && { username: owner.username },
 			isOwner: viewerId === list.ownerId,
 			items: items.filter((i) => i.record !== null) as Array<
 				Doc<"items"> & { record: Doc<"records"> }
