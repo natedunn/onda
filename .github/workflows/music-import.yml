@@ -1,0 +1,38 @@
+# Weekly refresh of the album search mirror (workers/music) from the
+# MusicBrainz JSON dumps, which come out on Wednesdays and Saturdays.
+name: Music mirror import
+
+on:
+  schedule:
+    - cron: "17 6 * * 4"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Reload even if the latest dump is already loaded
+        type: boolean
+        default: false
+
+concurrency: music-import
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: workers/music
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: pnpm install --frozen-lockfile
+      - run: sh import/run.sh
+        env:
+          # D1 edit on the "Nate" account; see workers/music/README.md.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_D1_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: fc87b44f5832b25053fec2efb19fc208
+          FORCE: ${{ inputs.force && '1' || '' }}
