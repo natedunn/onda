@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
 import { KIND_LABELS, type Kind } from "@convex/shared/constants";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAction, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { Art } from "@/components/art";
@@ -95,9 +95,19 @@ function AddItem({
 		if (kinds.length && !kinds.includes(kind)) setKind(kinds[0]!);
 	}, [kinds, kind]);
 
-	// Debounced search; stale responses are dropped by request id.
+	// Saved records matching the search, shown first and almost instantly. They also keep
+	// search useful when the source API is having trouble.
+	const term = useDebounced(query.trim(), 150);
+	const { data: local = [] } = useQuery({
+		...convexQuery(api.media.searchLocal, { kind, query: term }),
+		enabled: term.length >= 2,
+		placeholderData: keepPreviousData,
+	});
+
+	// Debounced source search; stale responses are dropped by request id.
 	useEffect(() => {
 		const q = query.trim();
+		setActive(0);
 		if (q.length < 2) {
 			requestId.current++;
 			setResults(null);
@@ -111,10 +121,10 @@ function AddItem({
 				const found = await search({ kind, query: q });
 				if (id !== requestId.current) return;
 				setResults(found);
-				setActive(0);
 				setStatus("idle");
 			} catch (e) {
 				if (id !== requestId.current) return;
+				setResults(null);
 				setError(errorMessage(e));
 				setStatus("error");
 			}
@@ -123,7 +133,10 @@ function AddItem({
 	}, [query, kind, search]);
 
 	const source = SOURCES[kind];
-	const shown = status !== "error" && results && results.length > 0 ? results : null;
+	// Saved matches on top; a source result for the same record is the same row (the
+	// search just refreshed it), so it isn't listed twice.
+	const merged = query.trim().length >= 2 ? [...local, ...(results ?? [])] : [];
+	const shown = merged.filter((r, i) => merged.findIndex((x) => x._id === r._id) === i);
 
 	const addRecord = async (r: Doc<"records">) => {
 		if (existing.has(r._id) || adding) return;
@@ -138,7 +151,7 @@ function AddItem({
 	};
 
 	const move = (to: number) => {
-		if (!shown) return;
+		if (!shown.length) return;
 		const i = (to + shown.length) % shown.length;
 		setActive(i);
 		document.getElementById(optionId(shown[i]!._id))?.scrollIntoView({ block: "nearest" });
@@ -177,7 +190,7 @@ function AddItem({
 					data-autofocus
 					autoComplete="off"
 					role="combobox"
-					aria-expanded={!!shown}
+					aria-expanded={shown.length > 0}
 					aria-controls="add-results"
 					aria-activedescendant={shown?.[active] ? optionId(shown[active]._id) : undefined}
 					aria-label={`Search ${KIND_LABELS[kind].many}`}
@@ -186,7 +199,7 @@ function AddItem({
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					onKeyDown={(e) => {
-						if (!shown) return;
+						if (!shown.length) return;
 						if (e.key === "ArrowDown" || e.key === "ArrowUp") {
 							e.preventDefault();
 							move(active + (e.key === "ArrowDown" ? 1 : -1));
@@ -197,14 +210,21 @@ function AddItem({
 					}}
 				/>
 
-				{(status !== "idle" || results) && (
+				{(status !== "idle" || results || shown.length > 0) && (
 					<div className="border-t border-rule">
 						{status === "searching" && <p className="px-4 py-2 text-[12px] text-muted">Searching…</p>}
-						{status === "error" && <p className="px-4 py-2 text-[12px] text-danger">{error}</p>}
-						{status === "idle" && results?.length === 0 && (
+						{status === "error" &&
+							(shown.length ? (
+								<p className="px-4 py-2 text-[12px] text-muted">
+									Couldn't reach {source.name} for more results. Try again in a moment.
+								</p>
+							) : (
+								<p className="px-4 py-2 text-[12px] text-danger">{error}</p>
+							))}
+						{status === "idle" && results && shown.length === 0 && (
 							<p className="px-4 py-2 text-[12px] text-muted">Nothing found.</p>
 						)}
-						{shown && (
+						{shown.length > 0 && (
 							// Phones scroll the whole dialog instead: an inner scroller ends up half under the keyboard.
 							<ul id="add-results" role="listbox" className="sm:max-h-[min(26rem,55vh)] sm:overflow-y-auto">
 								{shown.map((r, i) => {
@@ -272,3 +292,12 @@ function AddItem({
 }
 
 const optionId = (id: string) => `add-result-${id}`;
+
+function useDebounced<T>(value: T, ms: number) {
+	const [debounced, setDebounced] = useState(value);
+	useEffect(() => {
+		const timer = setTimeout(() => setDebounced(value), ms);
+		return () => clearTimeout(timer);
+	}, [value, ms]);
+	return debounced;
+}

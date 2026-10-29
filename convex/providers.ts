@@ -3,7 +3,7 @@
 import type { Doc } from "./_generated/dataModel";
 import type { Kind } from "./shared/constants";
 
-export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime">;
+export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime" | "searchText">;
 export type Provider = {
 	search: (query: string) => Promise<RecordInput[]>;
 	details: (sourceId: string) => Promise<RecordInput | null>;
@@ -28,12 +28,23 @@ function yearOf(date: string | number | undefined | null) {
 class NotFound extends Error {}
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
-	const res = await fetch(url, {
-		// Free APIs go down; fail fast rather than holding the action open.
-		signal: AbortSignal.timeout(8000),
-		...init,
-		headers: { "User-Agent": USER_AGENT, Accept: "application/json", ...init?.headers },
-	});
+	// Free APIs go down; fail fast rather than holding the action open. The
+	// deadline covers retries too.
+	const signal = AbortSignal.timeout(8000);
+	const request = () =>
+		fetch(url, {
+			signal,
+			...init,
+			headers: { "User-Agent": USER_AGENT, Accept: "application/json", ...init?.headers },
+		});
+	let res = await request();
+	// MusicBrainz sheds load with 503s that usually clear on the next try.
+	for (let attempt = 1; res.status === 503 && !init?.method && attempt < 4; attempt++) {
+		const wait = Math.min(Number(res.headers.get("retry-after")) || 0, 2) * 1000 + 300 * attempt;
+		await res.body?.cancel();
+		await new Promise((resolve) => setTimeout(resolve, wait));
+		res = await request();
+	}
 	if (res.status === 404) throw new NotFound();
 	if (!res.ok) throw new Error(`${new URL(url).host} responded ${res.status}`);
 	return (await res.json()) as T;

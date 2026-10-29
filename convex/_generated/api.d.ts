@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as authDiscord from "../authDiscord.js";
 import type * as authGateway from "../authGateway.js";
+import type * as crons from "../crons.js";
 import type * as items from "../items.js";
 import type * as lists from "../lists.js";
 import type * as media from "../media.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authDiscord: typeof authDiscord;
   authGateway: typeof authGateway;
+  crons: typeof crons;
   items: typeof items;
   lists: typeof lists;
   media: typeof media;
