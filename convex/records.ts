@@ -123,11 +123,13 @@ export const refreshBooks = internalAction({
 			paginationOpts: { numItems: 20, cursor: cursor ?? null },
 		});
 		for (const current of page.page) {
-			// Ignore any edition picked before this change; let details choose.
-			const record = await PROVIDERS.book
-				.details(current.sourceId, { ...current, editionId: undefined })
-				.catch((error) => console.error(`refresh book/${current.sourceId} failed`, error));
-			if (record) await ctx.runMutation(internal.records.saveDetails, { record });
+			try {
+				// Ignore any edition picked before this change; let details choose.
+				const record = await PROVIDERS.book.details(current.sourceId, { ...current, editionId: undefined });
+				if (record) await ctx.runMutation(internal.records.saveDetails, { record });
+			} catch (error) {
+				console.error(`refresh book/${current.sourceId} failed`, error);
+			}
 		}
 		if (!page.isDone) await ctx.scheduler.runAfter(0, internal.records.refreshBooks, { cursor: page.continueCursor });
 	},
