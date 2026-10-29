@@ -84,8 +84,23 @@ export default defineSchema({
 
 	// Shared metadata cache, and the backing data for public item pages. Only
 	// written from server-side fetches to the source APIs, never from client data.
-	records: defineTable(recordFields)
-		.index("by_kind", ["kind", "sourceId"]),
+	records: defineTable({
+		...recordFields,
+		// Title, subtitle and creators, for searching what's already saved. Set by upsertRecord.
+		searchText: v.optional(v.string()),
+	})
+		.index("by_kind", ["kind", "sourceId"])
+		.searchIndex("search", { searchField: "searchText", filterFields: ["kind"] }),
+
+	// Source API search results by normalized query, so repeat searches skip the API.
+	searchCache: defineTable({
+		kind: vKind,
+		query: v.string(),
+		recordIds: v.array(v.id("records")),
+		fetchedAt: v.number(),
+	})
+		.index("by_query", ["kind", "query"])
+		.index("by_fetchedAt", ["fetchedAt"]),
 
 	items: defineTable({
 		listId: v.id("lists"),
