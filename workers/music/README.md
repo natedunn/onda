@@ -3,8 +3,9 @@
 Album search over a mirror of MusicBrainz release groups (albums and EPs) in
 D1, so search doesn't depend on musicbrainz.org's rate limits. Convex's album
 provider (`convex/providers.ts`) calls `GET /search?q=` with a bearer token and
-falls back to the MusicBrainz API if the mirror fails or finds nothing. Album
-pages still fetch details from the API.
+falls back to the MusicBrainz API if the mirror fails or finds nothing. The add
+dialog's "Not here? Search MusicBrainz directly" asks the API too, for releases
+newer than the last dump. Album pages still fetch details from the API.
 
 - Worker: `onda-music` at `https://onda-music.hello-fc8.workers.dev`
 - D1: `onda-music` (`a85e0e6c-eb2e-4b65-9a11-3548e1d95e73`)
@@ -23,9 +24,11 @@ genres and ratings are CC BY-NC-SA, so they only feed a numeric `boost`
 (notability) and aren't stored. Rows are inserted most notable first, which is
 what lets broad queries rank only their first 1000 matches.
 
-`.github/workflows/music-import.yml` runs it weekly (and on demand, with
+`.github/workflows/music-import.yml` runs it daily (and on demand, with
 "force" to reload the same dump). It needs the repo secret
 `CLOUDFLARE_D1_TOKEN`: an API token with **Account → D1 → Edit** on "Nate".
+GitHub turns off schedules in public repos after 60 days without a commit; if
+that happens, re-enable the workflow in the Actions tab.
 
 By hand: `pnpm import` (or `FORCE=1 pnpm import`), with wrangler logged in.
 

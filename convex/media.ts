@@ -32,26 +32,35 @@ export const searchLocal = query({
 });
 
 export const search = action({
-	args: { kind: vKind, query: v.string() },
-	handler: async (ctx, { kind, query }): Promise<Doc<"records">[]> => {
+	// `live` asks the source directly, past any mirror and the cache; only for
+	// kinds whose provider has searchLive.
+	args: { kind: vKind, query: v.string(), live: v.optional(v.boolean()) },
+	handler: async (ctx, { kind, query, live }): Promise<Doc<"records">[]> => {
 		if (!(await ctx.auth.getUserIdentity())) throw new ConvexError("Not signed in");
 		const q = normalize(query);
 		if (q.length < 2) return [];
 		if (!enabledKinds().includes(kind)) throw new ConvexError(`Search for ${kind}s isn't set up yet.`);
+		const provider = PROVIDERS[kind];
+		if (live && !provider.searchLive) throw new ConvexError(`Live search isn't available for ${kind}s.`);
 
-		const cached = await ctx.runQuery(internal.media.cached, { kind, query: q });
-		if (cached) return cached;
+		if (!live) {
+			const cached = await ctx.runQuery(internal.media.cached, { kind, query: q });
+			if (cached) return cached;
+		}
 
 		let found: RecordInput[];
 		try {
-			found = await PROVIDERS[kind].search(q);
+			found = live ? await provider.searchLive!(q) : await provider.search(q);
 		} catch (error) {
-			console.error(`search ${kind} failed`, error);
+			console.error(`search ${kind}${live ? " (live)" : ""} failed`, error);
 			throw new ConvexError("Search is having trouble right now. Try again in a moment.");
 		}
 		// Results are cached as records so adding one only needs its id; the
 		// client never supplies record data itself.
-		return await ctx.runMutation(internal.media.upsert, { records: found, cacheAs: { kind, query: q } });
+		return await ctx.runMutation(internal.media.upsert, {
+			records: found,
+			cacheAs: live ? undefined : { kind, query: q },
+		});
 	},
 });
 

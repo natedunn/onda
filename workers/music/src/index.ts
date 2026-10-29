@@ -1,4 +1,4 @@
-// Album search over a weekly mirror of MusicBrainz release groups in D1, so
+// Album search over a mirror of MusicBrainz release groups in D1, so
 // searches don't depend on musicbrainz.org's rate limits. Called by Convex
 // (convex/providers.ts) only. The import (import/run.sh) loads the inactive
 // table slot and then flips `meta.active`, so searches never see a half-loaded

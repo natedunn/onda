@@ -2,7 +2,7 @@
 # Loads the latest MusicBrainz release-group dump into the onda-music D1
 # database. Builds the inactive table slot, then points `meta.active` at it, so
 # the Worker switches over in one step. Skips the work if that dump is already
-# loaded (FORCE=1 to reload). Run weekly by .github/workflows/music-import.yml.
+# loaded (FORCE=1 to reload). Run daily by .github/workflows/music-import.yml.
 #   needs: curl, xz, tar, node 24+, wrangler auth (CLOUDFLARE_API_TOKEN in CI)
 set -eu
 cd "$(dirname "$0")/.."
