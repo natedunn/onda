@@ -254,9 +254,46 @@ function albumRecord(g: any): RecordInput {
 	};
 }
 
+/**
+ * Our weekly MusicBrainz mirror (workers/music), which has no rate limits. Null
+ * when it isn't configured or can't answer, so search falls back to the API.
+ */
+async function searchMirror(query: string): Promise<RecordInput[] | null> {
+	const base = process.env.MUSIC_SEARCH_URL;
+	if (!base) return null;
+	const url = new URL("/search", base);
+	url.searchParams.set("q", query);
+	url.searchParams.set("limit", "8");
+	try {
+		const res = await fetch(url, {
+			signal: AbortSignal.timeout(3000),
+			headers: { Authorization: `Bearer ${process.env.MUSIC_SEARCH_TOKEN}` },
+		});
+		if (!res.ok) throw new Error(`music mirror responded ${res.status}`);
+		const { albums } = (await res.json()) as {
+			albums: { id: string; title: string; artist: string; year: number | null; type: string }[];
+		};
+		return albums.map((a) =>
+			albumRecord({
+				id: a.id,
+				title: a.title,
+				"primary-type": a.type,
+				"artist-credit": [{ name: a.artist }],
+				"first-release-date": a.year ? String(a.year) : undefined,
+			}),
+		);
+	} catch (error) {
+		console.warn("music mirror failed, using the MusicBrainz API", error);
+		return null;
+	}
+}
+
 const albums: Provider = {
 	idPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
 	async search(query) {
+		const mirrored = await searchMirror(query);
+		// An empty mirror answer may just be a release newer than the dump.
+		if (mirrored?.length) return mirrored;
 		const url = new URL("https://musicbrainz.org/ws/2/release-group/");
 		url.searchParams.set("query", query);
 		url.searchParams.set("dismax", "true");

@@ -1,0 +1,15 @@
+// Album search over a MusicBrainz mirror in D1; see README.md.
+// Secret: wrangler secret put SEARCH_TOKEN
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "onda-music",
+	// The account that owns onda.club ("Nate").
+	"account_id": "fc87b44f5832b25053fec2efb19fc208",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-01",
+	// Only Convex calls it, so the workers.dev address is enough.
+	"workers_dev": true,
+	"preview_urls": false,
+	"observability": { "enabled": true },
+	"d1_databases": [{ "binding": "DB", "database_name": "onda-music", "database_id": "a85e0e6c-eb2e-4b65-9a11-3548e1d95e73" }]
+}
