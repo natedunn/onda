@@ -264,22 +264,23 @@ function CompactItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 	);
 }
 
-// Columns, gaps, text and rank badge for each grid size.
+// Columns, gaps, text and rank badge for each grid size. Column counts hold at every width, so art
+// shrinks with the screen instead of growing as columns drop; only the gaps tighten on mobile.
 const GRID_SIZES = {
 	"grid-sm": {
-		grid: "grid-cols-3 gap-x-4 gap-y-8 sm:grid-cols-5 sm:gap-x-5 lg:grid-cols-7",
+		grid: "grid-cols-7 gap-x-2 gap-y-6 sm:gap-x-5 sm:gap-y-8",
 		title: "text-[12px]",
 		meta: "text-[10px]",
 		rank: "-top-1.5 -left-1.5 min-w-6 text-base leading-6",
 	},
 	grid: {
-		grid: "grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 sm:gap-x-7 lg:grid-cols-5",
+		grid: "grid-cols-5 gap-x-3 gap-y-8 sm:gap-x-7 sm:gap-y-10",
 		title: "",
 		meta: "text-[11px]",
 		rank: "-top-2 -left-2 min-w-8 text-xl leading-7",
 	},
 	"grid-lg": {
-		grid: "grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3",
+		grid: "grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-10 sm:gap-y-12",
 		title: "text-[15px]",
 		meta: "text-[12px]",
 		rank: "-top-2.5 -left-2.5 min-w-10 text-3xl leading-9",
