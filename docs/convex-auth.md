@@ -3,7 +3,9 @@
 We run `@convex-dev/auth@2.0.0-beta.0` (v2 beta). Upstream: `convex/convex-auth`,
 v2 on the `reboot` branch, docs at https://auth-v2.previews.convex.dev. Upstream
 targets a stable release in Q4 2026 and says not to use v2 in production yet;
-only the newest beta gets fixes, so we upgrade promptly.
+only the newest beta gets fixes, so we upgrade promptly. We follow npm
+releases (beta, then stable), not unreleased `reboot` commits: when the check
+finds a new release, it opens an upgrade PR (see "How to run the check").
 
 This file is the source of truth for what we carry on top of the package. The
 scheduled upstream check reads and updates the "Upstream tracking" section.
@@ -156,3 +158,10 @@ changed, so the patch should still apply. `ssr/*` changes are comment-only.
    can the adapter shrink, are there breaking renames?
 5. Update this section (date, version, statuses) and the plan; report what
    needs action.
+6. For a new beta or stable (not alpha): open an upgrade PR from a worktree
+   off `origin/main` (branch `deps/convex-auth-<version>`). Pin the exact
+   version, regenerate the patch (`pnpm patch @convex-dev/auth`, reapply,
+   `pnpm patch-commit`) or drop it if upstream now covers the callback URL,
+   work through "Merged since beta.0" above and adapt the adapter, update the
+   docs, and run `pnpm check` and `pnpm build`. Prod steps (clearing tables,
+   removing env vars) go in the PR description as a checklist; never run them.
