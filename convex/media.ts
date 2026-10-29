@@ -90,11 +90,18 @@ export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 		const id = await ctx.db.insert("records", { ...record, searchText: searchTextOf(record) });
 		return (await ctx.db.get(id))!;
 	}
+	// Once details are in, they decide what the item looks like. Book search
+	// hits carry whichever edition matched the query and would swap the cover.
+	const settled =
+		existing.detailsFetchedAt && !record.detailsFetchedAt
+			? { title: existing.title, subtitle: existing.subtitle, image: existing.image, editionId: existing.editionId }
+			: {};
 	const merged = {
 		...record,
 		creators: record.creators.length ? record.creators : existing.creators,
 		image: record.image ?? existing.image,
 		year: record.year ?? existing.year,
+		...settled,
 	};
 	const patch = { ...merged, searchText: searchTextOf(merged) };
 	await ctx.db.patch(existing._id, patch);

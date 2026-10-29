@@ -41,6 +41,8 @@ export const recordFields = {
 	year: v.optional(v.number()),
 	image: v.optional(v.string()),
 	url: v.optional(v.string()),
+	// Books: the Open Library edition (OL…M) whose title and cover we show.
+	editionId: v.optional(v.string()),
 	// Filled in the first time someone opens the item's page.
 	description: v.optional(v.string()),
 	genres: v.optional(v.array(v.string())),
