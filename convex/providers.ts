@@ -214,6 +214,16 @@ async function defaultEdition(workId: string) {
 	return docs[0] ? bookEdition(docs[0]) : undefined;
 }
 
+/** A work, following the redirect Open Library leaves behind when it merges duplicates. */
+async function olWork(id: string) {
+	let work = await getJson<any>(`https://openlibrary.org/works/${id}.json`);
+	for (let hop = 0; work.type?.key === "/type/redirect" && work.location && hop < 3; hop++) {
+		work = await getJson<any>(`https://openlibrary.org${work.location}.json`);
+	}
+	if (!work.title) throw new NotFound();
+	return work;
+}
+
 const books: Provider = {
 	idPattern: /^OL\d+W$/,
 	async search(query) {
@@ -241,16 +251,16 @@ const books: Provider = {
 	},
 	details: (id, current) =>
 		orNull(async () => {
+			const work = await olWork(id);
 			// Keep the edition the record already shows, so adding a book and
 			// then opening it doesn't swap its cover.
 			const editionId =
 				current?.editionId && /^OL\d+M$/.test(current.editionId)
 					? current.editionId
-					: (await defaultEdition(id))?.key.replace("/books/", "");
-			const [work, edition] = await Promise.all([
-				getJson<any>(`https://openlibrary.org/works/${id}.json`),
-				editionId ? orNull(() => getJson<any>(`https://openlibrary.org/books/${editionId}.json`)) : null,
-			]);
+					: (await defaultEdition(String(work.key).replace("/works/", "")))?.key.replace("/books/", "");
+			const edition = editionId
+				? await orNull(() => getJson<any>(`https://openlibrary.org/books/${editionId}.json`))
+				: null;
 			const authors = await Promise.all(
 				(work.authors ?? []).slice(0, 3).map(async (a: any) => {
 					const author = await getJson<any>(`https://openlibrary.org${a.author.key}.json`).catch(() => null);
