@@ -71,4 +71,4 @@ branch; each needs the matching key in `CONVEX_DEPLOY_KEY`.
 The gateways deploy separately and rarely: see `docs/auth-environments.md`.
 
 The album search mirror (`workers/music`) also deploys by hand, and its data
-refreshes weekly from GitHub Actions: see `workers/music/README.md`.
+refreshes daily from GitHub Actions: see `workers/music/README.md`.

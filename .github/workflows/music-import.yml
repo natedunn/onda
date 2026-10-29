@@ -1,10 +1,13 @@
-# Weekly refresh of the album search mirror (workers/music) from the
-# MusicBrainz JSON dumps, which come out on Wednesdays and Saturdays.
+# Daily refresh of the album search mirror (workers/music) from the
+# MusicBrainz JSON dumps. Dumps come out Wednesdays and Saturdays, ready by
+# about 16:30 UTC; other days the run sees nothing new and stops in a minute.
+# Daily rather than on dump days, so a failed run retries the next day.
 name: Music mirror import
 
 on:
   schedule:
-    - cron: "17 6 * * 4"
+    # 02:00 UTC, evening in the Americas.
+    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       force:

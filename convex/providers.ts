@@ -6,6 +6,8 @@ import type { Kind } from "./shared/constants";
 export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime" | "searchText">;
 export type Provider = {
 	search: (query: string) => Promise<RecordInput[]>;
+	/** Asks the source itself, skipping any mirror; for "Not here?" in the add dialog. */
+	searchLive?: (query: string) => Promise<RecordInput[]>;
 	details: (sourceId: string) => Promise<RecordInput | null>;
 	/** Shape check for ids arriving from URLs. */
 	idPattern: RegExp;
@@ -255,7 +257,7 @@ function albumRecord(g: any): RecordInput {
 }
 
 /**
- * Our weekly MusicBrainz mirror (workers/music), which has no rate limits. Null
+ * Our MusicBrainz mirror (workers/music), which has no rate limits. Null
  * when it isn't configured or can't answer, so search falls back to the API.
  */
 async function searchMirror(query: string): Promise<RecordInput[] | null> {
@@ -288,23 +290,29 @@ async function searchMirror(query: string): Promise<RecordInput[] | null> {
 	}
 }
 
+async function searchMusicBrainz(query: string): Promise<RecordInput[]> {
+	const url = new URL("https://musicbrainz.org/ws/2/release-group/");
+	url.searchParams.set("query", query);
+	url.searchParams.set("dismax", "true");
+	url.searchParams.set("limit", "15");
+	url.searchParams.set("fmt", "json");
+	const { "release-groups": groups = [] } = await getJson<any>(url.toString());
+	return groups
+		.filter((g: any) => ["Album", "EP"].includes(g["primary-type"]))
+		.slice(0, 8)
+		.map(albumRecord);
+}
+
 const albums: Provider = {
 	idPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
 	async search(query) {
 		const mirrored = await searchMirror(query);
 		// An empty mirror answer may just be a release newer than the dump.
 		if (mirrored?.length) return mirrored;
-		const url = new URL("https://musicbrainz.org/ws/2/release-group/");
-		url.searchParams.set("query", query);
-		url.searchParams.set("dismax", "true");
-		url.searchParams.set("limit", "15");
-		url.searchParams.set("fmt", "json");
-		const { "release-groups": groups = [] } = await getJson<any>(url.toString());
-		return groups
-			.filter((g: any) => ["Album", "EP"].includes(g["primary-type"]))
-			.slice(0, 8)
-			.map(albumRecord);
+		return await searchMusicBrainz(query);
 	},
+	// The mirror is up to a few days behind; this finds this week's releases.
+	searchLive: searchMusicBrainz,
 	details: (id) =>
 		orNull(async () => {
 			const g = await getJson<any>(

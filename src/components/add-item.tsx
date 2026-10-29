@@ -10,12 +10,13 @@ import { cn, errorMessage } from "@/lib/utils";
 
 const KIND_KEY = "onda:add-kind";
 
-// Where each kind's search results come from, credited under the results.
-const SOURCES: Record<Kind, { name: string; url: string }> = {
+// Where each kind's search results come from, credited under the results. `live` kinds
+// search a mirror first and offer to ask the source itself (media.search's `live`).
+const SOURCES: Record<Kind, { name: string; url: string; live?: true }> = {
 	movie: { name: "The Movie Database", url: "https://www.themoviedb.org" },
 	show: { name: "The Movie Database", url: "https://www.themoviedb.org" },
 	book: { name: "Open Library", url: "https://openlibrary.org" },
-	album: { name: "MusicBrainz", url: "https://musicbrainz.org" },
+	album: { name: "MusicBrainz", url: "https://musicbrainz.org", live: true },
 	game: { name: "IGDB", url: "https://www.igdb.com" },
 };
 
@@ -79,6 +80,10 @@ function AddItem({
 	const [results, setResults] = useState<Doc<"records">[] | null>(null);
 	const [status, setStatus] = useState<"idle" | "searching" | "error">("idle");
 	const [error, setError] = useState<string | null>(null);
+	// "Not here?": the source's own answer for the current query, after our mirror's.
+	const [live, setLive] = useState<
+		{ status: "searching" | "error" } | { status: "done"; results: Doc<"records">[] } | null
+	>(null);
 	const [adding, setAdding] = useState<string | null>(null);
 	// The highlighted result, moved with the arrow keys or the pointer; Enter adds it.
 	const [active, setActive] = useState(0);
@@ -108,6 +113,7 @@ function AddItem({
 	useEffect(() => {
 		const q = query.trim();
 		setActive(0);
+		setLive(null);
 		if (q.length < 2) {
 			requestId.current++;
 			setResults(null);
@@ -132,11 +138,31 @@ function AddItem({
 		return () => clearTimeout(timer);
 	}, [query, kind, search]);
 
+	const searchLive = async () => {
+		const id = requestId.current;
+		setLive({ status: "searching" });
+		try {
+			const fromSource = await search({ kind, query: query.trim(), live: true });
+			if (id !== requestId.current) return;
+			setLive({ status: "done", results: fromSource });
+			// They land at the end of the list, which may be scrolled out of view.
+			const first = fromSource.find((r) => !shown.some((x) => x._id === r._id));
+			if (first) requestAnimationFrame(() => document.getElementById(optionId(first._id))?.scrollIntoView({ block: "nearest" }));
+		} catch {
+			if (id === requestId.current) setLive({ status: "error" });
+		}
+	};
+
 	const source = SOURCES[kind];
 	// Saved matches on top; a source result for the same record is the same row (the
-	// search just refreshed it), so it isn't listed twice.
-	const merged = query.trim().length >= 2 ? [...local, ...(results ?? [])] : [];
-	const shown = merged.filter((r, i) => merged.findIndex((x) => x._id === r._id) === i);
+	// search just refreshed it), so it isn't listed twice. "Not here?" results go last.
+	const unique = (rs: Doc<"records">[]) => rs.filter((r, i) => rs.findIndex((x) => x._id === r._id) === i);
+	const found = query.trim().length >= 2 ? unique([...local, ...(results ?? [])]) : [];
+	const liveNew =
+		query.trim().length >= 2 && live?.status === "done"
+			? live.results.filter((r) => !found.some((x) => x._id === r._id))
+			: [];
+	const shown = [...found, ...liveNew];
 
 	const addRecord = async (r: Doc<"records">) => {
 		if (existing.has(r._id) || adding) return;
@@ -263,6 +289,21 @@ function AddItem({
 									);
 								})}
 							</ul>
+						)}
+						{source.live && status !== "searching" && (
+							<p className="border-t border-rule px-4 py-2 text-[12px] text-muted">
+								{!live && (
+									<button type="button" className="linkish" onClick={searchLive}>
+										Not here? Search {source.name} directly
+									</button>
+								)}
+								{live?.status === "searching" && `Searching ${source.name}…`}
+								{live?.status === "error" && `Couldn't reach ${source.name}. Try again in a moment.`}
+								{live?.status === "done" &&
+									(liveNew.length
+										? `${liveNew.length} more from ${source.name} above.`
+										: `Nothing else on ${source.name}.`)}
+							</p>
 						)}
 					</div>
 				)}
