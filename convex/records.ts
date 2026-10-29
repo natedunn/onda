@@ -1,6 +1,7 @@
+import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
-import { action, internalMutation, internalQuery, query, type QueryCtx } from "./_generated/server";
+import { action, internalAction, internalMutation, internalQuery, query, type QueryCtx } from "./_generated/server";
 import { upsertRecord } from "./media";
 import { enabledKinds, PROVIDERS } from "./providers";
 import { recordFields, vKind } from "./schema";
@@ -59,11 +60,13 @@ export const page = query({
 	},
 });
 
+/** `{ record }` (the cached one, if any) when details are missing or stale; null when fresh. */
 export const needsDetails = internalQuery({
 	args: { kind: vKind, sourceId: v.string() },
 	handler: async (ctx, { kind, sourceId }) => {
 		const record = await findRecord(ctx, kind, sourceId);
-		return !record?.detailsFetchedAt || Date.now() - record.detailsFetchedAt > DETAILS_TTL;
+		const stale = !record?.detailsFetchedAt || Date.now() - record.detailsFetchedAt > DETAILS_TTL;
+		return stale ? { record } : null;
 	},
 });
 
@@ -84,11 +87,12 @@ export const ensureDetails = action({
 	handler: async (ctx, { kind, sourceId }): Promise<"fresh" | "updated" | "missing"> => {
 		const provider = PROVIDERS[kind];
 		if (!enabledKinds().includes(kind) || !provider.idPattern.test(sourceId)) return "missing";
-		if (!(await ctx.runQuery(internal.records.needsDetails, { kind, sourceId }))) return "fresh";
+		const due = await ctx.runQuery(internal.records.needsDetails, { kind, sourceId });
+		if (!due) return "fresh";
 
 		let record;
 		try {
-			record = await provider.details(sourceId);
+			record = await provider.details(sourceId, due.record);
 		} catch (error) {
 			console.error(`details ${kind}/${sourceId} failed`, error);
 			throw new ConvexError("Couldn't reach the source right now.");
@@ -96,5 +100,35 @@ export const ensureDetails = action({
 		if (!record) return "missing";
 		await ctx.runMutation(internal.records.saveDetails, { record });
 		return "updated";
+	},
+});
+
+export const bookPage = internalQuery({
+	args: { paginationOpts: paginationOptsValidator },
+	handler: async (ctx, { paginationOpts }) =>
+		await ctx.db
+			.query("records")
+			.withIndex("by_kind", (q) => q.eq("kind", "book"))
+			.paginate(paginationOpts),
+});
+
+/**
+ * One-off: refetch every book so its title and cover come from an English
+ * edition. `npx convex run records:refreshBooks`
+ */
+export const refreshBooks = internalAction({
+	args: { cursor: v.optional(v.union(v.string(), v.null())) },
+	handler: async (ctx, { cursor }) => {
+		const page = await ctx.runQuery(internal.records.bookPage, {
+			paginationOpts: { numItems: 20, cursor: cursor ?? null },
+		});
+		for (const current of page.page) {
+			// Ignore any edition picked before this change; let details choose.
+			const record = await PROVIDERS.book
+				.details(current.sourceId, { ...current, editionId: undefined })
+				.catch((error) => console.error(`refresh book/${current.sourceId} failed`, error));
+			if (record) await ctx.runMutation(internal.records.saveDetails, { record });
+		}
+		if (!page.isDone) await ctx.scheduler.runAfter(0, internal.records.refreshBooks, { cursor: page.continueCursor });
 	},
 });

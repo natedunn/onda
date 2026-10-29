@@ -8,7 +8,8 @@ export type Provider = {
 	search: (query: string) => Promise<RecordInput[]>;
 	/** Asks the source itself, skipping any mirror; for "Not here?" in the add dialog. */
 	searchLive?: (query: string) => Promise<RecordInput[]>;
-	details: (sourceId: string) => Promise<RecordInput | null>;
+	/** `current` is the cached record, if any. */
+	details: (sourceId: string, current?: RecordInput | null) => Promise<RecordInput | null>;
 	/** Shape check for ids arriving from URLs. */
 	idPattern: RegExp;
 };
@@ -184,54 +185,101 @@ const shows: Provider = {
 
 // --- Open Library (books) --------------------------------------------------
 
+// Books show one edition's title and cover so they come out in the app's
+// language; a work's own cover is whichever edition Open Library picked (often
+// a translation), and its title is often the original-language one.
+const BOOK_LANG = "en";
+const EDITION_FIELDS = "editions,editions.key,editions.title,editions.subtitle,editions.cover_i,editions.language";
+
+const olCover = (id?: number) => (id && id > 0 ? `https://covers.openlibrary.org/b/id/${id}-L.jpg` : undefined);
+const olText = (text: any): string | undefined => (typeof text === "string" ? text : text?.value);
+
+/** The edition Open Library chose for a search hit, if it's in our language or unlabeled. */
+function bookEdition(b: any) {
+	const edition = b.editions?.docs?.[0];
+	if (!edition?.key) return undefined;
+	// Search matches editions on the query's words, so a Spanish query can
+	// pick a Chinese edition even with lang=en; keep the work's own data then.
+	if (edition.language?.length && !edition.language.includes("eng")) return undefined;
+	return edition;
+}
+
+/** Our-language edition of a work, independent of any query. */
+async function defaultEdition(workId: string) {
+	const url = new URL("https://openlibrary.org/search.json");
+	url.searchParams.set("q", `key:/works/${workId}`);
+	url.searchParams.set("lang", BOOK_LANG);
+	url.searchParams.set("fields", `key,${EDITION_FIELDS}`);
+	const { docs = [] } = await getJson<any>(url.toString());
+	return docs[0] ? bookEdition(docs[0]) : undefined;
+}
+
 const books: Provider = {
 	idPattern: /^OL\d+W$/,
 	async search(query) {
 		const url = new URL("https://openlibrary.org/search.json");
 		url.searchParams.set("q", query);
+		url.searchParams.set("lang", BOOK_LANG);
 		url.searchParams.set("limit", "8");
-		url.searchParams.set("fields", "key,title,subtitle,author_name,first_publish_year,cover_i");
+		url.searchParams.set("fields", `key,title,subtitle,author_name,first_publish_year,cover_i,${EDITION_FIELDS}`);
 		const { docs = [] } = await getJson<any>(url.toString());
-		return docs.map(
-			(b: any): RecordInput => ({
+		return docs.map((b: any): RecordInput => {
+			const edition = bookEdition(b);
+			return {
 				kind: "book",
 				source: "openlibrary",
 				sourceId: String(b.key).replace("/works/", ""),
-				title: b.title,
-				subtitle: b.subtitle,
+				title: edition?.title ?? b.title,
+				subtitle: edition ? edition.subtitle : b.subtitle,
 				creators: (b.author_name ?? []).slice(0, 3),
 				year: yearOf(b.first_publish_year),
-				image: b.cover_i ? `https://covers.openlibrary.org/b/id/${b.cover_i}-L.jpg` : undefined,
+				image: olCover(edition?.cover_i) ?? olCover(b.cover_i),
 				url: `https://openlibrary.org${b.key}`,
-			}),
-		);
+				editionId: edition?.key.replace("/books/", ""),
+			};
+		});
 	},
-	details: (id) =>
+	details: (id, current) =>
 		orNull(async () => {
-			const work = await getJson<any>(`https://openlibrary.org/works/${id}.json`);
+			// Keep the edition the record already shows, so adding a book and
+			// then opening it doesn't swap its cover.
+			const editionId =
+				current?.editionId && /^OL\d+M$/.test(current.editionId)
+					? current.editionId
+					: (await defaultEdition(id))?.key.replace("/books/", "");
+			const [work, edition] = await Promise.all([
+				getJson<any>(`https://openlibrary.org/works/${id}.json`),
+				editionId ? orNull(() => getJson<any>(`https://openlibrary.org/books/${editionId}.json`)) : null,
+			]);
 			const authors = await Promise.all(
 				(work.authors ?? []).slice(0, 3).map(async (a: any) => {
 					const author = await getJson<any>(`https://openlibrary.org${a.author.key}.json`).catch(() => null);
 					return author?.name as string | undefined;
 				}),
 			);
-			const description = typeof work.description === "string" ? work.description : work.description?.value;
-			const cover = (work.covers ?? []).find((c: number) => c > 0);
+			const description = olText(work.description) ?? olText(edition?.description);
+			const publisher = edition?.publishers?.[0];
+			const isbn = edition?.isbn_13?.[0] ?? edition?.isbn_10?.[0];
 			return {
 				kind: "book",
 				source: "openlibrary",
 				sourceId: id,
-				title: work.title,
-				subtitle: work.subtitle,
+				title: edition?.title ?? work.title,
+				subtitle: edition ? edition.subtitle : work.subtitle,
 				creators: authors.filter((a): a is string => Boolean(a)),
 				year: yearOf(work.first_publish_date),
-				image: cover ? `https://covers.openlibrary.org/b/id/${cover}-L.jpg` : undefined,
+				image: olCover(edition?.covers?.find((c: number) => c > 0)) ?? olCover(work.covers?.find((c: number) => c > 0)),
 				url: `https://openlibrary.org/works/${id}`,
+				editionId: edition ? editionId : undefined,
 				// Open Library descriptions often carry a trailing source/link block.
 				description: clean(description?.split(/\n-{3,}/)[0]),
 				genres: (work.subjects ?? []).slice(0, 6),
 				facts: [
 					work.first_publish_date ? { label: "First published", value: work.first_publish_date } : null,
+					publisher
+						? { label: "Edition", value: [publisher, edition.publish_date].filter(Boolean).join(", ") }
+						: null,
+					isbn ? { label: "ISBN", value: isbn } : null,
 				].filter((f) => f !== null),
 				detailsFetchedAt: Date.now(),
 			};
