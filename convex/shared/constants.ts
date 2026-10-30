@@ -26,16 +26,6 @@ export const KIND_LABELS: Record<Kind, { one: string; many: string; title: strin
 export const LAYOUTS = ["minimal", "list", "list-lg", "grid-sm", "grid", "grid-lg"] as const;
 export type Layout = (typeof LAYOUTS)[number];
 
-/** Renamed views, by their old ID, so old `?view=` links keep working through toLayout. */
-export const OLD_LAYOUTS = { compact: "minimal", journal: "list-lg" } as const satisfies Record<string, Layout>;
-
-/** A view ID, old or new, as a current view (undefined if it isn't one). */
-export function toLayout(id: unknown): Layout | undefined {
-	if (typeof id !== "string") return undefined;
-	if ((LAYOUTS as readonly string[]).includes(id)) return id as Layout;
-	return OLD_LAYOUTS[id as keyof typeof OLD_LAYOUTS];
-}
-
 export const LAYOUT_LABELS: Record<Layout, string> = {
 	minimal: "Minimal",
 	list: "List — Medium",
