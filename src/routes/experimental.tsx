@@ -5,11 +5,23 @@ export const Route = createFileRoute("/experimental")({
 	component: Experimental,
 });
 
-// Carried over word for word from RAD's /docs/experimental.
+// Book search is carried over word for word from RAD's /docs/experimental.
 function Experimental() {
 	return (
 		<article className="legal">
 			<h1 className="font-serif text-5xl">Experimental features</h1>
+
+			<h2 id="language-selector">🌐 Language selector</h2>
+			<p>
+				Turn it on in <a href="/settings#experimental">settings</a> and the add dialog gets a language
+				select. Pick Español and movies and shows come from The Movie Database with their Mexican Spanish
+				titles and posters, and books come from Open Library's Spanish editions. Albums and games look the
+				same in any language, so they don't get the select.
+			</p>
+			<p>
+				Things keep the language they were added in, so everyone sees your list the way you made it. The
+				rest of onda is still only in English.
+			</p>
 
 			<h2>📕 Book search</h2>
 			<p>

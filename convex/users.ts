@@ -269,3 +269,12 @@ export const updateProfile = mutation({
 		return { username };
 	},
 });
+
+/** Experimental: shows a language select in the add dialog. */
+export const setLanguageSelector = mutation({
+	args: { enabled: v.boolean() },
+	handler: async (ctx, { enabled }) => {
+		const userId = await requireUserId(ctx);
+		await ctx.db.patch(userId, { languageSelector: enabled || undefined });
+	},
+});

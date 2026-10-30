@@ -23,9 +23,12 @@ export const Route = createFileRoute("/$kind/$id")({
 		},
 		stringify: ({ kind, id }) => ({ kind, id }),
 	},
-	loader: async ({ context, params }) => {
+	// Experimental: `?lang=es` is the Spanish record, added with the add dialog's language select.
+	validateSearch: (search: Record<string, unknown>): { lang?: "es" } => (search.lang === "es" ? { lang: "es" } : {}),
+	loaderDeps: ({ search }) => ({ lang: search.lang }),
+	loader: async ({ context, params, deps }) => {
 		const { record } = await context.queryClient.ensureQueryData(
-			convexQuery(api.records.page, { kind: params.kind, sourceId: params.id }),
+			convexQuery(api.records.page, { kind: params.kind, sourceId: params.id, language: deps.lang }),
 		);
 		return (
 			record && {
@@ -63,7 +66,8 @@ export const Route = createFileRoute("/$kind/$id")({
 
 function ItemPage() {
 	const { kind, id } = Route.useParams();
-	const { data } = useSuspenseQuery(convexQuery(api.records.page, { kind, sourceId: id }));
+	const { lang } = Route.useSearch();
+	const { data } = useSuspenseQuery(convexQuery(api.records.page, { kind, sourceId: id, language: lang }));
 	const ensureDetails = useAction(api.records.ensureDetails);
 	const [status, setStatus] = useState<"idle" | "fetching" | "missing" | "error">("idle");
 
@@ -76,13 +80,13 @@ function ItemPage() {
 		if (!stale) return;
 		let cancelled = false;
 		setStatus("fetching");
-		ensureDetails({ kind, sourceId: id })
+		ensureDetails({ kind, sourceId: id, language: lang })
 			.then((result) => !cancelled && setStatus(result === "missing" ? "missing" : "idle"))
 			.catch(() => !cancelled && setStatus("error"));
 		return () => {
 			cancelled = true;
 		};
-	}, [kind, id, stale, ensureDetails]);
+	}, [kind, id, lang, stale, ensureDetails]);
 
 	if (!record) {
 		if (status === "missing") {

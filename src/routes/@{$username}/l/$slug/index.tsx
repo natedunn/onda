@@ -264,7 +264,12 @@ function Meta({ record, mixed }: { record: Doc<"records">; mixed: boolean }) {
 function Title({ record }: { record: Doc<"records"> }) {
 	const text = record.subtitle && record.kind === "book" ? `${record.title}: ${record.subtitle}` : record.title;
 	return (
-		<Link to="/$kind/$id" params={{ kind: record.kind, id: record.sourceId }} className="plain hover:underline">
+		<Link
+			to="/$kind/$id"
+			params={{ kind: record.kind, id: record.sourceId }}
+			search={record.language ? { lang: record.language } : {}}
+			className="plain hover:underline"
+		>
 			{text}
 		</Link>
 	);

@@ -1,18 +1,23 @@
 // Source APIs, one per kind. Search returns lightweight records; details()
 // returns the fuller record shown on an item's own page.
 import type { Doc } from "./_generated/dataModel";
-import type { Kind } from "./shared/constants";
+import type { Kind, Language } from "./shared/constants";
 
 export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime" | "searchText">;
+// `language` asks the source for its titles, art and editions in that language. Providers
+// whose sources aren't localized (albums, games) ignore it.
 export type Provider = {
-	search: (query: string) => Promise<RecordInput[]>;
+	search: (query: string, language?: Language) => Promise<RecordInput[]>;
 	/** Asks the source itself, skipping any mirror; for "Not here?" in the add dialog. */
 	searchLive?: (query: string) => Promise<RecordInput[]>;
 	/** `current` is the cached record, if any. */
-	details: (sourceId: string, current?: RecordInput | null) => Promise<RecordInput | null>;
+	details: (sourceId: string, current?: RecordInput | null, language?: Language) => Promise<RecordInput | null>;
 	/** Shape check for ids arriving from URLs. */
 	idPattern: RegExp;
 };
+
+/** How a record stores a language: absent for English. */
+export const recordLanguage = (language: Language = "en") => (language === "en" ? undefined : language);
 
 const USER_AGENT = "Onda/0.1 (https://github.com/natedunn/onda)";
 
@@ -67,9 +72,13 @@ const clean = (text?: string | null) => text?.replace(/\r\n/g, "\n").trim() || u
 
 // --- TMDB (movies + shows) -------------------------------------------------
 
-function tmdb(path: string, params: Record<string, string> = {}) {
+// Spanish as it's used in Mexico, for titles and posters released there.
+const TMDB_LANGUAGES: Record<Language, string> = { en: "en-US", es: "es-MX" };
+
+function tmdb(path: string, params: Record<string, string> = {}, language: Language = "en") {
 	const key = process.env.TMDB_API_KEY!;
 	const url = new URL(`https://api.themoviedb.org/3${path}`);
+	url.searchParams.set("language", TMDB_LANGUAGES[language]);
 	for (const [k, val] of Object.entries(params)) url.searchParams.set(k, val);
 	// Long keys are v4 read-access tokens; short ones are v3 api keys.
 	const isBearer = key.length > 40;
@@ -115,8 +124,8 @@ const directors = (credits: any) =>
 
 const movies: Provider = {
 	idPattern: /^\d{1,10}$/,
-	async search(query) {
-		const { results = [] } = await tmdb("/search/movie", { query, include_adult: "false" });
+	async search(query, language) {
+		const { results = [] } = await tmdb("/search/movie", { query, include_adult: "false" }, language);
 		return await Promise.all(
 			results.slice(0, 8).map(async (m: any, i: number) => {
 				// Directors need a second call; only worth it for the top hits.
@@ -125,9 +134,9 @@ const movies: Provider = {
 			}),
 		);
 	},
-	details: (id) =>
+	details: (id, _current, language) =>
 		orNull(async () => {
-			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits" });
+			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits" }, language);
 			return {
 				...movieRecord(m, directors(m.credits)),
 				description: clean(m.overview),
@@ -152,18 +161,18 @@ const movies: Provider = {
 
 const shows: Provider = {
 	idPattern: /^\d{1,10}$/,
-	async search(query) {
-		const { results = [] } = await tmdb("/search/tv", { query, include_adult: "false" });
+	async search(query, language) {
+		const { results = [] } = await tmdb("/search/tv", { query, include_adult: "false" }, language);
 		return await Promise.all(
 			results.slice(0, 8).map(async (s: any, i: number) => {
-				const detail = i < 5 ? await tmdb(`/tv/${s.id}`).catch(() => null) : null;
+				const detail = i < 5 ? await tmdb(`/tv/${s.id}`, {}, language).catch(() => null) : null;
 				return showRecord(s, (detail?.created_by ?? []).map((c: any) => c.name).slice(0, 2));
 			}),
 		);
 	},
-	details: (id) =>
+	details: (id, _current, language) =>
 		orNull(async () => {
-			const s = await tmdb(`/tv/${id}`);
+			const s = await tmdb(`/tv/${id}`, {}, language);
 			return {
 				...showRecord(s, (s.created_by ?? []).map((c: any) => c.name).slice(0, 2)),
 				description: clean(s.overview),
@@ -188,19 +197,23 @@ const shows: Provider = {
 // Books show one edition's title and cover so they come out in the app's
 // language; a work's own cover is whichever edition Open Library picked (often
 // a translation), and its title is often the original-language one.
-const BOOK_LANG = "en";
+// Open Library takes ISO 639-1 in `lang` but labels editions with MARC codes.
+const OL_LANGUAGES: Record<Language, { lang: string; marc: string }> = {
+	en: { lang: "en", marc: "eng" },
+	es: { lang: "es", marc: "spa" },
+};
 const EDITION_FIELDS = "editions,editions.key,editions.title,editions.subtitle,editions.cover_i,editions.language";
 
 const olCover = (id?: number) => (id && id > 0 ? ({ host: "openlibrary", id: String(id) }) as const : undefined);
 const olText = (text: any): string | undefined => (typeof text === "string" ? text : text?.value);
 
 /** The edition Open Library chose for a search hit, if it's in our language or unlabeled. */
-function bookEdition(b: any) {
+function bookEdition(b: any, language: Language) {
 	const edition = b.editions?.docs?.[0];
 	if (!edition?.key) return undefined;
 	// Search matches editions on the query's words, so a Spanish query can
 	// pick a Chinese edition even with lang=en; keep the work's own data then.
-	if (edition.language?.length && !edition.language.includes("eng")) return undefined;
+	if (edition.language?.length && !edition.language.includes(OL_LANGUAGES[language].marc)) return undefined;
 	return edition;
 }
 
@@ -226,13 +239,13 @@ function bookTitle(work: { title: string; subtitle?: string }, edition?: { title
 }
 
 /** Our-language edition of a work, independent of any query. */
-async function defaultEdition(workId: string) {
+async function defaultEdition(workId: string, language: Language) {
 	const url = new URL("https://openlibrary.org/search.json");
 	url.searchParams.set("q", `key:/works/${workId}`);
-	url.searchParams.set("lang", BOOK_LANG);
+	url.searchParams.set("lang", OL_LANGUAGES[language].lang);
 	url.searchParams.set("fields", `key,${EDITION_FIELDS}`);
 	const { docs = [] } = await getJson<any>(url.toString());
-	return docs[0] ? bookEdition(docs[0]) : undefined;
+	return docs[0] ? bookEdition(docs[0], language) : undefined;
 }
 
 /** A work, following the redirect Open Library leaves behind when it merges duplicates. */
@@ -247,15 +260,15 @@ async function olWork(id: string) {
 
 const books: Provider = {
 	idPattern: /^OL\d+W$/,
-	async search(query) {
+	async search(query, language = "en") {
 		const url = new URL("https://openlibrary.org/search.json");
 		url.searchParams.set("q", query);
-		url.searchParams.set("lang", BOOK_LANG);
+		url.searchParams.set("lang", OL_LANGUAGES[language].lang);
 		url.searchParams.set("limit", "8");
 		url.searchParams.set("fields", `key,title,subtitle,author_name,first_publish_year,cover_i,${EDITION_FIELDS}`);
 		const { docs = [] } = await getJson<any>(url.toString());
 		return docs.map((b: any): RecordInput => {
-			const edition = bookEdition(b);
+			const edition = bookEdition(b, language);
 			return {
 				kind: "book",
 				source: "openlibrary",
@@ -269,7 +282,7 @@ const books: Provider = {
 			};
 		});
 	},
-	details: (id, current) =>
+	details: (id, current, language = "en") =>
 		orNull(async () => {
 			const work = await olWork(id);
 			// Keep the edition the record already shows, so adding a book and
@@ -277,7 +290,7 @@ const books: Provider = {
 			const editionId =
 				current?.editionId && /^OL\d+M$/.test(current.editionId)
 					? current.editionId
-					: (await defaultEdition(String(work.key).replace("/works/", "")))?.key.replace("/books/", "");
+					: (await defaultEdition(String(work.key).replace("/works/", ""), language))?.key.replace("/books/", "");
 			const edition = editionId
 				? await orNull(() => getJson<any>(`https://openlibrary.org/books/${editionId}.json`))
 				: null;

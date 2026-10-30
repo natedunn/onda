@@ -3,8 +3,8 @@ import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { action, internalMutation, internalQuery, type MutationCtx, query } from "./_generated/server";
 import { copyWhenListed, mergeImage } from "./images";
-import { enabledKinds, PROVIDERS, type RecordInput } from "./providers";
-import { recordFields, vKind } from "./schema";
+import { enabledKinds, PROVIDERS, type RecordInput, recordLanguage } from "./providers";
+import { recordFields, vKind, vLanguage } from "./schema";
 
 // Repeat searches within this window reuse the source's last answer.
 const SEARCH_CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -21,22 +21,23 @@ export const kinds = query({
  * source API is down; the add dialog shows these above the source's results.
  */
 export const searchLocal = query({
-	args: { kind: vKind, query: v.string() },
-	handler: async (ctx, { kind, query }): Promise<Doc<"records">[]> => {
+	args: { kind: vKind, query: v.string(), language: v.optional(vLanguage) },
+	handler: async (ctx, { kind, query, language }): Promise<Doc<"records">[]> => {
 		const q = normalize(query);
 		if (q.length < 2) return [];
-		return await ctx.db
+		const matches = await ctx.db
 			.query("records")
 			.withSearchIndex("search", (s) => s.search("searchText", q).eq("kind", kind))
-			.take(5);
+			.take(10);
+		return matches.filter((r) => r.language === recordLanguage(language)).slice(0, 5);
 	},
 });
 
 export const search = action({
 	// `live` asks the source directly, past any mirror and the cache; only for
 	// kinds whose provider has searchLive.
-	args: { kind: vKind, query: v.string(), live: v.optional(v.boolean()) },
-	handler: async (ctx, { kind, query, live }): Promise<Doc<"records">[]> => {
+	args: { kind: vKind, query: v.string(), live: v.optional(v.boolean()), language: v.optional(vLanguage) },
+	handler: async (ctx, { kind, query, live, language }): Promise<Doc<"records">[]> => {
 		if (!(await ctx.auth.getUserIdentity())) throw new ConvexError("Not signed in");
 		const q = normalize(query);
 		if (q.length < 2) return [];
@@ -45,13 +46,13 @@ export const search = action({
 		if (live && !provider.searchLive) throw new ConvexError(`Live search isn't available for ${kind}s.`);
 
 		if (!live) {
-			const cached = await ctx.runQuery(internal.media.cached, { kind, query: q });
+			const cached = await ctx.runQuery(internal.media.cached, { kind, query: q, language });
 			if (cached) return cached;
 		}
 
 		let found: RecordInput[];
 		try {
-			found = live ? await provider.searchLive!(q) : await provider.search(q);
+			found = live ? await provider.searchLive!(q) : await provider.search(q, language);
 		} catch (error) {
 			console.error(`search ${kind}${live ? " (live)" : ""} failed`, error);
 			throw new ConvexError("Search is having trouble right now. Try again in a moment.");
@@ -59,18 +60,20 @@ export const search = action({
 		// Results are cached as records so adding one only needs its id; the
 		// client never supplies record data itself.
 		return await ctx.runMutation(internal.media.upsert, {
-			records: found,
-			cacheAs: live ? undefined : { kind, query: q },
+			records: found.map((r) => ({ ...r, language: recordLanguage(language) })),
+			cacheAs: live ? undefined : { kind, query: q, language: recordLanguage(language) },
 		});
 	},
 });
 
 export const cached = internalQuery({
-	args: { kind: vKind, query: v.string() },
-	handler: async (ctx, { kind, query }) => {
+	args: { kind: vKind, query: v.string(), language: v.optional(vLanguage) },
+	handler: async (ctx, { kind, query, language }) => {
 		const entry = await ctx.db
 			.query("searchCache")
-			.withIndex("by_query", (q) => q.eq("kind", kind).eq("query", query))
+			.withIndex("by_query", (q) =>
+				q.eq("kind", kind).eq("query", query).eq("language", recordLanguage(language)),
+			)
 			.unique();
 		if (!entry || Date.now() - entry.fetchedAt > SEARCH_CACHE_TTL) return null;
 		const records = await Promise.all(entry.recordIds.map((id) => ctx.db.get(id)));
@@ -85,7 +88,9 @@ const searchTextOf = (r: Pick<Doc<"records">, "title" | "subtitle" | "creators">
 export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 	const existing = await ctx.db
 		.query("records")
-		.withIndex("by_kind", (q) => q.eq("kind", record.kind).eq("sourceId", record.sourceId))
+		.withIndex("by_kind", (q) =>
+			q.eq("kind", record.kind).eq("sourceId", record.sourceId).eq("language", record.language),
+		)
 		.unique();
 	if (!existing) {
 		const id = await ctx.db.insert("records", { ...record, searchText: searchTextOf(record) });
@@ -114,7 +119,7 @@ export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 export const upsert = internalMutation({
 	args: {
 		records: v.array(v.object(recordFields)),
-		cacheAs: v.optional(v.object({ kind: vKind, query: v.string() })),
+		cacheAs: v.optional(v.object({ kind: vKind, query: v.string(), language: recordFields.language })),
 	},
 	handler: async (ctx, { records, cacheAs }) => {
 		const out: Doc<"records">[] = [];
@@ -122,7 +127,9 @@ export const upsert = internalMutation({
 		if (cacheAs) {
 			const entry = await ctx.db
 				.query("searchCache")
-				.withIndex("by_query", (q) => q.eq("kind", cacheAs.kind).eq("query", cacheAs.query))
+				.withIndex("by_query", (q) =>
+					q.eq("kind", cacheAs.kind).eq("query", cacheAs.query).eq("language", cacheAs.language),
+				)
 				.unique();
 			const value = { ...cacheAs, recordIds: out.map((r) => r._id), fetchedAt: Date.now() };
 			if (entry) await ctx.db.replace(entry._id, value);

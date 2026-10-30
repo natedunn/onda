@@ -1,27 +1,30 @@
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { action, internalAction, internalMutation, internalQuery, query, type QueryCtx } from "./_generated/server";
 import { upsertRecord } from "./media";
 import { enabledKinds, PROVIDERS } from "./providers";
 import { recordFields, vKind } from "./schema";
 import type { Kind } from "./shared/constants";
 
+type RecordLanguage = Doc<"records">["language"];
+
 // Item pages refetch from the source at most this often.
 export const DETAILS_TTL = 30 * 24 * 60 * 60 * 1000;
 
-async function findRecord(ctx: QueryCtx, kind: Kind, sourceId: string) {
+async function findRecord(ctx: QueryCtx, kind: Kind, sourceId: string, language: RecordLanguage) {
 	return await ctx.db
 		.query("records")
-		.withIndex("by_kind", (q) => q.eq("kind", kind).eq("sourceId", sourceId))
+		.withIndex("by_kind", (q) => q.eq("kind", kind).eq("sourceId", sourceId).eq("language", language))
 		.unique();
 }
 
 /** Public item page: the cached record plus the public lists it appears on. */
 export const page = query({
-	args: { kind: vKind, sourceId: v.string() },
-	handler: async (ctx, { kind, sourceId }) => {
-		const record = await findRecord(ctx, kind, sourceId);
+	args: { kind: vKind, sourceId: v.string(), language: recordFields.language },
+	handler: async (ctx, { kind, sourceId, language }) => {
+		const record = await findRecord(ctx, kind, sourceId, language);
 		if (!record) return { record: null, lists: [] };
 
 		const items = await ctx.db
@@ -62,9 +65,9 @@ export const page = query({
 
 /** `{ record }` (the cached one, if any) when details are missing or stale; null when fresh. */
 export const needsDetails = internalQuery({
-	args: { kind: vKind, sourceId: v.string() },
-	handler: async (ctx, { kind, sourceId }) => {
-		const record = await findRecord(ctx, kind, sourceId);
+	args: { kind: vKind, sourceId: v.string(), language: recordFields.language },
+	handler: async (ctx, { kind, sourceId, language }) => {
+		const record = await findRecord(ctx, kind, sourceId, language);
 		const stale = !record?.detailsFetchedAt || Date.now() - record.detailsFetchedAt > DETAILS_TTL;
 		return stale ? { record } : null;
 	},
@@ -83,22 +86,22 @@ export const saveDetails = internalMutation({
  * most one request per item per TTL.
  */
 export const ensureDetails = action({
-	args: { kind: vKind, sourceId: v.string() },
-	handler: async (ctx, { kind, sourceId }): Promise<"fresh" | "updated" | "missing"> => {
+	args: { kind: vKind, sourceId: v.string(), language: recordFields.language },
+	handler: async (ctx, { kind, sourceId, language }): Promise<"fresh" | "updated" | "missing"> => {
 		const provider = PROVIDERS[kind];
 		if (!enabledKinds().includes(kind) || !provider.idPattern.test(sourceId)) return "missing";
-		const due = await ctx.runQuery(internal.records.needsDetails, { kind, sourceId });
+		const due = await ctx.runQuery(internal.records.needsDetails, { kind, sourceId, language });
 		if (!due) return "fresh";
 
 		let record;
 		try {
-			record = await provider.details(sourceId, due.record);
+			record = await provider.details(sourceId, due.record, language);
 		} catch (error) {
 			console.error(`details ${kind}/${sourceId} failed`, error);
 			throw new ConvexError("Couldn't reach the source right now.");
 		}
 		if (!record) return "missing";
-		await ctx.runMutation(internal.records.saveDetails, { record });
+		await ctx.runMutation(internal.records.saveDetails, { record: { ...record, language } });
 		return "updated";
 	},
 });
@@ -125,8 +128,12 @@ export const refreshBooks = internalAction({
 		for (const current of page.page) {
 			try {
 				// Ignore any edition picked before this change; let details choose.
-				const record = await PROVIDERS.book.details(current.sourceId, { ...current, editionId: undefined });
-				if (record) await ctx.runMutation(internal.records.saveDetails, { record });
+				const record = await PROVIDERS.book.details(
+					current.sourceId,
+					{ ...current, editionId: undefined },
+					current.language,
+				);
+				if (record) await ctx.runMutation(internal.records.saveDetails, { record: { ...record, language: current.language } });
 			} catch (error) {
 				console.error(`refresh book/${current.sourceId} failed`, error);
 			}
