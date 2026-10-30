@@ -25,7 +25,13 @@ export const page = query({
 	args: { kind: vKind, sourceId: v.string(), language: recordFields.language },
 	handler: async (ctx, { kind, sourceId, language }) => {
 		const record = await findRecord(ctx, kind, sourceId, language);
-		if (!record) return { record: null, lists: [] };
+		if (!record) return { record: null, lists: [], hasOtherLanguage: false };
+		// Experimental: whether the same thing is also saved in another language.
+		const versions = await ctx.db
+			.query("records")
+			.withIndex("by_kind", (q) => q.eq("kind", kind).eq("sourceId", sourceId))
+			.take(2);
+		const hasOtherLanguage = versions.length > 1;
 
 		const items = await ctx.db
 			.query("items")
@@ -59,7 +65,7 @@ export const page = query({
 			if (lists.length >= 30) break;
 		}
 		lists.sort((a, b) => b.updatedAt - a.updatedAt);
-		return { record, lists };
+		return { record, lists, hasOtherLanguage };
 	},
 });
 

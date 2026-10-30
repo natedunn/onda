@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
-import { KIND_LABELS, KINDS, type Kind, SOURCE_LABELS } from "@convex/shared/constants";
+import { KIND_LABELS, KINDS, type Kind, LOCALIZED_KINDS, SOURCE_LABELS } from "@convex/shared/constants";
 import { imageUrl } from "@convex/shared/images";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -68,6 +68,7 @@ function ItemPage() {
 	const { kind, id } = Route.useParams();
 	const { lang } = Route.useSearch();
 	const { data } = useSuspenseQuery(convexQuery(api.records.page, { kind, sourceId: id, language: lang }));
+	const { data: viewer } = useQuery(convexQuery(api.users.viewer, {}));
 	const ensureDetails = useAction(api.records.ensureDetails);
 	const [status, setStatus] = useState<"idle" | "fetching" | "missing" | "error">("idle");
 
@@ -103,6 +104,11 @@ function ItemPage() {
 			</p>
 		);
 	}
+
+	// Experimental: Spanish pages can always go back to English; English pages offer Spanish
+	// once it exists or to people with the language selector on.
+	const canChangeLanguage =
+		LOCALIZED_KINDS.includes(kind) && (lang === "es" || data.hasOtherLanguage || viewer?.languageSelector === true);
 
 	return (
 		<article>
@@ -163,11 +169,21 @@ function ItemPage() {
 				</dl>
 			)}
 
-			{record.url && (
-				<p className="mt-5 text-[12px]">
-					<a href={record.url} target="_blank" rel="noopener noreferrer">
-						View on {SOURCE_LABELS[record.source]} ↗
-					</a>
+			{(record.url || canChangeLanguage) && (
+				<p className="mt-5 flex flex-wrap gap-x-4 text-[12px]">
+					{record.url && (
+						<a href={record.url} target="_blank" rel="noopener noreferrer">
+							View on {SOURCE_LABELS[record.source]} ↗
+						</a>
+					)}
+					{canChangeLanguage && (
+						<span className="text-muted">
+							Change language:{" "}
+							<Link to="/$kind/$id" params={{ kind, id }} search={lang ? {} : { lang: "es" }}>
+								{lang ? "EN" : "ES"}
+							</Link>
+						</span>
+					)}
 				</p>
 			)}
 

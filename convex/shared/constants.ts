@@ -29,6 +29,9 @@ export type Language = (typeof LANGUAGES)[number];
 
 export const LANGUAGE_LABELS: Record<Language, string> = { en: "English", es: "Español" };
 
+// Kinds whose sources answer in other languages; albums and games are the same in any.
+export const LOCALIZED_KINDS: Kind[] = ["movie", "show", "book"];
+
 // The medium size of each family goes by the bare name ("list", "grid").
 export const LAYOUTS = ["minimal", "list", "list-lg", "grid-sm", "grid", "grid-lg"] as const;
 export type Layout = (typeof LAYOUTS)[number];

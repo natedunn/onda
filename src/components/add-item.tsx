@@ -1,7 +1,14 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
-import { KIND_LABELS, type Kind, LANGUAGE_LABELS, LANGUAGES, type Language } from "@convex/shared/constants";
+import {
+	KIND_LABELS,
+	type Kind,
+	LANGUAGE_LABELS,
+	LANGUAGES,
+	type Language,
+	LOCALIZED_KINDS,
+} from "@convex/shared/constants";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAction, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -10,9 +17,6 @@ import { cn, errorMessage } from "@/lib/utils";
 
 const KIND_KEY = "onda:add-kind";
 const LANGUAGE_KEY = "onda:add-language";
-
-// Kinds whose sources answer in other languages; the rest search the same either way.
-const LOCALIZED: Kind[] = ["movie", "show", "book"];
 
 // Where each kind's search results come from, credited under the results. `live` kinds
 // search a mirror first and offer to ask the source itself (media.search's `live`).
@@ -83,7 +87,7 @@ function AddItem({
 	const [kind, setKind] = useState<Kind>("movie");
 	// Experimental: only people who turned the language selector on in settings get a choice.
 	const [chosenLanguage, setChosenLanguage] = useState<Language>("en");
-	const canChooseLanguage = viewer?.languageSelector === true && LOCALIZED.includes(kind);
+	const canChooseLanguage = viewer?.languageSelector === true && LOCALIZED_KINDS.includes(kind);
 	const language = canChooseLanguage ? chosenLanguage : "en";
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<Doc<"records">[] | null>(null);
