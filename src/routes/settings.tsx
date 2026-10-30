@@ -6,7 +6,8 @@ import { LIMITS } from "@convex/shared/constants";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
+import { PALETTE, saveTheme, type Theme } from "@/lib/theme";
 import { errorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
@@ -17,17 +18,42 @@ export const Route = createFileRoute("/settings")({
 	component: Settings,
 });
 
+const SECTIONS = [
+	{ id: "profile", label: "Profile" },
+	{ id: "privacy", label: "Privacy" },
+	{ id: "appearance", label: "Appearance" },
+	{ id: "account", label: "Account" },
+];
+
 function Settings() {
 	const { data: viewer } = useSuspenseQuery(convexQuery(api.users.viewer, {}));
 	if (!viewer) return null;
-	return <SettingsForm viewer={viewer} />;
+	return (
+		<>
+			<h1 className="mb-8 font-serif text-5xl">Settings</h1>
+			<div className="grid gap-x-12 gap-y-6 md:grid-cols-[10rem_minmax(0,1fr)]">
+				<nav className="md:sticky md:top-6 md:self-start">
+					<ul className="flex flex-wrap gap-x-4 gap-y-1 md:flex-col">
+						{SECTIONS.map((section) => (
+							<li key={section.id}>
+								<a href={`#${section.id}`}>{section.label}</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+				<div className="space-y-8 [&_fieldset]:scroll-mt-6">
+					<ProfileForm viewer={viewer} />
+					<Appearance />
+					<Account viewer={viewer} />
+				</div>
+			</div>
+		</>
+	);
 }
 
-function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
+function ProfileForm({ viewer }: { viewer: Doc<"users"> }) {
 	const update = useMutation(api.users.updateProfile);
 	const navigate = useNavigate();
-	const router = useRouter();
-	const { signOut } = useAuthActions();
 	const [form, setForm] = useState({
 		username: viewer.username,
 		name: viewer.name ?? "",
@@ -39,7 +65,7 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 
 	return (
 		<form
-			className="max-w-[32rem] space-y-8"
+			className="space-y-8"
 			onSubmit={async (e) => {
 				e.preventDefault();
 				setSaving(true);
@@ -58,11 +84,9 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 				}
 			}}
 		>
-			<h1 className="font-serif text-5xl">Settings</h1>
-
-			<fieldset className="box space-y-5">
+			<fieldset id="profile" className="box grid gap-5 lg:grid-cols-2">
 				<legend>Profile</legend>
-				<div className="flex items-center gap-4">
+				<div className="flex items-center gap-4 lg:col-span-2">
 					{viewer.image && <img src={viewer.image} alt="" className="size-14 border border-ink object-cover" />}
 					<p className="text-[12px] text-muted">Your photo comes from GitHub and updates when you sign in.</p>
 				</div>
@@ -85,7 +109,7 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 					<span className="label">Display name</span>
 					<input className="field mt-1" value={form.name} maxLength={60} onChange={(e) => setForm({ ...form, name: e.target.value })} />
 				</label>
-				<label className="block">
+				<label className="block lg:col-span-2">
 					<span className="label">About</span>
 					<textarea
 						className="field mt-1"
@@ -101,7 +125,7 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 				</label>
 			</fieldset>
 
-			<fieldset className="box">
+			<fieldset id="privacy" className="box">
 				<legend>Privacy</legend>
 				<label className="flex items-baseline gap-2">
 					<input type="checkbox" checked={form.isPrivate} onChange={(e) => setForm({ ...form, isPrivate: e.target.checked })} />
@@ -118,22 +142,98 @@ function SettingsForm({ viewer }: { viewer: Doc<"users"> }) {
 				</button>
 				{status && <span className={status.kind === "error" ? "text-danger" : "text-muted"}>{status.text}</span>}
 			</div>
-
-			<fieldset className="box flex flex-wrap items-center justify-between gap-3">
-				<legend>Account</legend>
-				<p className="text-[12px] text-muted">Signed in as @{viewer.username}.</p>
-				<button
-					type="button"
-					className="btn"
-					onClick={async () => {
-						await signOut();
-						await router.invalidate();
-						await router.navigate({ to: "/" });
-					}}
-				>
-					Sign out
-				</button>
-			</fieldset>
 		</form>
+	);
+}
+
+const THEMES: { value: Theme; label: string; hint: string }[] = [
+	{ value: "system", label: "System", hint: "Follows your device." },
+	{ value: "light", label: "Light", hint: "Ink on paper." },
+	{ value: "dark", label: "Dark", hint: "Paper on ink." },
+];
+
+function Appearance() {
+	const router = useRouter();
+	const [theme, setTheme] = useState(Route.useRouteContext({ select: (context) => context.theme }));
+
+	return (
+		<fieldset id="appearance" className="box">
+			<legend>Appearance</legend>
+			<div className="grid gap-3 sm:grid-cols-3">
+				{THEMES.map((option) => (
+					<label
+						key={option.value}
+						className="block cursor-pointer border border-rule p-2 hover:border-muted has-checked:border-ink"
+					>
+						<ThemePreview theme={option.value} />
+						<span className="mt-2 flex items-baseline gap-2">
+							<input
+								type="radio"
+								name="theme"
+								value={option.value}
+								checked={theme === option.value}
+								onChange={() => {
+									setTheme(option.value);
+									saveTheme(option.value);
+									// Picks the new cookie up into the root's context (and its theme-color).
+									void router.invalidate();
+								}}
+							/>
+							<span>
+								<b>{option.label}</b> <span className="text-muted">— {option.hint}</span>
+							</span>
+						</span>
+					</label>
+				))}
+			</div>
+			<p className="mt-3 text-[11px] text-muted">Saved on this device.</p>
+		</fieldset>
+	);
+}
+
+/** A thumbnail of a page in the given palette; "system" shows light and dark split across the diagonal. */
+function ThemePreview({ theme }: { theme: Theme }) {
+	return (
+		<div className="relative h-20 overflow-hidden border border-rule" aria-hidden>
+			{theme !== "dark" && <PreviewPage colors={PALETTE.light} />}
+			{theme !== "light" && (
+				<PreviewPage
+					colors={PALETTE.dark}
+					style={theme === "system" ? { clipPath: "polygon(100% 0, 100% 100%, 0 100%)" } : undefined}
+				/>
+			)}
+		</div>
+	);
+}
+
+function PreviewPage({ colors, style }: { colors: (typeof PALETTE)["light"]; style?: CSSProperties }) {
+	return (
+		<div className="absolute inset-0 px-3 py-2" style={{ background: colors.paper, color: colors.ink, ...style }}>
+			<div className="font-serif text-3xl leading-none">Aa</div>
+			<div className="mt-2 h-px w-3/4" style={{ background: colors.rule }} />
+			<div className="mt-2 h-3 w-10 border" style={{ borderColor: colors.ink, boxShadow: `2px 2px 0 ${colors.ink}` }} />
+		</div>
+	);
+}
+
+function Account({ viewer }: { viewer: Doc<"users"> }) {
+	const router = useRouter();
+	const { signOut } = useAuthActions();
+	return (
+		<fieldset id="account" className="box flex flex-wrap items-center justify-between gap-3">
+			<legend>Account</legend>
+			<p className="text-[12px] text-muted">Signed in as @{viewer.username}.</p>
+			<button
+				type="button"
+				className="btn"
+				onClick={async () => {
+					await signOut();
+					await router.invalidate();
+					await router.navigate({ to: "/" });
+				}}
+			>
+				Sign out
+			</button>
+		</fieldset>
 	);
 }

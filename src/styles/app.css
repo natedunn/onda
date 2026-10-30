@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
-@custom-variant dark (@media (prefers-color-scheme: dark));
+/* Dark when the visitor picked it (data-theme on <html>, from the theme cookie), or when they
+   left it to the device (no data-theme) and the device is dark. */
+@custom-variant dark {
+	&:where([data-theme="dark"], [data-theme="dark"] *) {
+		@slot;
+	}
+	@media (prefers-color-scheme: dark) {
+		&:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+			@slot;
+		}
+	}
+}
 
 :root {
 	--paper: #fbfaf6;
@@ -17,10 +28,8 @@
 	--dither-a: #00000055;
 	--dither-b: #000000a0;
 	color-scheme: light;
-}
 
-@media (prefers-color-scheme: dark) {
-	:root {
+	@variant dark {
 		--paper: #121211;
 		--paper-2: #1b1b19;
 		--ink: #ecebe5;
@@ -195,18 +204,24 @@
 	}
 	/* On dark paper a light edge and a light shadow run together into one thick
 	   outline, so the shadow stays brighter than the (grey) edge. */
-	@media (prefers-color-scheme: dark) {
-		.btn {
+	.btn {
+		@variant dark {
 			--btn-shadow: color-mix(in oklab, var(--ink) 68%, var(--paper));
 		}
-		/* A light fill would melt into a bright shadow, so this one keeps a dimmer one. */
-		.btn-primary {
+	}
+	/* A light fill would melt into a bright shadow, so this one keeps a dimmer one. */
+	.btn-primary {
+		@variant dark {
 			--btn-shadow: color-mix(in oklab, var(--ink) 55%, var(--paper));
 		}
-		.btn-theme {
+	}
+	.btn-theme {
+		@variant dark {
 			--btn-edge: var(--theme-accent);
 		}
-		.btn-danger {
+	}
+	.btn-danger {
+		@variant dark {
 			--btn-shadow: color-mix(in oklab, var(--danger) 70%, var(--paper));
 		}
 	}
@@ -270,8 +285,8 @@
 			0 0,
 			1.6px 1.6px;
 	}
-	@media (prefers-color-scheme: dark) {
-		.bg-halftone {
+	.bg-halftone {
+		@variant dark {
 			background-image:
 				radial-gradient(circle at center, #00000075 0.8px, transparent 0),
 				radial-gradient(circle at center, #ffffff25 0.8px, transparent 0);
@@ -288,8 +303,8 @@
 		/* Fades out toward the right. */
 		mask-image: linear-gradient(to right, #000 15%, transparent 95%);
 	}
-	@media (prefers-color-scheme: dark) {
-		.halftone-wash {
+	.halftone-wash {
+		@variant dark {
 			filter: grayscale(1) contrast(30) invert(1);
 			opacity: 0.14;
 		}
@@ -331,16 +346,17 @@
 		background: var(--word-color);
 		mix-blend-mode: lighten;
 	}
-	@media (prefers-color-scheme: dark) {
-		.halftone-glow {
+	.halftone-glow {
+		@variant dark {
 			mix-blend-mode: screen;
 			opacity: 0.26;
-		}
-		.halftone-glow::before {
-			filter: grayscale(1) contrast(30) invert(1);
-		}
-		.halftone-glow::after {
-			mix-blend-mode: darken;
+			/* The variant goes on the element; a pseudo-element has to stay last in the selector. */
+			&::before {
+				filter: grayscale(1) contrast(30) invert(1);
+			}
+			&::after {
+				mix-blend-mode: darken;
+			}
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
@@ -412,9 +428,9 @@
 		background-blend-mode: multiply, normal;
 		filter: grayscale(1) contrast(30);
 	}
-	@media (prefers-color-scheme: dark) {
-		.add-backdrop-dots,
-		.page-backdrop-dots {
+	.add-backdrop-dots,
+	.page-backdrop-dots {
+		@variant dark {
 			mix-blend-mode: screen;
 			opacity: 0.12;
 			filter: grayscale(1) contrast(30) invert(1);

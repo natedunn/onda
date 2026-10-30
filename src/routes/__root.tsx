@@ -15,6 +15,7 @@ import { SiteHeader } from "@/components/site-header";
 import { TopStrip } from "@/components/top-strip";
 import { getAuthToken } from "@/lib/convex-auth-start/functions";
 import { ConvexAuthStartProvider } from "@/lib/convex-auth-start/provider";
+import { PALETTE, readTheme } from "@/lib/theme";
 import { siteUrl } from "@/lib/utils";
 import appCss from "@/styles/app.css?url";
 
@@ -29,10 +30,10 @@ const DESCRIPTION = "Make lists of the movies, shows, books, albums and games yo
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	beforeLoad: async ({ context }) => {
-		const token = await getAuthToken();
+		const [token, theme] = await Promise.all([getAuthToken(), readTheme()]);
 		// SSR queries run over HTTP; give them the request's identity.
 		if (token) context.convexQueryClient.serverHttpClient?.setAuth(token);
-		return { token };
+		return { token, theme };
 	},
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(convexQuery(api.users.viewer, {}));
@@ -45,7 +46,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 			{ name: "description", content: DESCRIPTION },
 			{ property: "og:site_name", content: "onda" },
 			{ name: "twitter:card", content: "summary_large_image" },
-			{ name: "theme-color", content: "#fbfaf6" },
 		],
 		links: [
 			{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
@@ -63,10 +63,21 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootDocument({ children }: { children: ReactNode }) {
+	const theme = Route.useRouteContext({ select: (context) => context.theme }) ?? "system";
 	return (
-		<html lang="en">
+		// No data-theme means "follow the device" (app.css's dark variant falls back to the media query).
+		<html lang="en" data-theme={theme === "system" ? undefined : theme}>
 			<head>
 				<HeadContent />
+				{/* Here rather than in head(): HeadContent keeps only one meta per name, and "system" needs two. */}
+				{theme === "system" ? (
+					<>
+						<meta name="theme-color" media="(prefers-color-scheme: light)" content={PALETTE.light.paper} />
+						<meta name="theme-color" media="(prefers-color-scheme: dark)" content={PALETTE.dark.paper} />
+					</>
+				) : (
+					<meta name="theme-color" content={PALETTE[theme].paper} />
+				)}
 			</head>
 			<body>
 				{children}
