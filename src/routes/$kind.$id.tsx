@@ -111,7 +111,15 @@ function ItemPage() {
 		LOCALIZED_KINDS.includes(kind) && (lang === "es" || data.hasOtherLanguage || viewer?.languageSelector === true);
 
 	return (
-		<article>
+		<article className="relative">
+			{canChangeLanguage && (
+				<p className="absolute top-0 right-0 text-[12px] text-muted">
+					{lang ? "Cambiar idioma" : "Change language"}:{" "}
+					<Link to="/$kind/$id" params={{ kind, id }} search={lang ? {} : { lang: "es" }}>
+						{lang ? "EN" : "ES"}
+					</Link>
+				</p>
+			)}
 			<header className="flex flex-col gap-6 sm:flex-row sm:items-end">
 				<div className="halftone w-36 shrink-0 sm:w-44">
 					<Art
@@ -169,21 +177,11 @@ function ItemPage() {
 				</dl>
 			)}
 
-			{(record.url || canChangeLanguage) && (
-				<p className="mt-5 flex flex-wrap gap-x-4 text-[12px]">
-					{record.url && (
-						<a href={record.url} target="_blank" rel="noopener noreferrer">
-							View on {SOURCE_LABELS[record.source]} ↗
-						</a>
-					)}
-					{canChangeLanguage && (
-						<span className="text-muted">
-							Change language:{" "}
-							<Link to="/$kind/$id" params={{ kind, id }} search={lang ? {} : { lang: "es" }}>
-								{lang ? "EN" : "ES"}
-							</Link>
-						</span>
-					)}
+			{record.url && (
+				<p className="mt-5 text-[12px]">
+					<a href={record.url} target="_blank" rel="noopener noreferrer">
+						View on {SOURCE_LABELS[record.source]} ↗
+					</a>
 				</p>
 			)}
 
