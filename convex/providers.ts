@@ -72,7 +72,6 @@ const clean = (text?: string | null) => text?.replace(/\r\n/g, "\n").trim() || u
 
 // --- TMDB (movies + shows) -------------------------------------------------
 
-// Spanish as it's used in Mexico, for titles and posters released there.
 const TMDB_LANGUAGES: Record<Language, string> = { en: "en-US", es: "es-MX" };
 
 function tmdb(path: string, params: Record<string, string> = {}, language: Language = "en") {

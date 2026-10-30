@@ -14,7 +14,7 @@ function Experimental() {
 			<h2 id="language-selector">🌐 Language selector</h2>
 			<p>
 				Turn it on in <a href="/settings#experimental">settings</a> and the add dialog gets a language
-				select. Pick Español and movies and shows come from The Movie Database with their Mexican Spanish
+				select. Pick Español and movies and shows come from The Movie Database with their Spanish
 				titles and posters, and books come from Open Library's Spanish editions. Albums and games look the
 				same in any language, so they don't get the select.
 			</p>
