@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { vLayout, vVisibility } from "./schema";
 import { LIMITS, PEEK } from "./shared/constants";
+import { hasArt } from "./shared/images";
 import { DEFAULT_THEME, isThemeId, randomSeed, THEMES } from "./shared/themes";
 import { requireUserId } from "./users";
 
@@ -99,7 +100,7 @@ export const recent = query({
 					...list,
 					owner: owner && { username: owner.username },
 					covers: records
-						.filter((r) => r?.image)
+						.filter((r) => hasArt(r?.image))
 						.map((r) => ({ image: r!.image!, kind: r!.kind, title: r!.title })),
 				};
 			}),

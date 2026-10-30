@@ -13,7 +13,7 @@ export function SiteFooter() {
 				<a href="https://musicbrainz.org">MusicBrainz</a> &amp; <a href="https://www.igdb.com">IGDB</a>.
 			</p>
 			<p className="mt-2">
-				<Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link>
+				<Link to="/credits">Credits</Link> · <Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link>
 			</p>
 		</footer>
 	);

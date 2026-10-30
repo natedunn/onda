@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtChar123usernameChar125RouteImport } from './routes/@{$username}'
+import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as ExperimentalRouteImport } from './routes/experimental'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -35,6 +36,11 @@ const AtChar123usernameChar125Route =
     path: '/@{$username}',
     getParentRoute: () => rootRouteImport,
   } as any)
+const CreditsRoute = CreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExperimentalRoute = ExperimentalRouteImport.update({
   id: '/experimental',
   path: '/experimental',
@@ -100,6 +106,7 @@ const OgLChar123slugChar125DotpngRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/@{$username}': typeof AtChar123usernameChar125Route
+  '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/@{$username}'
+    | '/credits'
     | '/experimental'
     | '/privacy'
     | '/settings'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/@{$username}'
+    | '/credits'
     | '/experimental'
     | '/privacy'
     | '/settings'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/@{$username}'
+    | '/credits'
     | '/experimental'
     | '/privacy'
     | '/settings'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtChar123usernameChar125Route: typeof AtChar123usernameChar125Route
+  CreditsRoute: typeof CreditsRoute
   ExperimentalRoute: typeof ExperimentalRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/@{$username}'
       fullPath: '/@{$username}'
       preLoaderRoute: typeof AtChar123usernameChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/credits': {
+      id: '/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof CreditsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/experimental': {
@@ -320,6 +340,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtChar123usernameChar125Route: AtChar123usernameChar125Route,
+  CreditsRoute: CreditsRoute,
   ExperimentalRoute: ExperimentalRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,

@@ -2,6 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
 import { KIND_LABELS, KINDS, type Kind, SOURCE_LABELS } from "@convex/shared/constants";
+import { imageUrl } from "@convex/shared/images";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useAction, useMutation } from "convex/react";
@@ -11,6 +12,8 @@ import { ListCover } from "@/components/list-cover";
 import { errorMessage, plural } from "@/lib/utils";
 
 const DETAILS_TTL = 30 * 24 * 60 * 60 * 1000;
+// The cover is w-36, sm:w-44.
+const COVER_SIZES = "(min-width: 640px) 176px, 144px";
 
 export const Route = createFileRoute("/$kind/$id")({
 	params: {
@@ -24,7 +27,14 @@ export const Route = createFileRoute("/$kind/$id")({
 		const { record } = await context.queryClient.ensureQueryData(
 			convexQuery(api.records.page, { kind: params.kind, sourceId: params.id }),
 		);
-		return record && { title: record.title, year: record.year, description: record.description, image: record.image };
+		return (
+			record && {
+				title: record.title,
+				year: record.year,
+				description: record.description,
+				image: imageUrl(record.image, 500),
+			}
+		);
 	},
 	head: ({ loaderData, params }) => {
 		if (!loaderData) return { meta: [{ title: `${KIND_LABELS[params.kind].one} · onda` }] };
@@ -94,7 +104,14 @@ function ItemPage() {
 		<article>
 			<header className="flex flex-col gap-6 sm:flex-row sm:items-end">
 				<div className="halftone w-36 shrink-0 sm:w-44">
-					<Art src={record.image} kind={record.kind} alt={record.title} className="w-full border-ink" />
+					<Art
+						image={record.image}
+						kind={record.kind}
+						alt={record.title}
+						sizes={COVER_SIZES}
+						priority
+						className="w-full border-ink"
+					/>
 				</div>
 				<div className="min-w-0">
 					<p className="label">

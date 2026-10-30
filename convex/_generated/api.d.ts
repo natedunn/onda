@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as authDiscord from "../authDiscord.js";
 import type * as authGateway from "../authGateway.js";
 import type * as crons from "../crons.js";
+import type * as images from "../images.js";
 import type * as items from "../items.js";
 import type * as lists from "../lists.js";
 import type * as media from "../media.js";
@@ -21,6 +22,7 @@ import type * as providers from "../providers.js";
 import type * as records from "../records.js";
 import type * as seed from "../seed.js";
 import type * as shared_constants from "../shared/constants.js";
+import type * as shared_images from "../shared/images.js";
 import type * as shared_themes from "../shared/themes.js";
 import type * as users from "../users.js";
 
@@ -35,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   authDiscord: typeof authDiscord;
   authGateway: typeof authGateway;
   crons: typeof crons;
+  images: typeof images;
   items: typeof items;
   lists: typeof lists;
   media: typeof media;
@@ -44,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   records: typeof records;
   seed: typeof seed;
   "shared/constants": typeof shared_constants;
+  "shared/images": typeof shared_images;
   "shared/themes": typeof shared_themes;
   users: typeof users;
 }>;

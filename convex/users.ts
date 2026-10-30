@@ -12,6 +12,7 @@ import {
 	type QueryCtx,
 } from "./_generated/server";
 import { LIMITS, PEEK, USERNAME_PATTERN } from "./shared/constants";
+import { hasArt } from "./shared/images";
 
 export async function requireUserId(ctx: QueryCtx | MutationCtx) {
 	const userId = await getAuthUserId(ctx);
@@ -216,7 +217,7 @@ export const profile = query({
 				return {
 					...list,
 					covers: records
-						.filter((r) => r?.image)
+						.filter((r) => hasArt(r?.image))
 						.slice(0, PEEK)
 						.map((r) => ({ image: r!.image!, kind: r!.kind, title: r!.title })),
 				};

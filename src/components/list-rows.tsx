@@ -1,3 +1,4 @@
+import type { AnyImage } from "@convex/shared/images";
 import { Link } from "@tanstack/react-router";
 import { Art } from "@/components/art";
 import { ListCover } from "@/components/list-cover";
@@ -15,7 +16,7 @@ type Row = {
 	updatedAt: number;
 	visibility: string;
 	description?: string;
-	covers: { image: string; kind: string; title: string }[];
+	covers: { image: AnyImage; kind: string; title: string }[];
 	owner?: { username: string } | null;
 };
 
@@ -85,9 +86,10 @@ export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNo
 								{list.covers.map((cover, i) => (
 									<Art
 										key={i}
-										src={cover.image}
+										image={cover.image}
 										kind={cover.kind}
 										alt={cover.title}
+										sizes="(min-width: 1024px) 56px, 44px"
 										// Posters and albums share a width, so albums sit shorter on the shelf.
 										// They may shrink so six still fit on the narrowest phones.
 										className="w-11 min-w-0 shrink lg:w-14"

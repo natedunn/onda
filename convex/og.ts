@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { getListBySlug } from "./lists";
+import { hasArt } from "./shared/images";
 
 // Bump to invalidate every cached image after changing the design.
 const DESIGN_VERSION = 2;
@@ -28,7 +29,7 @@ export const listForImage = internalQuery({
 			itemCount: list.itemCount,
 			owner: owner?.username,
 			covers: records
-				.filter((r) => r?.image)
+				.filter((r) => hasArt(r?.image))
 				.slice(0, 5)
 				.map((r) => ({ image: r!.image!, kind: r!.kind })),
 		};

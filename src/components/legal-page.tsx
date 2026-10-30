@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export const LEGAL_UPDATED = "October 27, 2026";
+export const LEGAL_UPDATED = "October 29, 2026";
 export const CONTACT_EMAIL = "hello@onda.club";
 
 export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
