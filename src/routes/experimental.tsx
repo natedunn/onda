@@ -5,11 +5,26 @@ export const Route = createFileRoute("/experimental")({
 	component: Experimental,
 });
 
-// Carried over word for word from RAD's /docs/experimental.
+// Book search is carried over word for word from RAD's /docs/experimental.
 function Experimental() {
 	return (
 		<article className="legal">
 			<h1 className="font-serif text-5xl">Experimental features</h1>
+
+			<h2 id="language-selector">🌐 Language selector</h2>
+			<p>
+				The language selector lets you add movies, shows and books in Spanish. Search results come back
+				with Spanish titles and covers, when The Movie Database or Open Library has them. Albums and games
+				search the same way in either language.
+			</p>
+			<p>
+				Each item stays in the language you added it in, and your list shows it that way to everyone. The
+				rest of onda is only in English for now.
+			</p>
+			<p>
+				To turn it on, go to Settings and check Language selector under Experimental. The add dialog will
+				then have a language menu next to the item type.
+			</p>
 
 			<h2>📕 Book search</h2>
 			<p>

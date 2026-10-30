@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
-import { KIND_LABELS, KINDS, type Kind, SOURCE_LABELS } from "@convex/shared/constants";
+import { KIND_LABELS, KINDS, type Kind, LOCALIZED_KINDS, SOURCE_LABELS } from "@convex/shared/constants";
 import { imageUrl } from "@convex/shared/images";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -23,9 +23,12 @@ export const Route = createFileRoute("/$kind/$id")({
 		},
 		stringify: ({ kind, id }) => ({ kind, id }),
 	},
-	loader: async ({ context, params }) => {
+	// Experimental: `?lang=es` is the Spanish record, added with the add dialog's language select.
+	validateSearch: (search: Record<string, unknown>): { lang?: "es" } => (search.lang === "es" ? { lang: "es" } : {}),
+	loaderDeps: ({ search }) => ({ lang: search.lang }),
+	loader: async ({ context, params, deps }) => {
 		const { record } = await context.queryClient.ensureQueryData(
-			convexQuery(api.records.page, { kind: params.kind, sourceId: params.id }),
+			convexQuery(api.records.page, { kind: params.kind, sourceId: params.id, language: deps.lang }),
 		);
 		return (
 			record && {
@@ -63,7 +66,9 @@ export const Route = createFileRoute("/$kind/$id")({
 
 function ItemPage() {
 	const { kind, id } = Route.useParams();
-	const { data } = useSuspenseQuery(convexQuery(api.records.page, { kind, sourceId: id }));
+	const { lang } = Route.useSearch();
+	const { data } = useSuspenseQuery(convexQuery(api.records.page, { kind, sourceId: id, language: lang }));
+	const { data: viewer } = useQuery(convexQuery(api.users.viewer, {}));
 	const ensureDetails = useAction(api.records.ensureDetails);
 	const [status, setStatus] = useState<"idle" | "fetching" | "missing" | "error">("idle");
 
@@ -76,13 +81,13 @@ function ItemPage() {
 		if (!stale) return;
 		let cancelled = false;
 		setStatus("fetching");
-		ensureDetails({ kind, sourceId: id })
+		ensureDetails({ kind, sourceId: id, language: lang })
 			.then((result) => !cancelled && setStatus(result === "missing" ? "missing" : "idle"))
 			.catch(() => !cancelled && setStatus("error"));
 		return () => {
 			cancelled = true;
 		};
-	}, [kind, id, stale, ensureDetails]);
+	}, [kind, id, lang, stale, ensureDetails]);
 
 	if (!record) {
 		if (status === "missing") {
@@ -100,8 +105,21 @@ function ItemPage() {
 		);
 	}
 
+	// Experimental: Spanish pages can always go back to English; English pages offer Spanish
+	// once it exists or to people with the language selector on.
+	const canChangeLanguage =
+		LOCALIZED_KINDS.includes(kind) && (lang === "es" || data.hasOtherLanguage || viewer?.languageSelector === true);
+
 	return (
-		<article>
+		<article className="relative">
+			{canChangeLanguage && (
+				<p className="absolute top-0 right-0 text-[12px] text-muted">
+					{lang ? "Cambiar idioma" : "Change language"}:{" "}
+					<Link to="/$kind/$id" params={{ kind, id }} search={lang ? {} : { lang: "es" }}>
+						{lang ? "EN" : "ES"}
+					</Link>
+				</p>
+			)}
 			<header className="flex flex-col gap-6 sm:flex-row sm:items-end">
 				<div className="halftone w-36 shrink-0 sm:w-44">
 					<Art

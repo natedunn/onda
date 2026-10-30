@@ -16,6 +16,8 @@ export const vSource = v.union(
 	v.literal("igdb"),
 );
 
+export const vLanguage = v.union(v.literal("en"), v.literal("es"));
+
 export const vVisibility = v.union(
 	v.literal("public"),
 	v.literal("unlisted"),
@@ -66,6 +68,9 @@ export const recordFields = {
 	url: v.optional(v.string()),
 	// Books: the Open Library edition (OL…M) whose title and cover we show.
 	editionId: v.optional(v.string()),
+	// Fetched in another language (experimental); absent for English. Each language
+	// is its own record, so adding something in Spanish leaves the English one alone.
+	language: v.optional(v.literal("es")),
 	// Filled in the first time someone opens the item's page.
 	description: v.optional(v.string()),
 	genres: v.optional(v.array(v.string())),
@@ -83,6 +88,8 @@ export default defineSchema({
 		isPrivate: v.boolean(),
 		// Verified email from a sign-in provider, lowercased; links providers to one user.
 		email: v.optional(v.string()),
+		// Experimental: a language select in the add dialog.
+		languageSelector: v.optional(v.boolean()),
 	})
 		.index("by_username", ["username"])
 		.index("by_email", ["email"]),
@@ -114,17 +121,18 @@ export default defineSchema({
 		// Title, subtitle and creators, for searching what's already saved. Set by upsertRecord.
 		searchText: v.optional(v.string()),
 	})
-		.index("by_kind", ["kind", "sourceId"])
+		.index("by_kind", ["kind", "sourceId", "language"])
 		.searchIndex("search", { searchField: "searchText", filterFields: ["kind"] }),
 
 	// Source API search results by normalized query, so repeat searches skip the API.
 	searchCache: defineTable({
 		kind: vKind,
 		query: v.string(),
+		language: v.optional(v.literal("es")),
 		recordIds: v.array(v.id("records")),
 		fetchedAt: v.number(),
 	})
-		.index("by_query", ["kind", "query"])
+		.index("by_query", ["kind", "query", "language"])
 		.index("by_fetchedAt", ["fetchedAt"]),
 
 	items: defineTable({

@@ -22,6 +22,7 @@ const SECTIONS = [
 	{ id: "profile", label: "Profile" },
 	{ id: "privacy", label: "Privacy" },
 	{ id: "appearance", label: "Appearance" },
+	{ id: "experimental", label: "Experimental" },
 	{ id: "account", label: "Account" },
 ];
 
@@ -44,6 +45,7 @@ function Settings() {
 				<div className="space-y-8 [&_fieldset]:scroll-mt-6">
 					<ProfileForm viewer={viewer} />
 					<Appearance />
+					<Experimental viewer={viewer} />
 					<Account viewer={viewer} />
 				</div>
 			</div>
@@ -213,6 +215,39 @@ function PreviewPage({ colors, style }: { colors: (typeof PALETTE)["light"]; sty
 			<div className="mt-2 h-px w-3/4" style={{ background: colors.rule }} />
 			<div className="mt-2 h-3 w-10 border" style={{ borderColor: colors.ink, boxShadow: `2px 2px 0 ${colors.ink}` }} />
 		</div>
+	);
+}
+
+function Experimental({ viewer }: { viewer: Doc<"users"> }) {
+	const setLanguageSelector = useMutation(api.users.setLanguageSelector);
+	const [error, setError] = useState<string | null>(null);
+
+	return (
+		<fieldset id="experimental" className="box">
+			<legend>Experimental</legend>
+			<label className="flex items-baseline gap-2">
+				<input
+					type="checkbox"
+					checked={viewer.languageSelector ?? false}
+					onChange={async (e) => {
+						setError(null);
+						try {
+							await setLanguageSelector({ enabled: e.target.checked });
+						} catch (err) {
+							setError(errorMessage(err));
+						}
+					}}
+				/>
+				<span>
+					<b>Language selector</b>{" "}
+					<span className="text-muted">
+						— search for movies, shows and books in English or Spanish when adding to a list.{" "}
+						<a href="/experimental#language-selector">More</a>
+					</span>
+				</span>
+			</label>
+			{error && <p className="mt-2 text-danger">{error}</p>}
+		</fieldset>
 	);
 }
 

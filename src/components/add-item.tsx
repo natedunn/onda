@@ -1,7 +1,14 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
-import { KIND_LABELS, type Kind } from "@convex/shared/constants";
+import {
+	KIND_LABELS,
+	type Kind,
+	LANGUAGE_LABELS,
+	LANGUAGES,
+	type Language,
+	LOCALIZED_KINDS,
+} from "@convex/shared/constants";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAction, useMutation } from "convex/react";
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +16,7 @@ import { Art } from "@/components/art";
 import { cn, errorMessage } from "@/lib/utils";
 
 const KIND_KEY = "onda:add-kind";
+const LANGUAGE_KEY = "onda:add-language";
 
 // Where each kind's search results come from, credited under the results. `live` kinds
 // search a mirror first and offer to ask the source itself (media.search's `live`).
@@ -75,7 +83,12 @@ function AddItem({
 	onClose: () => void;
 }) {
 	const { data: kinds = [] } = useQuery(convexQuery(api.media.kinds, {}));
+	const { data: viewer } = useQuery(convexQuery(api.users.viewer, {}));
 	const [kind, setKind] = useState<Kind>("movie");
+	// Experimental: only people who turned the language selector on in settings get a choice.
+	const [chosenLanguage, setChosenLanguage] = useState<Language>("en");
+	const canChooseLanguage = viewer?.languageSelector === true && LOCALIZED_KINDS.includes(kind);
+	const language = canChooseLanguage ? chosenLanguage : "en";
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<Doc<"records">[] | null>(null);
 	const [status, setStatus] = useState<"idle" | "searching" | "error">("idle");
@@ -95,6 +108,8 @@ function AddItem({
 	useEffect(() => {
 		const saved = localStorage.getItem(KIND_KEY) as Kind | null;
 		if (saved) setKind(saved);
+		const savedLanguage = localStorage.getItem(LANGUAGE_KEY) as Language | null;
+		if (savedLanguage && LANGUAGES.includes(savedLanguage)) setChosenLanguage(savedLanguage);
 	}, []);
 	useEffect(() => {
 		if (kinds.length && !kinds.includes(kind)) setKind(kinds[0]!);
@@ -104,7 +119,7 @@ function AddItem({
 	// search useful when the source API is having trouble.
 	const term = useDebounced(query.trim(), 150);
 	const { data: local = [] } = useQuery({
-		...convexQuery(api.media.searchLocal, { kind, query: term }),
+		...convexQuery(api.media.searchLocal, { kind, query: term, language }),
 		enabled: term.length >= 2,
 		placeholderData: keepPreviousData,
 	});
@@ -124,7 +139,7 @@ function AddItem({
 		const timer = setTimeout(async () => {
 			setStatus("searching");
 			try {
-				const found = await search({ kind, query: q });
+				const found = await search({ kind, query: q, language });
 				if (id !== requestId.current) return;
 				setResults(found);
 				setStatus("idle");
@@ -136,13 +151,13 @@ function AddItem({
 			}
 		}, 450);
 		return () => clearTimeout(timer);
-	}, [query, kind, search]);
+	}, [query, kind, language, search]);
 
 	const searchLive = async () => {
 		const id = requestId.current;
 		setLive({ status: "searching" });
 		try {
-			const fromSource = await search({ kind, query: query.trim(), live: true });
+			const fromSource = await search({ kind, query: query.trim(), live: true, language });
 			if (id !== requestId.current) return;
 			setLive({ status: "done", results: fromSource });
 			// They land at the end of the list, which may be scrolled out of view.
@@ -206,6 +221,27 @@ function AddItem({
 							))}
 						</select>
 					</label>
+					{canChooseLanguage && (
+						<label className="flex items-center gap-2">
+							<span className="label">in</span>
+							<select
+								className="field py-1 pl-2.5 text-[13px] leading-6 pointer-coarse:text-[16px]"
+								value={chosenLanguage}
+								onChange={(e) => {
+									const l = e.target.value as Language;
+									setChosenLanguage(l);
+									localStorage.setItem(LANGUAGE_KEY, l);
+									input.current?.focus();
+								}}
+							>
+								{LANGUAGES.map((l) => (
+									<option key={l} value={l}>
+										{LANGUAGE_LABELS[l]}
+									</option>
+								))}
+							</select>
+						</label>
+					)}
 					<button type="button" className="linkish -m-2 ml-auto p-2 text-[12px]" onClick={onClose}>
 						done
 					</button>
