@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AtChar123usernameChar125RouteImport } from './routes/@{$username}'
 import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as ExperimentalRouteImport } from './routes/experimental'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -18,24 +17,19 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as KindIdRouteImport } from './routes/$kind.$id'
+import { Route as AtChar123usernameChar125IndexRouteImport } from './routes/@{$username}/index'
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
-import { Route as LSlugIndexRouteImport } from './routes/l/$slug/index'
-import { Route as LSlugSettingsRouteImport } from './routes/l/$slug/settings'
 import { Route as OgLChar123slugChar125DotpngRouteImport } from './routes/og/l/{$slug}[.]png'
+import { Route as AtChar123usernameChar125LSlugIndexRouteImport } from './routes/@{$username}/l/$slug/index'
+import { Route as AtChar123usernameChar125LSlugSettingsRouteImport } from './routes/@{$username}/l/$slug/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtChar123usernameChar125Route =
-  AtChar123usernameChar125RouteImport.update({
-    id: '/@{$username}',
-    path: '/@{$username}',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const CreditsRoute = CreditsRouteImport.update({
   id: '/credits',
   path: '/credits',
@@ -71,6 +65,12 @@ const KindIdRoute = KindIdRouteImport.update({
   path: '/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtChar123usernameChar125IndexRoute =
+  AtChar123usernameChar125IndexRouteImport.update({
+    id: '/@{$username}/',
+    path: '/@{$username}/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthRefreshRoute = AuthRefreshRouteImport.update({
   id: '/auth/refresh',
   path: '/auth/refresh',
@@ -86,26 +86,27 @@ const AuthSignoutRoute = AuthSignoutRouteImport.update({
   path: '/auth/signout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LSlugIndexRoute = LSlugIndexRouteImport.update({
-  id: '/l/$slug/',
-  path: '/l/$slug/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LSlugSettingsRoute = LSlugSettingsRouteImport.update({
-  id: '/l/$slug/settings',
-  path: '/l/$slug/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OgLChar123slugChar125DotpngRoute =
   OgLChar123slugChar125DotpngRouteImport.update({
     id: '/og/l/{$slug}.png',
     path: '/og/l/{$slug}.png',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AtChar123usernameChar125LSlugIndexRoute =
+  AtChar123usernameChar125LSlugIndexRouteImport.update({
+    id: '/@{$username}/l/$slug/',
+    path: '/@{$username}/l/$slug/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AtChar123usernameChar125LSlugSettingsRoute =
+  AtChar123usernameChar125LSlugSettingsRouteImport.update({
+    id: '/@{$username}/l/$slug/settings',
+    path: '/@{$username}/l/$slug/settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/@{$username}': typeof AtChar123usernameChar125Route
   '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
@@ -116,13 +117,13 @@ export interface FileRoutesByFullPath {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/settings': typeof LSlugSettingsRoute
+  '/@{$username}/': typeof AtChar123usernameChar125IndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
-  '/l/$slug/': typeof LSlugIndexRoute
+  '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
+  '/@{$username}/l/$slug/': typeof AtChar123usernameChar125LSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/@{$username}': typeof AtChar123usernameChar125Route
   '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
@@ -133,14 +134,14 @@ export interface FileRoutesByTo {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/settings': typeof LSlugSettingsRoute
+  '/@{$username}': typeof AtChar123usernameChar125IndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
-  '/l/$slug': typeof LSlugIndexRoute
+  '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
+  '/@{$username}/l/$slug': typeof AtChar123usernameChar125LSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/@{$username}': typeof AtChar123usernameChar125Route
   '/credits': typeof CreditsRoute
   '/experimental': typeof ExperimentalRoute
   '/privacy': typeof PrivacyRoute
@@ -151,15 +152,15 @@ export interface FileRoutesById {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/settings': typeof LSlugSettingsRoute
+  '/@{$username}/': typeof AtChar123usernameChar125IndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
-  '/l/$slug/': typeof LSlugIndexRoute
+  '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
+  '/@{$username}/l/$slug/': typeof AtChar123usernameChar125LSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/@{$username}'
     | '/credits'
     | '/experimental'
     | '/privacy'
@@ -170,13 +171,13 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/settings'
+    | '/@{$username}/'
     | '/og/l/{$slug}.png'
-    | '/l/$slug/'
+    | '/@{$username}/l/$slug/settings'
+    | '/@{$username}/l/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/@{$username}'
     | '/credits'
     | '/experimental'
     | '/privacy'
@@ -187,13 +188,13 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/settings'
+    | '/@{$username}'
     | '/og/l/{$slug}.png'
-    | '/l/$slug'
+    | '/@{$username}/l/$slug/settings'
+    | '/@{$username}/l/$slug'
   id:
     | '__root__'
     | '/'
-    | '/@{$username}'
     | '/credits'
     | '/experimental'
     | '/privacy'
@@ -204,14 +205,14 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/settings'
+    | '/@{$username}/'
     | '/og/l/{$slug}.png'
-    | '/l/$slug/'
+    | '/@{$username}/l/$slug/settings'
+    | '/@{$username}/l/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AtChar123usernameChar125Route: typeof AtChar123usernameChar125Route
   CreditsRoute: typeof CreditsRoute
   ExperimentalRoute: typeof ExperimentalRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -222,9 +223,10 @@ export interface RootRouteChildren {
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
-  LSlugSettingsRoute: typeof LSlugSettingsRoute
+  AtChar123usernameChar125IndexRoute: typeof AtChar123usernameChar125IndexRoute
   OgLChar123slugChar125DotpngRoute: typeof OgLChar123slugChar125DotpngRoute
-  LSlugIndexRoute: typeof LSlugIndexRoute
+  AtChar123usernameChar125LSlugSettingsRoute: typeof AtChar123usernameChar125LSlugSettingsRoute
+  AtChar123usernameChar125LSlugIndexRoute: typeof AtChar123usernameChar125LSlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -234,13 +236,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/@{$username}': {
-      id: '/@{$username}'
-      path: '/@{$username}'
-      fullPath: '/@{$username}'
-      preLoaderRoute: typeof AtChar123usernameChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/credits': {
@@ -292,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/@{$username}/': {
+      id: '/@{$username}/'
+      path: '/@{$username}'
+      fullPath: '/@{$username}/'
+      preLoaderRoute: typeof AtChar123usernameChar125IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/refresh': {
       id: '/auth/refresh'
       path: '/auth/refresh'
@@ -313,20 +315,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/l/$slug/': {
-      id: '/l/$slug/'
-      path: '/l/$slug'
-      fullPath: '/l/$slug/'
-      preLoaderRoute: typeof LSlugIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/l/$slug/settings': {
-      id: '/l/$slug/settings'
-      path: '/l/$slug/settings'
-      fullPath: '/l/$slug/settings'
-      preLoaderRoute: typeof LSlugSettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/og/l/{$slug}.png': {
       id: '/og/l/{$slug}.png'
       path: '/og/l/{$slug}.png'
@@ -334,12 +322,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OgLChar123slugChar125DotpngRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/@{$username}/l/$slug/': {
+      id: '/@{$username}/l/$slug/'
+      path: '/@{$username}/l/$slug'
+      fullPath: '/@{$username}/l/$slug/'
+      preLoaderRoute: typeof AtChar123usernameChar125LSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/@{$username}/l/$slug/settings': {
+      id: '/@{$username}/l/$slug/settings'
+      path: '/@{$username}/l/$slug/settings'
+      fullPath: '/@{$username}/l/$slug/settings'
+      preLoaderRoute: typeof AtChar123usernameChar125LSlugSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AtChar123usernameChar125Route: AtChar123usernameChar125Route,
   CreditsRoute: CreditsRoute,
   ExperimentalRoute: ExperimentalRoute,
   PrivacyRoute: PrivacyRoute,
@@ -350,9 +351,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,
-  LSlugSettingsRoute: LSlugSettingsRoute,
+  AtChar123usernameChar125IndexRoute: AtChar123usernameChar125IndexRoute,
   OgLChar123slugChar125DotpngRoute: OgLChar123slugChar125DotpngRoute,
-  LSlugIndexRoute: LSlugIndexRoute,
+  AtChar123usernameChar125LSlugSettingsRoute:
+    AtChar123usernameChar125LSlugSettingsRoute,
+  AtChar123usernameChar125LSlugIndexRoute:
+    AtChar123usernameChar125LSlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

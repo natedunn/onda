@@ -22,20 +22,22 @@ type Row = {
 
 /**
  * Lists as rows: the cover, what it is, and a peek at the art of its first items,
- * standing on a shared baseline like a shelf.
+ * standing on a shared baseline like a shelf. `owner` is for a profile, where every
+ * list is theirs and the rows skip the byline.
  */
-export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNode }) {
+export function ListRows({ lists, owner, empty }: { lists: Row[]; owner?: string; empty?: React.ReactNode }) {
 	if (lists.length === 0) return <p className="text-muted">{empty ?? "No lists yet."}</p>;
 	return (
 		<ol>
 			{lists.map((list) => {
 				const more = list.itemCount - list.covers.length;
+				const params = { username: owner ?? list.owner!.username, slug: list.slug };
 				return (
 					<li
 						key={list._id}
 						className="flex flex-wrap items-center gap-x-7 gap-y-4 border-b border-rule py-6 first:pt-0 md:flex-nowrap"
 					>
-						<Link to="/l/$slug" params={{ slug: list.slug }} className="plain shrink-0" tabIndex={-1}>
+						<Link to="/@{$username}/l/$slug" params={params} className="plain shrink-0" tabIndex={-1}>
 							<ListCover
 								theme={list.theme}
 								seed={list.seed}
@@ -47,8 +49,8 @@ export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNo
 						</Link>
 						<div className="min-w-0 flex-1">
 							<Link
-								to="/l/$slug"
-								params={{ slug: list.slug }}
+								to="/@{$username}/l/$slug"
+								params={params}
 								className="plain font-serif text-[1.9rem] leading-[1.05] tracking-tight hover:underline"
 							>
 								{list.name}
@@ -78,8 +80,8 @@ export function ListRows({ lists, empty }: { lists: Row[]; empty?: React.ReactNo
 						</div>
 						{list.covers.length > 0 && (
 							<Link
-								to="/l/$slug"
-								params={{ slug: list.slug }}
+								to="/@{$username}/l/$slug"
+								params={params}
 								className="plain flex w-full shrink-0 items-end gap-2 md:w-auto"
 								aria-label={`What's on ${list.name}`}
 							>

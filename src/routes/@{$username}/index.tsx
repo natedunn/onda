@@ -8,7 +8,7 @@ import { NewListButton } from "@/components/new-list-button";
 import { ControlStrip, PageHero } from "@/components/page-hero";
 import { plural } from "@/lib/utils";
 
-export const Route = createFileRoute("/@{$username}")({
+export const Route = createFileRoute("/@{$username}/")({
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
 			convexQuery(api.users.profile, { username: params.username }),
@@ -88,7 +88,7 @@ function Profile() {
 			</ControlStrip>
 
 			<div className="mt-8">
-				<ListRows lists={lists} empty={isOwner ? "You haven't made any lists yet." : "No public lists yet."} />
+				<ListRows lists={lists} owner={user.username} empty={isOwner ? "You haven't made any lists yet." : "No public lists yet."} />
 			</div>
 		</div>
 	);

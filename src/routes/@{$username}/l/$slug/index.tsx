@@ -4,7 +4,7 @@ import type { Doc } from "@convex/_generated/dataModel";
 import { KIND_LABELS, type Layout, LAYOUT_LABELS, LAYOUTS, LIMITS } from "@convex/shared/constants";
 import { getTheme } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { AddItemDialog } from "@/components/add-item";
@@ -16,7 +16,7 @@ import { cn, errorMessage, plural, siteUrl, timeAgo } from "@/lib/utils";
 
 type Search = { view?: Layout; editing?: boolean };
 
-export const Route = createFileRoute("/l/$slug/")({
+export const Route = createFileRoute("/@{$username}/l/$slug/")({
 	validateSearch: (search: Record<string, unknown>): Search => ({
 		view: LAYOUTS.includes(search.view as Layout) ? (search.view as Layout) : undefined,
 		editing: search.editing === true || search.editing === "true" ? true : undefined,
@@ -25,12 +25,16 @@ export const Route = createFileRoute("/l/$slug/")({
 		const data = await context.queryClient.ensureQueryData(
 			convexQuery(api.lists.get, { slug: params.slug }),
 		);
-		if (!data) throw notFound();
+		if (!data?.owner) throw notFound();
+		// The id alone finds the list; the username follows its owner (renames, letter case).
+		if (data.owner.username !== params.username) {
+			throw redirect({ to: "/@{$username}/l/$slug", params: { username: data.owner.username, slug: params.slug }, search: true });
+		}
 		return {
 			name: data.list.name,
 			emoji: data.list.emoji,
 			description: data.list.description,
-			owner: data.owner?.username,
+			owner: data.owner.username,
 			updatedAt: data.list.updatedAt,
 			unlisted: data.list.visibility !== "public",
 		};
@@ -62,7 +66,7 @@ export const Route = createFileRoute("/l/$slug/")({
 type Item = Doc<"items"> & { record: Doc<"records"> };
 
 function ListPage() {
-	const { slug } = Route.useParams();
+	const { username, slug } = Route.useParams();
 	const search = Route.useSearch();
 	const navigate = Route.useNavigate();
 	const { data } = useSuspenseQuery(convexQuery(api.lists.get, { slug }));
@@ -117,8 +121,8 @@ function ListPage() {
 					</div>
 					{isOwner && (
 						<Link
-							to="/l/$slug/settings"
-							params={{ slug }}
+							to="/@{$username}/l/$slug/settings"
+							params={{ username, slug }}
 							className="btn btn-icon absolute top-0 right-0"
 							aria-label="List settings"
 							title="List settings"
