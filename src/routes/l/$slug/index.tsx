@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
-import { KIND_LABELS, type Layout, LAYOUT_LABELS, LAYOUTS, LIMITS, toLayout } from "@convex/shared/constants";
+import { KIND_LABELS, type Layout, LAYOUT_LABELS, LAYOUTS, LIMITS } from "@convex/shared/constants";
 import { getTheme } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -18,7 +18,7 @@ type Search = { view?: Layout; editing?: boolean };
 
 export const Route = createFileRoute("/l/$slug/")({
 	validateSearch: (search: Record<string, unknown>): Search => ({
-		view: toLayout(search.view),
+		view: LAYOUTS.includes(search.view as Layout) ? (search.view as Layout) : undefined,
 		editing: search.editing === true || search.editing === "true" ? true : undefined,
 	}),
 	loader: async ({ context, params }) => {
