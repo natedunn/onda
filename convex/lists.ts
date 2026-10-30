@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, type MutationCtx, query, type QueryCtx } from "./_generated/server";
 import { vLayout, vVisibility } from "./schema";
-import { LIMITS, PEEK } from "./shared/constants";
+import { LIMITS, PEEK, toLayout } from "./shared/constants";
 import { hasArt } from "./shared/images";
 import { DEFAULT_THEME, isThemeId, randomSeed, THEMES } from "./shared/themes";
 import { requireUserId } from "./users";
@@ -68,7 +68,8 @@ export const get = query({
 		);
 
 		return {
-			list,
+			// Lists not yet migrated to the renamed view IDs read as the new ones.
+			list: { ...list, layout: toLayout(list.layout) ?? "list" },
 			owner: owner && { username: owner.username },
 			isOwner: viewerId === list.ownerId,
 			items: items.filter((i) => i.record !== null) as Array<

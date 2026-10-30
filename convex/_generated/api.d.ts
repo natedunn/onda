@@ -16,6 +16,7 @@ import type * as images from "../images.js";
 import type * as items from "../items.js";
 import type * as lists from "../lists.js";
 import type * as media from "../media.js";
+import type * as migrations from "../migrations.js";
 import type * as og from "../og.js";
 import type * as ogRender from "../ogRender.js";
 import type * as providers from "../providers.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   items: typeof items;
   lists: typeof lists;
   media: typeof media;
+  migrations: typeof migrations;
   og: typeof og;
   ogRender: typeof ogRender;
   providers: typeof providers;

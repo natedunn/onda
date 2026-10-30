@@ -55,7 +55,7 @@ export function TopStrip() {
 	return (
 		<div
 			aria-hidden
-			className="fixed inset-x-0 top-0 h-1.5 bg-(--mesh-base) duration-500 ease-in-out motion-reduce:transition-none"
+			className="fixed inset-x-0 top-0 z-60 h-1.5 bg-(--mesh-base) duration-500 ease-in-out motion-reduce:transition-none"
 			style={{ ...style, backgroundImage: IMAGE, transitionProperty: PROPERTIES } as CSSProperties}
 		/>
 	);
