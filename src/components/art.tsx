@@ -1,4 +1,4 @@
-import { type AnyImage, hasArt, imageSrcSet, imageUrl } from "@convex/shared/images";
+import { hasArt, type Image, imageSrcSet, imageUrl } from "@convex/shared/images";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ export function Art({
 	priority,
 	className,
 }: {
-	image?: AnyImage;
+	image?: Image;
 	kind: string;
 	alt: string;
 	sizes: string;

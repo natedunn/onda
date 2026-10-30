@@ -57,31 +57,28 @@ export const COPIED_HOSTS: SourceImageHost[] = ["igdb", "caa", "openlibrary"];
 /** The sizes copied for each of those: one for lists, one for item pages and grids. */
 export const COPIED_SIZES: Record<string, number[]> = { igdb: [264, 528], caa: [250, 500], openlibrary: [180, 330] };
 
-// Records saved before images were pointers hold plain URLs; read them as-is
-// until the migration (images:migrateUrls) has run everywhere.
-export type AnyImage = Image | string | undefined | null;
+type MaybeImage = Image | undefined | null;
 
 function sizesOf(image: Image): Size[] {
 	if (image.host === "r2") return image.files.map((f) => ({ width: f.width, url: () => `${IMAGE_BASE}/${f.path}` }));
 	return SOURCE_SIZES[image.host];
 }
 
-export function hasArt(image: AnyImage): boolean {
+export function hasArt(image: MaybeImage): boolean {
 	if (!image) return false;
-	return typeof image === "string" || sizesOf(image).length > 0;
+	return sizesOf(image).length > 0;
 }
 
 /** The smallest size at least `width` pixels wide (or the largest there is). */
-export function imageUrl(image: AnyImage, width: number): string | undefined {
+export function imageUrl(image: MaybeImage, width: number): string | undefined {
 	if (!image) return undefined;
-	if (typeof image === "string") return image;
 	const sizes = sizesOf(image);
 	const id = image.host === "r2" ? "" : image.id;
 	return (sizes.find((s) => s.width >= width) ?? sizes.at(-1))?.url(id);
 }
 
-export function imageSrcSet(image: AnyImage): string | undefined {
-	if (!image || typeof image === "string") return undefined;
+export function imageSrcSet(image: MaybeImage): string | undefined {
+	if (!image) return undefined;
 	const id = image.host === "r2" ? "" : image.id;
 	return sizesOf(image)
 		.map((s) => `${s.url(id)} ${s.width}w`)
@@ -91,19 +88,4 @@ export function imageSrcSet(image: AnyImage): string | undefined {
 /** Same picture: equal source images, or a copy and the source image it was made from. */
 export function sameSourceImage(a: SourceImage | undefined, b: SourceImage | undefined) {
 	return Boolean(a && b && a.host === b.host && a.id === b.id);
-}
-
-/** Reads one of the URLs records used to store as a pointer. */
-export function parseImageUrl(url: string): SourceImage | undefined {
-	const patterns: [SourceImageHost, RegExp][] = [
-		["tmdb", /^https:\/\/image\.tmdb\.org\/t\/p\/[a-z0-9]+(\/[^/]+)$/],
-		["igdb", /^https:\/\/images\.igdb\.com\/igdb\/image\/upload\/[a-z0-9_]+\/([^/.]+)\.\w+$/],
-		["caa", /^https:\/\/coverartarchive\.org\/release-group\/([0-9a-f-]{36})\/front/],
-		["openlibrary", /^https:\/\/covers\.openlibrary\.org\/b\/id\/(\d+)-[SML]\.jpg$/],
-	];
-	for (const [host, pattern] of patterns) {
-		const match = url.match(pattern);
-		if (match) return { host, id: match[1]! };
-	}
-	return undefined;
 }
