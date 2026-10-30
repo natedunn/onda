@@ -89,7 +89,7 @@ export default defineSchema({
 
 	lists: defineTable({
 		ownerId: v.id("users"),
-		// Short public id used in URLs (/l/:slug).
+		// Random public id used in URLs (/@:username/l/:slug).
 		slug: v.string(),
 		name: v.string(),
 		emoji: v.optional(v.string()),

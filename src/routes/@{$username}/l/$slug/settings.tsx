@@ -10,7 +10,7 @@ import { useState } from "react";
 import { ListCover } from "@/components/list-cover";
 import { cn, errorMessage } from "@/lib/utils";
 
-export const Route = createFileRoute("/l/$slug/settings")({
+export const Route = createFileRoute("/@{$username}/l/$slug/settings")({
 	validateSearch: (search: Record<string, unknown>): { new?: boolean } => ({
 		new: search.new === true || search.new === "true" ? true : undefined,
 	}),
@@ -20,7 +20,14 @@ export const Route = createFileRoute("/l/$slug/settings")({
 	},
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(convexQuery(api.lists.get, { slug: params.slug }));
-		if (!data?.isOwner) throw notFound();
+		if (!data?.isOwner || !data.owner) throw notFound();
+		if (data.owner.username !== params.username) {
+			throw redirect({
+				to: "/@{$username}/l/$slug/settings",
+				params: { username: data.owner.username, slug: params.slug },
+				search: true,
+			});
+		}
 	},
 	head: () => ({ meta: [{ title: "List settings · onda" }] }),
 	component: ListSettings,
@@ -46,15 +53,15 @@ const LAYOUT_HELP: Record<Layout, string> = {
 };
 
 function ListSettings() {
-	const { slug } = Route.useParams();
+	const { username, slug } = Route.useParams();
 	const { new: isNew } = Route.useSearch();
 	const { data } = useSuspenseQuery(convexQuery(api.lists.get, { slug }));
 	if (!data) return null;
 	// Keyed so a fresh copy of the form state is made if the list changes underneath.
-	return <EditForm key={data.list._id} list={data.list} isNew={isNew === true} />;
+	return <EditForm key={data.list._id} list={data.list} username={username} isNew={isNew === true} />;
 }
 
-function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
+function EditForm({ list, username, isNew }: { list: Doc<"lists">; username: string; isNew: boolean }) {
 	const update = useMutation(api.lists.update);
 	const remove = useMutation(api.lists.remove);
 	const navigate = useNavigate();
@@ -80,7 +87,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 		setError(null);
 		try {
 			await update({ listId: list._id, ...form, emoji: form.emoji || null });
-			await navigate({ to: "/l/$slug", params: { slug: list.slug } });
+			await navigate({ to: "/@{$username}/l/$slug", params: { username, slug: list.slug } });
 		} catch (err) {
 			setError(errorMessage(err));
 			setSaving(false);
@@ -102,7 +109,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 					<p className="label">{isNew ? "A new list" : "List settings"}</p>
 					<h1 className="font-serif text-5xl leading-none">{form.name || "Untitled"}</h1>
 					<p className="mt-2 text-[12px]">
-						<Link to="/l/$slug" params={{ slug: list.slug }}>
+						<Link to="/@{$username}/l/$slug" params={{ username, slug: list.slug }}>
 							← back to the list
 						</Link>
 					</p>
@@ -218,7 +225,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 				<button type="submit" className="btn btn-primary" disabled={saving}>
 					{saving ? "Saving…" : "Save list"}
 				</button>
-				<Link to="/l/$slug" params={{ slug: list.slug }} className="text-[12px]">
+				<Link to="/@{$username}/l/$slug" params={{ username, slug: list.slug }} className="text-[12px]">
 					cancel
 				</Link>
 				{error && <span className="text-danger">{error}</span>}

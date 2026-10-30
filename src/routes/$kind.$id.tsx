@@ -179,7 +179,7 @@ function ItemPage() {
 							<li key={list._id} className="flex items-center gap-3 border-b border-rule py-2">
 								<ListCover theme={list.theme} seed={list.seed} emoji={list.emoji} className="w-9" emojiClassName="text-lg" />
 								<div className="min-w-0 flex-1">
-									<Link to="/l/$slug" params={{ slug: list.slug }} className="font-serif text-lg leading-tight">
+									<Link to="/@{$username}/l/$slug" params={{ username: list.owner, slug: list.slug }} className="font-serif text-lg leading-tight">
 										{list.name}
 									</Link>
 									<p className="text-[11px] text-muted">

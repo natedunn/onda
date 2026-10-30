@@ -29,7 +29,8 @@ convex/
   og.ts ogRender.ts   OG images: satori + resvg in a Node action, cached in storage
   shared/             code shared with the frontend (themes, gradient, limits)
 src/
-  routes/             /, /sign-in, /@{username}, /settings, /l/{slug}, /l/{slug}/edit,
+  routes/             /, /sign-in, /@{username}, /settings, /@{username}/l/{slug},
+                      /@{username}/l/{slug}/settings,
                       /{kind}/{sourceId} (item pages, e.g. /movie/603),
                       /privacy, /terms, /og/l/{slug}.png, /auth/* (auth proxy)
   lib/convex-auth-start/  stopgap TanStack Start adapter for Convex Auth (see its README)

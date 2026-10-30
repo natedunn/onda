@@ -16,8 +16,8 @@ export function NewListButton({ className, children }: { className?: string; chi
 			onClick={async () => {
 				setPending(true);
 				try {
-					const slug = await create();
-					await navigate({ to: "/l/$slug/settings", params: { slug }, search: { new: true } });
+					const params = await create();
+					await navigate({ to: "/@{$username}/l/$slug/settings", params, search: { new: true } });
 				} catch (error) {
 					alert(errorMessage(error));
 				} finally {

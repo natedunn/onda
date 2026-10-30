@@ -8,11 +8,12 @@ import { hasArt } from "./shared/images";
 import { DEFAULT_THEME, isThemeId, randomSeed, THEMES } from "./shared/themes";
 import { requireUserId } from "./users";
 
-const SLUG_ALPHABET = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// 15 mixed-case letters and digits, like RAD's list ids (e.g. 1M5JzQxHRCqEShW).
+const SLUG_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 function makeSlug() {
 	let slug = "";
-	for (let i = 0; i < 10; i++) {
+	for (let i = 0; i < 15; i++) {
 		slug += SLUG_ALPHABET[Math.floor(Math.random() * SLUG_ALPHABET.length)];
 	}
 	return slug;
@@ -90,7 +91,7 @@ export const recent = query({
 		return await Promise.all(
 			withItems.map(async (list) => {
 				const owner = await ctx.db.get(list.ownerId);
-				if (owner?.isPrivate) return null;
+				if (!owner || owner.isPrivate) return null;
 				const first = await ctx.db
 					.query("items")
 					.withIndex("by_list", (q) => q.eq("listId", list._id))
@@ -98,7 +99,7 @@ export const recent = query({
 				const records = await Promise.all(first.map((i) => ctx.db.get(i.recordId)));
 				return {
 					...list,
-					owner: owner && { username: owner.username },
+					owner: { username: owner.username },
 					covers: records
 						.filter((r) => hasArt(r?.image))
 						.map((r) => ({ image: r!.image!, kind: r!.kind, title: r!.title })),
@@ -120,6 +121,8 @@ export const create = mutation({
 			throw new ConvexError(`You can have up to ${LIMITS.listsPerUser} lists for now.`);
 		}
 
+		const user = await ctx.db.get(userId);
+		if (!user) throw new ConvexError("Not signed in");
 		let slug = makeSlug();
 		while (await getListBySlug(ctx, slug)) slug = makeSlug();
 
@@ -141,7 +144,7 @@ export const create = mutation({
 			itemCount: 0,
 			updatedAt: Date.now(),
 		});
-		return slug;
+		return { slug, username: user.username };
 	},
 });
 
