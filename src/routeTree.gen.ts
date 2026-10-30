@@ -22,7 +22,7 @@ import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
 import { Route as LSlugIndexRouteImport } from './routes/l/$slug/index'
-import { Route as LSlugEditRouteImport } from './routes/l/$slug/edit'
+import { Route as LSlugSettingsRouteImport } from './routes/l/$slug/settings'
 import { Route as OgLChar123slugChar125DotpngRouteImport } from './routes/og/l/{$slug}[.]png'
 
 const IndexRoute = IndexRouteImport.update({
@@ -91,9 +91,9 @@ const LSlugIndexRoute = LSlugIndexRouteImport.update({
   path: '/l/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LSlugEditRoute = LSlugEditRouteImport.update({
-  id: '/l/$slug/edit',
-  path: '/l/$slug/edit',
+const LSlugSettingsRoute = LSlugSettingsRouteImport.update({
+  id: '/l/$slug/settings',
+  path: '/l/$slug/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OgLChar123slugChar125DotpngRoute =
@@ -116,7 +116,7 @@ export interface FileRoutesByFullPath {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/edit': typeof LSlugEditRoute
+  '/l/$slug/settings': typeof LSlugSettingsRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/l/$slug/': typeof LSlugIndexRoute
 }
@@ -133,7 +133,7 @@ export interface FileRoutesByTo {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/edit': typeof LSlugEditRoute
+  '/l/$slug/settings': typeof LSlugSettingsRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/l/$slug': typeof LSlugIndexRoute
 }
@@ -151,7 +151,7 @@ export interface FileRoutesById {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
-  '/l/$slug/edit': typeof LSlugEditRoute
+  '/l/$slug/settings': typeof LSlugSettingsRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/l/$slug/': typeof LSlugIndexRoute
 }
@@ -170,7 +170,7 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/edit'
+    | '/l/$slug/settings'
     | '/og/l/{$slug}.png'
     | '/l/$slug/'
   fileRoutesByTo: FileRoutesByTo
@@ -187,7 +187,7 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/edit'
+    | '/l/$slug/settings'
     | '/og/l/{$slug}.png'
     | '/l/$slug'
   id:
@@ -204,7 +204,7 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
-    | '/l/$slug/edit'
+    | '/l/$slug/settings'
     | '/og/l/{$slug}.png'
     | '/l/$slug/'
   fileRoutesById: FileRoutesById
@@ -222,7 +222,7 @@ export interface RootRouteChildren {
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
-  LSlugEditRoute: typeof LSlugEditRoute
+  LSlugSettingsRoute: typeof LSlugSettingsRoute
   OgLChar123slugChar125DotpngRoute: typeof OgLChar123slugChar125DotpngRoute
   LSlugIndexRoute: typeof LSlugIndexRoute
 }
@@ -320,11 +320,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/l/$slug/edit': {
-      id: '/l/$slug/edit'
-      path: '/l/$slug/edit'
-      fullPath: '/l/$slug/edit'
-      preLoaderRoute: typeof LSlugEditRouteImport
+    '/l/$slug/settings': {
+      id: '/l/$slug/settings'
+      path: '/l/$slug/settings'
+      fullPath: '/l/$slug/settings'
+      preLoaderRoute: typeof LSlugSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/og/l/{$slug}.png': {
@@ -350,7 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,
-  LSlugEditRoute: LSlugEditRoute,
+  LSlugSettingsRoute: LSlugSettingsRoute,
   OgLChar123slugChar125DotpngRoute: OgLChar123slugChar125DotpngRoute,
   LSlugIndexRoute: LSlugIndexRoute,
 }

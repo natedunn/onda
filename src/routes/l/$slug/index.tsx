@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
-import { KIND_LABELS, type Layout, LAYOUT_LABELS, LAYOUTS } from "@convex/shared/constants";
+import { KIND_LABELS, type Layout, LAYOUT_LABELS, LAYOUTS, LIMITS, toLayout } from "@convex/shared/constants";
 import { getTheme } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -14,12 +14,12 @@ import { Markdown, stripMarkdown } from "@/components/markdown";
 import { ControlStrip, PageHero } from "@/components/page-hero";
 import { cn, errorMessage, plural, siteUrl, timeAgo } from "@/lib/utils";
 
-type Search = { view?: Layout; arrange?: boolean };
+type Search = { view?: Layout; editing?: boolean };
 
 export const Route = createFileRoute("/l/$slug/")({
 	validateSearch: (search: Record<string, unknown>): Search => ({
-		view: LAYOUTS.includes(search.view as Layout) ? (search.view as Layout) : undefined,
-		arrange: search.arrange === true || search.arrange === "true" ? true : undefined,
+		view: toLayout(search.view),
+		editing: search.editing === true || search.editing === "true" ? true : undefined,
 	}),
 	loader: async ({ context, params }) => {
 		const data = await context.queryClient.ensureQueryData(
@@ -71,17 +71,18 @@ function ListPage() {
 
 	const { list, owner, isOwner, items } = data;
 	const layout = search.view ?? list.layout;
-	const arrange = isOwner && search.arrange === true;
+	const editing = isOwner && search.editing === true;
 	const theme = getTheme(list.theme);
+	const themeVars = { "--theme-accent": theme.accent, "--theme-ink": theme.ink } as React.CSSProperties;
 	// One kind of thing says so in the header; a mix tags each item with its kind instead.
 	const kinds = new Set(items.map((i) => i.record.kind));
 	const onlyKind = kinds.size === 1 ? KIND_LABELS[items[0].record.kind] : null;
 	const mixed = kinds.size > 1;
 
 	return (
-		<article>
+		<article style={themeVars}>
 			<PageHero>
-				<header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-7">
+				<header className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-7">
 					<ListCover
 						theme={list.theme}
 						seed={list.seed}
@@ -90,7 +91,7 @@ function ListPage() {
 						className="w-28 sm:w-32"
 						emojiClassName="text-[3.25rem]"
 					/>
-					<div className="min-w-0">
+					<div className={cn("min-w-0", isOwner && "pr-12")}>
 						<h1 className="font-serif text-[clamp(2.4rem,6vw,3.6rem)] leading-[0.95] tracking-tight [overflow-wrap:anywhere]">
 							{list.name}
 						</h1>
@@ -114,17 +115,48 @@ function ListPage() {
 							)}
 						</p>
 					</div>
+					{isOwner && (
+						<Link
+							to="/l/$slug/settings"
+							params={{ slug }}
+							className="btn btn-icon absolute top-0 right-0"
+							aria-label="List settings"
+							title="List settings"
+						>
+							<GearIcon />
+						</Link>
+					)}
 				</header>
 
 				{list.description && <Markdown text={list.description} className="prose-note mt-6 text-[14px]" />}
+
+				{isOwner && (
+					// The header fades out under a halftone while the items are being edited. Always mounted
+					// so it can fade both ways.
+					<div
+						inert={!editing}
+						className={cn(
+							"group page-backdrop absolute inset-0 z-10 grid place-items-center p-5 transition-opacity duration-300 ease-out motion-reduce:transition-none",
+							editing ? "opacity-100" : "pointer-events-none opacity-0",
+						)}
+						data-editing={editing || undefined}
+					>
+						<div aria-hidden className="page-backdrop-dots absolute inset-0" />
+						<p className="relative translate-y-2 border border-edge bg-paper px-4 py-2 text-center text-[12px] transition-transform duration-300 ease-out group-data-editing:translate-y-0 motion-reduce:transition-none">
+							<span className="font-bold">Editing Items.</span> Click or tap “done editing” to return.
+						</p>
+					</div>
+				)}
 			</PageHero>
 
-			<ControlStrip>
-				<label className="flex items-center gap-3">
+			{/* While editing, the rest of the strip stays put but switches off, so "done editing" is the way back. */}
+			<ControlStrip className={cn(editing && "sticky top-1.5 z-20 bg-paper")}>
+				<label className={cn("flex items-center gap-3", editing && "opacity-50")}>
 					<span className="label">View</span>
 					<select
 						className="field py-1 pl-2.5 text-[13px] leading-6 pointer-coarse:text-[16px]"
 						value={layout}
+						disabled={editing}
 						onChange={(e) => {
 							const view = e.target.value as Layout;
 							void navigate({
@@ -143,15 +175,20 @@ function ListPage() {
 				</label>
 				{isOwner && (
 					<span className="flex gap-3">
-						<button type="button" className="linkish" onClick={() => setAdding(true)}>
+						{(items.length > 0 || editing) && (
+							<Link
+								to="."
+								search={(prev) => ({ ...prev, editing: editing ? undefined : true })}
+								replace
+								resetScroll={false}
+								className={cn("btn", editing && "btn-theme")}
+							>
+								{editing ? "done editing" : "edit items"}
+							</Link>
+						)}
+						<button type="button" className="btn btn-theme" disabled={editing} onClick={() => setAdding(true)}>
 							+ add
 						</button>
-						<Link to="." search={(prev) => ({ ...prev, arrange: arrange ? undefined : true })} replace resetScroll={false}>
-							{arrange ? "done arranging" : "arrange"}
-						</Link>
-						<Link to="/l/$slug/edit" params={{ slug }}>
-							edit list
-						</Link>
 					</span>
 				)}
 			</ControlStrip>
@@ -165,7 +202,7 @@ function ListPage() {
 				/>
 			)}
 
-			<div className="mt-6" style={{ "--accent": theme.colors[0] } as React.CSSProperties}>
+			<div className="mt-6">
 				{items.length === 0 ? (
 					<p className="py-10 text-muted">
 						{isOwner ? (
@@ -180,11 +217,13 @@ function ListPage() {
 							"Nothing on this list yet."
 						)}
 					</p>
-				) : arrange ? (
-					<ArrangeItems items={items} ranked={list.ranked} />
+				) : editing ? (
+					<EditItems items={items} ranked={list.ranked} />
 				) : layout === "grid-sm" || layout === "grid" || layout === "grid-lg" ? (
 					<GridItems items={items} ranked={list.ranked} mixed={mixed} size={GRID_SIZES[layout]} />
-				) : layout === "compact" ? (
+				) : layout === "list-lg" ? (
+					<JournalItems items={items} ranked={list.ranked} mixed={mixed} />
+				) : layout === "minimal" ? (
 					<CompactItems items={items} ranked={list.ranked} mixed={mixed} />
 				) : (
 					<ListItems items={items} ranked={list.ranked} mixed={mixed} />
@@ -194,9 +233,18 @@ function ListPage() {
 	);
 }
 
+function GearIcon() {
+	return (
+		<svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+			<circle cx="12" cy="12" r="3" />
+			<path d="m22,12h0c0-.757-.455-1.44-1.154-1.731l-1.164-.485c-.099-.343-.219-.678-.36-1.001-.198-.453-.192-.969-.004-1.426l.16-.389c.288-.7.127-1.504-.408-2.04h0c-.535-.535-1.34-.696-2.04-.408l-1.162.479c-.518-.287-1.073-.515-1.654-.682l-.485-1.164c-.291-.699-.974-1.154-1.731-1.154h0c-.757,0-1.44.455-1.731,1.154l-.485,1.164c-.581.167-1.135.395-1.654.682l-1.162-.479c-.7-.288-1.504-.127-2.040.408h0c-.535.535-.696,1.34-.408,2.04l.479,1.162c-.287.518-.515,1.073-.682,1.654l-1.164.485c-.699.291-1.154.974-1.154,1.731h0c0,.757.455,1.44,1.154,1.731l1.164.485c.167.581.395,1.135.682,1.654l-.479,1.162c-.288.7-.127,1.504.408,2.04h0c.535.535,1.34.696,2.040.408l1.162-.479c.518.287,1.073.515,1.654.682l.485,1.164c.291.699.974,1.154,1.731,1.154h0c.757,0,1.44-.455,1.731-1.154l.485-1.164c.581-.167,1.135-.395,1.654-.682l1.162.479c.7.288,1.504.127,2.04-.408h0c.535-.535.696-1.34.408-2.04l-.479-1.162c.287-.518.515-1.073.682-1.654l1.164-.485c.699-.291,1.154-.974,1.154-1.731Z" />
+		</svg>
+	);
+}
+
 function Rank({ n, className }: { n: number; className?: string }) {
 	return (
-		<span className={cn("font-serif tabular-nums", className)} aria-label={`Number ${n}`}>
+		<span className={cn("tabular-nums", className)} aria-label={`Number ${n}`}>
 			{n}
 		</span>
 	);
@@ -225,7 +273,7 @@ function ListItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean; m
 		<ol>
 			{items.map((item, i) => (
 				<li key={item._id} className="flex gap-4 border-b border-rule py-4 first:pt-0">
-					{ranked && <Rank n={i + 1} className="w-9 shrink-0 text-right text-4xl leading-none" />}
+					{ranked && <Rank n={i + 1} className="w-9 shrink-0 text-right font-serif text-4xl leading-none" />}
 					<Art
 						image={item.record.image}
 						kind={item.record.kind}
@@ -274,6 +322,58 @@ function CompactItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 	);
 }
 
+/**
+ * One entry per row, like a blog: big art beside the title, with the note as the body of a review.
+ * A band of halftone runs edge to edge behind the title, with the art hanging down out of it.
+ */
+function JournalItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean; mixed: boolean }) {
+	return (
+		<ol>
+			{items.map((item, i) => (
+				// On wide screens the art spans both rows; the second row is 1fr so the art's height
+				// doesn't stretch the band (the first row) past the title.
+				<li
+					key={item._id}
+					className="relative isolate -mx-5 grid border-b border-rule pb-10 sm:-mx-8 sm:grid-cols-[auto_1fr] sm:grid-rows-[auto_1fr] sm:gap-x-8"
+				>
+					<div aria-hidden className="bg-halftone -z-10 col-span-full row-start-2 sm:row-start-1" />
+					<Art
+						image={item.record.image}
+						kind={item.record.kind}
+						alt=""
+						sizes="(min-width: 640px) 200px, 140px"
+						priority={i < 3}
+						className="mx-5 mt-10 mb-5 w-36 sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:mr-0 sm:mb-0 sm:ml-8 sm:w-50"
+					/>
+					<div className="row-start-2 min-w-0 px-5 pt-8 pb-10 sm:col-start-2 sm:row-start-1 sm:pt-14 sm:pr-8 sm:pl-0">
+						<div className="flex items-center gap-4">
+							{ranked && (
+								<Rank n={i + 1} className="grid min-w-11 shrink-0 place-items-center border border-edge bg-paper px-1.5 text-[18px] leading-11" />
+							)}
+							<h2 className="min-w-0 font-serif text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.05] tracking-tight [overflow-wrap:anywhere]">
+								<Title record={item.record} />
+							</h2>
+						</div>
+						<p className="mt-1.5 text-[12px]">
+							<Meta record={item.record} mixed={mixed} />
+						</p>
+					</div>
+					{item.note ? (
+						<Markdown
+							text={item.note}
+							className="prose-note row-start-3 min-w-0 px-5 pt-6 text-[14px] leading-relaxed sm:col-start-2 sm:row-start-2 sm:pr-8 sm:pl-0"
+						/>
+					) : (
+						<p className="row-start-3 px-5 pt-6 text-[13px] text-muted italic opacity-70 sm:col-start-2 sm:row-start-2 sm:pr-8 sm:pl-0">
+							No note added
+						</p>
+					)}
+				</li>
+			))}
+		</ol>
+	);
+}
+
 // Columns, gaps, text and rank badge for each grid size. Column counts hold at every width, so art
 // shrinks with the screen instead of growing as columns drop; only the gaps tighten on mobile.
 // `sizes` is how wide art renders: a share of the screen, capped once the layout column stops
@@ -284,21 +384,21 @@ const GRID_SIZES = {
 		sizes: "(min-width: 1152px) 140px, 13vw",
 		title: "text-[12px]",
 		meta: "text-[10px]",
-		rank: "-top-1.5 -left-1.5 min-w-6 text-base leading-6",
+		rank: "-top-2 -left-2 min-w-8 text-[14px] leading-8",
 	},
 	grid: {
 		grid: "grid-cols-5 gap-x-3 gap-y-8 sm:gap-x-7 sm:gap-y-10",
 		sizes: "(min-width: 1152px) 200px, 18vw",
 		title: "",
 		meta: "text-[11px]",
-		rank: "-top-2 -left-2 min-w-8 text-xl leading-7",
+		rank: "-top-2.5 -left-2.5 min-w-11 text-[18px] leading-11",
 	},
 	"grid-lg": {
 		grid: "grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-10 sm:gap-y-12",
 		sizes: "(min-width: 1152px) 340px, 31vw",
 		title: "text-[15px]",
 		meta: "text-[12px]",
-		rank: "-top-2.5 -left-2.5 min-w-10 text-3xl leading-9",
+		rank: "-top-3 -left-3 min-w-14 text-[24px] leading-14",
 	},
 };
 
@@ -321,7 +421,7 @@ function GridItems({ items, ranked, mixed, size }: { items: Item[]; ranked: bool
 							className="w-full"
 						/>
 						{ranked && (
-							<Rank n={i + 1} className={cn("absolute grid place-items-center border border-ink bg-paper px-1", size.rank)} />
+							<Rank n={i + 1} className={cn("absolute grid place-items-center border border-edge bg-paper px-1.5", size.rank)} />
 						)}
 					</div>
 					<div aria-hidden className="relative flex-1">
@@ -341,7 +441,7 @@ function GridItems({ items, ranked, mixed, size }: { items: Item[]; ranked: bool
 	);
 }
 
-function ArrangeItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
+function EditItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
 	const move = useMutation(api.items.move);
 	const remove = useMutation(api.items.remove);
 	const setNote = useMutation(api.items.setNote);
@@ -381,7 +481,7 @@ function ArrangeItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
 					<span className="cursor-grab pt-1 font-mono text-muted select-none" title="Drag to reorder">
 						⠿
 					</span>
-					<span className="w-6 pt-0.5 text-right font-mono text-[11px] text-muted">{ranked ? i + 1 : ""}</span>
+					{ranked && <span className="w-6 pt-0.5 text-right font-mono text-[11px] text-muted">{i + 1}</span>}
 					<Art image={item.record.image} kind={item.record.kind} alt="" sizes="40px" className="w-10" />
 					<div className="min-w-0 flex-1">
 						<p className="truncate font-bold">{item.record.title}</p>
@@ -396,8 +496,8 @@ function ArrangeItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
 							>
 								<textarea
 									className="field font-serif text-[1.05rem] italic pointer-coarse:text-[16px]"
-									rows={3}
-									maxLength={500}
+									rows={6}
+									maxLength={LIMITS.itemNote}
 									value={draft}
 									onChange={(e) => setDraft(e.target.value)}
 									placeholder="A note about this one…"

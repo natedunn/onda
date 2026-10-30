@@ -12,6 +12,8 @@
 	--visited: #6a2db0;
 	--mark: #fff1a0;
 	--danger: #c22a1d;
+	/* Outlines on boxes that sit on the page: buttons, rank badges. */
+	--edge: var(--ink);
 	--dither-a: #00000055;
 	--dither-b: #000000a0;
 	color-scheme: light;
@@ -28,6 +30,8 @@
 		--visited: #c6a6ff;
 		--mark: #4a4216;
 		--danger: #ff7a6b;
+		/* A full-ink outline glares on dark paper. */
+		--edge: color-mix(in oklab, var(--ink) 40%, var(--paper));
 		--dither-a: #00000075;
 		--dither-b: #ffffff70;
 		color-scheme: dark;
@@ -73,6 +77,7 @@
 	--color-link: var(--link);
 	--color-mark: var(--mark);
 	--color-danger: var(--danger);
+	--color-edge: var(--edge);
 	--font-sans: Verdana, Geneva, Tahoma, "DejaVu Sans", sans-serif;
 	--font-serif: "Instrument Serif", "Times New Roman", Times, serif;
 	--font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -129,7 +134,8 @@
 	.btn {
 		--btn-bg: var(--paper);
 		--btn-fg: var(--ink);
-		--btn-edge: var(--ink);
+		--btn-edge: var(--edge);
+		--btn-shadow: var(--btn-edge);
 		--btn-lift: 2px;
 		display: inline-flex;
 		align-items: center;
@@ -141,7 +147,7 @@
 		font: inherit;
 		font-size: 12px;
 		line-height: 1.6;
-		box-shadow: var(--btn-lift) var(--btn-lift) 0 var(--btn-edge);
+		box-shadow: var(--btn-lift) var(--btn-lift) 0 var(--btn-shadow);
 		cursor: pointer;
 		text-decoration: none;
 		white-space: nowrap;
@@ -178,8 +184,35 @@
 		--btn-bg: var(--ink);
 		--btn-fg: var(--paper);
 		/* An ink shadow would just read as a bigger button; use a softer grey. */
-		box-shadow: var(--btn-lift) var(--btn-lift) 0 color-mix(in oklab, var(--ink) 45%, var(--paper));
+		--btn-shadow: color-mix(in oklab, var(--ink) 45%, var(--paper));
 		--btn-hover-bg: color-mix(in oklab, var(--ink) 85%, var(--link));
+	}
+	/* Filled with the list's theme: set --theme-accent and --theme-ink on an ancestor. */
+	.btn-theme {
+		--btn-bg: var(--theme-accent);
+		--btn-fg: var(--theme-ink);
+		--btn-hover-bg: color-mix(in oklab, var(--theme-accent) 88%, var(--theme-ink));
+	}
+	/* On dark paper a light edge and a light shadow run together into one thick
+	   outline, so the shadow stays brighter than the (grey) edge. */
+	@media (prefers-color-scheme: dark) {
+		.btn {
+			--btn-shadow: color-mix(in oklab, var(--ink) 68%, var(--paper));
+		}
+		/* A light fill would melt into a bright shadow, so this one keeps a dimmer one. */
+		.btn-primary {
+			--btn-shadow: color-mix(in oklab, var(--ink) 55%, var(--paper));
+		}
+		.btn-theme {
+			--btn-edge: var(--theme-accent);
+		}
+		.btn-danger {
+			--btn-shadow: color-mix(in oklab, var(--danger) 70%, var(--paper));
+		}
+	}
+	/* A square button holding just an icon. */
+	.btn-icon {
+		padding: 0.35em;
 	}
 	.btn-danger {
 		--btn-fg: var(--danger);
@@ -224,6 +257,25 @@
 		background-position:
 			0 0,
 			0.1rem 0.1rem;
+	}
+
+	/* RAD's bg-halftone, as it was: a flat, faint dot screen for a band behind content. Sizes are
+	   RAD's rems at 16px (this site's root is 13px). */
+	.bg-halftone {
+		background-image:
+			radial-gradient(circle at center, #00000015 0.8px, transparent 0),
+			radial-gradient(circle at center, #00000030 0.8px, transparent 0);
+		background-size: 3.2px 3.2px;
+		background-position:
+			0 0,
+			1.6px 1.6px;
+	}
+	@media (prefers-color-scheme: dark) {
+		.bg-halftone {
+			background-image:
+				radial-gradient(circle at center, #00000075 0.8px, transparent 0),
+				radial-gradient(circle at center, #ffffff25 0.8px, transparent 0);
+		}
 	}
 
 	/* A halftone print of a gradient (layers from halftoneWash): the dot screen is multiplied
@@ -339,12 +391,16 @@
 	.add-dialog::backdrop {
 		background: transparent;
 	}
-	.add-backdrop {
+	.add-backdrop,
+	.page-backdrop {
 		background: color-mix(in oklab, var(--paper) 72%, transparent);
 		backdrop-filter: grayscale(0.6);
+	}
+	.add-backdrop {
 		animation: fade-in 160ms ease-out both;
 	}
-	.add-backdrop-dots {
+	.add-backdrop-dots,
+	.page-backdrop-dots {
 		mix-blend-mode: multiply;
 		opacity: 0.18;
 		background-image:
@@ -357,7 +413,8 @@
 		filter: grayscale(1) contrast(30);
 	}
 	@media (prefers-color-scheme: dark) {
-		.add-backdrop-dots {
+		.add-backdrop-dots,
+		.page-backdrop-dots {
 			mix-blend-mode: screen;
 			opacity: 0.12;
 			filter: grayscale(1) contrast(30) invert(1);

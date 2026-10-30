@@ -92,7 +92,7 @@ const OWNER_LISTS: SeedList[] = [
 		name: "Reading in 2026",
 		emoji: "📚",
 		visibility: "public",
-		layout: "compact",
+		layout: "minimal",
 		ranked: false,
 		theme: "sand",
 		items: [
@@ -282,7 +282,7 @@ const TEST_USERS: SeedUser[] = [
 				slug: "seed-maya-drafts",
 				name: "drafts",
 				visibility: "private",
-				layout: "compact",
+				layout: "minimal",
 				ranked: false,
 				theme: "fair",
 				items: [movie("Past Lives", 2023), book("Klara and the Sun", "Kazuo Ishiguro")],
@@ -336,7 +336,7 @@ const TEST_USERS: SeedUser[] = [
 				slug: "seed-theo-prestige",
 				name: "Prestige TV, ranked",
 				visibility: "public",
-				layout: "compact",
+				layout: "minimal",
 				ranked: true,
 				theme: "web",
 				items: [

@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
-import { LAYOUT_LABELS, LIMITS, type Layout, type Visibility } from "@convex/shared/constants";
+import { LAYOUT_LABELS, LIMITS, type Layout, toLayout, type Visibility } from "@convex/shared/constants";
 import { meshGradient, randomSeed, THEMES } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
@@ -10,7 +10,7 @@ import { useState } from "react";
 import { ListCover } from "@/components/list-cover";
 import { cn, errorMessage } from "@/lib/utils";
 
-export const Route = createFileRoute("/l/$slug/edit")({
+export const Route = createFileRoute("/l/$slug/settings")({
 	validateSearch: (search: Record<string, unknown>): { new?: boolean } => ({
 		new: search.new === true || search.new === "true" ? true : undefined,
 	}),
@@ -22,8 +22,8 @@ export const Route = createFileRoute("/l/$slug/edit")({
 		const data = await context.queryClient.ensureQueryData(convexQuery(api.lists.get, { slug: params.slug }));
 		if (!data?.isOwner) throw notFound();
 	},
-	head: () => ({ meta: [{ title: "Edit list · onda" }] }),
-	component: EditList,
+	head: () => ({ meta: [{ title: "List settings · onda" }] }),
+	component: ListSettings,
 });
 
 const EMOJI = "🎬📚💿🎮📺🍿🎧🎸🎹🎤🏆⭐️🔥💀🎃👻🌙☀️🌊🌲🍂❄️🌸💔❤️✨⚡️🍕🍷☕️🛸🚀🎲🧩📼📷🗺️🏝️🤠🍈".match(
@@ -37,14 +37,15 @@ const VISIBILITY_HELP: Record<Visibility, string> = {
 };
 
 const LAYOUT_HELP: Record<Layout, string> = {
+	minimal: "One tidy line per item.",
 	list: "Artwork, details and notes.",
-	compact: "One tidy line per item.",
+	"list-lg": "One entry at a time, with room for a full review.",
 	"grid-sm": "A dense cover wall.",
 	grid: "Cover wall.",
 	"grid-lg": "Big covers, a few to a row.",
 };
 
-function EditList() {
+function ListSettings() {
 	const { slug } = Route.useParams();
 	const { new: isNew } = Route.useSearch();
 	const { data } = useSuspenseQuery(convexQuery(api.lists.get, { slug }));
@@ -63,7 +64,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 		emoji: list.emoji ?? "",
 		description: list.description ?? "",
 		visibility: list.visibility,
-		layout: list.layout,
+		layout: toLayout(list.layout) ?? "list",
 		ranked: list.ranked,
 		theme: list.theme,
 		seed: list.seed,
@@ -98,7 +99,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 					emojiClassName="text-[2.75rem]"
 				/>
 				<div>
-					<p className="label">{isNew ? "A new list" : "Editing"}</p>
+					<p className="label">{isNew ? "A new list" : "List settings"}</p>
 					<h1 className="font-serif text-5xl leading-none">{form.name || "Untitled"}</h1>
 					<p className="mt-2 text-[12px]">
 						<Link to="/l/$slug" params={{ slug: list.slug }}>

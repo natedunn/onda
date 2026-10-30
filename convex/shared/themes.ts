@@ -1,21 +1,22 @@
-// Palettes carried over from RAD. `ink` is the text color that reads on top.
+// Palettes carried over from RAD. `ink` is the text color that reads on top; `accent` is the
+// palette color a list's main buttons are filled with (`ink` reads on it too).
 export const THEMES = [
-	{ id: "deep-space", name: "Deep space", ink: "#fff", colors: ["#000000", "#3d3d3d", "#454545", "#6d6d6d"] },
-	{ id: "blood-orange", name: "Blood orange", ink: "#fff", colors: ["#d26f3d", "#e08a52", "#a3452b", "#391711"] },
-	{ id: "after-hours", name: "After hours", ink: "#fff", colors: ["#ff6363", "#7000ff", "#151515", "#202123"] },
-	{ id: "solar", name: "Solar", ink: "#fff", colors: ["#ff2828", "#ff4409", "#fda829", "#ffe2b8"] },
-	{ id: "pop", name: "Pop", ink: "#fff", colors: ["#6903f9", "#7917ff", "#ebe5ff", "#d9ceff"] },
-	{ id: "fair", name: "Fair", ink: "#0b2a30", colors: ["#4ca1af", "#7fbcc6", "#c4e0e5", "#e3f1f3"] },
-	{ id: "verano", name: "Verano", ink: "#fff", colors: ["#22c1c3", "#15888c", "#fdbb2d", "#fecd4b"] },
-	{ id: "mint", name: "Mint", ink: "#0d3b2a", colors: ["#d7fbe8", "#9df3c4", "#62d2a2", "#1fab89"] },
-	{ id: "cake", name: "Cake", ink: "#3a2020", colors: ["#d57e7e", "#c6d57e", "#a2cdcd", "#ffe1af"] },
-	{ id: "punk", name: "Punk", ink: "#fff", colors: ["#00ff9f", "#00b8ff", "#d600ff", "#bd00ff"] },
-	{ id: "artisan", name: "Artisan", ink: "#fff", colors: ["#f9322c", "#c42620", "#232323", "#ffffff"] },
-	{ id: "dusk", name: "Dusk", ink: "#fff", colors: ["#de492a", "#34285a", "#ee992e", "#0b0b0a"] },
-	{ id: "forest", name: "Forest", ink: "#fff", colors: ["#606c38", "#283618", "#bc6c25", "#ffdcb5"] },
-	{ id: "paper", name: "Paper", ink: "#111", colors: ["#ffffff", "#f4f2f2", "#ebe8e8", "#b5b5b5"] },
-	{ id: "sand", name: "Sand", ink: "#3b2f27", colors: ["#edede9", "#d6d3c1", "#f5ebe0", "#d5bdaf"] },
-	{ id: "web", name: "Web", ink: "#fff", colors: ["#396afc", "#2948ff", "#1f3bd1", "#2f4f9f"] },
+	{ id: "deep-space", name: "Deep space", ink: "#fff", accent: "#3d3d3d", colors: ["#000000", "#3d3d3d", "#454545", "#6d6d6d"] },
+	{ id: "blood-orange", name: "Blood orange", ink: "#fff", accent: "#a3452b", colors: ["#d26f3d", "#e08a52", "#a3452b", "#391711"] },
+	{ id: "after-hours", name: "After hours", ink: "#fff", accent: "#7000ff", colors: ["#ff6363", "#7000ff", "#151515", "#202123"] },
+	{ id: "solar", name: "Solar", ink: "#fff", accent: "#ff2828", colors: ["#ff2828", "#ff4409", "#fda829", "#ffe2b8"] },
+	{ id: "pop", name: "Pop", ink: "#fff", accent: "#6903f9", colors: ["#6903f9", "#7917ff", "#ebe5ff", "#d9ceff"] },
+	{ id: "fair", name: "Fair", ink: "#0b2a30", accent: "#7fbcc6", colors: ["#4ca1af", "#7fbcc6", "#c4e0e5", "#e3f1f3"] },
+	{ id: "verano", name: "Verano", ink: "#fff", accent: "#15888c", colors: ["#22c1c3", "#15888c", "#fdbb2d", "#fecd4b"] },
+	{ id: "mint", name: "Mint", ink: "#0d3b2a", accent: "#62d2a2", colors: ["#d7fbe8", "#9df3c4", "#62d2a2", "#1fab89"] },
+	{ id: "cake", name: "Cake", ink: "#3a2020", accent: "#d57e7e", colors: ["#d57e7e", "#c6d57e", "#a2cdcd", "#ffe1af"] },
+	{ id: "punk", name: "Punk", ink: "#fff", accent: "#d600ff", colors: ["#00ff9f", "#00b8ff", "#d600ff", "#bd00ff"] },
+	{ id: "artisan", name: "Artisan", ink: "#fff", accent: "#f9322c", colors: ["#f9322c", "#c42620", "#232323", "#ffffff"] },
+	{ id: "dusk", name: "Dusk", ink: "#fff", accent: "#de492a", colors: ["#de492a", "#34285a", "#ee992e", "#0b0b0a"] },
+	{ id: "forest", name: "Forest", ink: "#fff", accent: "#606c38", colors: ["#606c38", "#283618", "#bc6c25", "#ffdcb5"] },
+	{ id: "paper", name: "Paper", ink: "#111", accent: "#ffffff", colors: ["#ffffff", "#f4f2f2", "#ebe8e8", "#b5b5b5"] },
+	{ id: "sand", name: "Sand", ink: "#3b2f27", accent: "#d5bdaf", colors: ["#edede9", "#d6d3c1", "#f5ebe0", "#d5bdaf"] },
+	{ id: "web", name: "Web", ink: "#fff", accent: "#2948ff", colors: ["#396afc", "#2948ff", "#1f3bd1", "#2f4f9f"] },
 ] as const;
 
 export type Theme = (typeof THEMES)[number];
