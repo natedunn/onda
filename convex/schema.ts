@@ -31,19 +31,6 @@ export const vLayout = v.union(
 	v.literal("grid-lg"),
 );
 
-// What lists.layout may hold until migrations:layoutIds has run everywhere: the current views
-// plus the old IDs in OLD_LAYOUTS. Then this goes back to plain vLayout.
-const vStoredLayout = v.union(
-	v.literal("minimal"),
-	v.literal("list"),
-	v.literal("list-lg"),
-	v.literal("grid-sm"),
-	v.literal("grid"),
-	v.literal("grid-lg"),
-	v.literal("compact"),
-	v.literal("journal"),
-);
-
 const pinned = {
 	// Set by hand (an editor or agent); source refreshes leave the image alone.
 	pinned: v.optional(v.boolean()),
@@ -108,7 +95,7 @@ export default defineSchema({
 		emoji: v.optional(v.string()),
 		description: v.optional(v.string()),
 		visibility: vVisibility,
-		layout: vStoredLayout,
+		layout: vLayout,
 		ranked: v.boolean(),
 		theme: v.string(),
 		// Seeds the mesh gradient so "refresh gradient" is a single number.

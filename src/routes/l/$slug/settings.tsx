@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc } from "@convex/_generated/dataModel";
-import { LAYOUT_LABELS, LIMITS, type Layout, toLayout, type Visibility } from "@convex/shared/constants";
+import { LAYOUT_LABELS, LIMITS, type Layout, type Visibility } from "@convex/shared/constants";
 import { meshGradient, randomSeed, THEMES } from "@convex/shared/themes";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound, redirect, useNavigate } from "@tanstack/react-router";
@@ -64,7 +64,7 @@ function EditForm({ list, isNew }: { list: Doc<"lists">; isNew: boolean }) {
 		emoji: list.emoji ?? "",
 		description: list.description ?? "",
 		visibility: list.visibility,
-		layout: toLayout(list.layout) ?? "list",
+		layout: list.layout,
 		ranked: list.ranked,
 		theme: list.theme,
 		seed: list.seed,
