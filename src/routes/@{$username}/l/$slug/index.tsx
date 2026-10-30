@@ -340,27 +340,27 @@ function JournalItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 	return (
 		<ol>
 			{items.map((item, i) => (
-				// On wide screens the art spans both rows; the second row is 1fr so the art's height
-				// doesn't stretch the band (the first row) past the title.
+				// The art spans both rows; the second row is 1fr so the art's height doesn't stretch
+				// the band (the first row) past the title. Phones get the same layout, scaled down.
 				<li
 					key={item._id}
-					className="relative isolate -mx-5 grid border-b border-rule pb-10 sm:-mx-8 sm:grid-cols-[auto_1fr] sm:grid-rows-[auto_1fr] sm:gap-x-8"
+					className="relative isolate -mx-5 grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] gap-x-4 border-b border-rule pb-8 sm:-mx-8 sm:gap-x-8 sm:pb-10"
 				>
-					<div aria-hidden className="bg-halftone -z-10 col-span-full row-start-2 sm:row-start-1" />
+					<div aria-hidden className="bg-halftone -z-10 col-span-full row-start-1" />
 					<Art
 						image={item.record.image}
 						kind={item.record.kind}
 						alt=""
-						sizes="(min-width: 640px) 200px, 140px"
+						sizes="(min-width: 640px) 200px, 96px"
 						priority={i < 3}
-						className="mx-5 mt-10 mb-5 w-36 sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:mr-0 sm:mb-0 sm:ml-8 sm:w-50"
+						className="col-start-1 row-span-2 row-start-1 mt-6 ml-5 w-24 sm:mt-10 sm:ml-8 sm:w-50"
 					/>
-					<div className="row-start-2 min-w-0 px-5 pt-8 pb-10 sm:col-start-2 sm:row-start-1 sm:pt-14 sm:pr-8 sm:pl-0">
-						<div className="flex items-center gap-4">
+					<div className="col-start-2 row-start-1 min-w-0 pt-8 pr-5 pb-6 sm:pt-14 sm:pr-8 sm:pb-10">
+						<div className="flex items-center gap-3 sm:gap-4">
 							{ranked && (
-								<Rank n={i + 1} className="grid min-w-11 shrink-0 place-items-center border border-edge bg-paper px-1.5 text-[18px] leading-11" />
+								<Rank n={i + 1} className="grid min-w-9 shrink-0 place-items-center border border-edge bg-paper px-1 text-[15px] leading-9 sm:min-w-11 sm:px-1.5 sm:text-[18px] sm:leading-11" />
 							)}
-							<h2 className="min-w-0 font-serif text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.05] tracking-tight [overflow-wrap:anywhere]">
+							<h2 className="min-w-0 font-serif text-[1.6rem] sm:text-[clamp(1.9rem,4vw,2.6rem)] leading-[1.05] tracking-tight [overflow-wrap:anywhere]">
 								<Title record={item.record} />
 							</h2>
 						</div>
@@ -371,10 +371,10 @@ function JournalItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 					{item.note ? (
 						<Markdown
 							text={item.note}
-							className="prose-note row-start-3 min-w-0 px-5 pt-6 text-[14px] leading-relaxed sm:col-start-2 sm:row-start-2 sm:pr-8 sm:pl-0"
+							className="prose-note col-start-2 row-start-2 min-w-0 pt-5 pr-5 text-[14px] leading-relaxed sm:pt-6 sm:pr-8"
 						/>
 					) : (
-						<p className="row-start-3 px-5 pt-6 text-[13px] text-muted italic opacity-70 sm:col-start-2 sm:row-start-2 sm:pr-8 sm:pl-0">
+						<p className="col-start-2 row-start-2 pt-5 pr-5 text-[13px] text-muted italic opacity-70 sm:pt-6 sm:pr-8">
 							No note added
 						</p>
 					)}
