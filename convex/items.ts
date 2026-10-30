@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { copyWhenListed } from "./images";
 import { requireOwnedList, touchList } from "./lists";
 import { LIMITS } from "./shared/constants";
 
@@ -10,7 +11,8 @@ export const add = mutation({
 		if (list.itemCount >= LIMITS.itemsPerList) {
 			throw new ConvexError(`Lists hold up to ${LIMITS.itemsPerList} items for now.`);
 		}
-		if (!(await ctx.db.get(recordId))) throw new ConvexError("Unknown item");
+		const record = await ctx.db.get(recordId);
+		if (!record) throw new ConvexError("Unknown item");
 
 		const items = await ctx.db
 			.query("items")
@@ -26,6 +28,7 @@ export const add = mutation({
 			position: last ? last.position + 1 : 0,
 		});
 		await touchList(ctx, listId, 1);
+		await copyWhenListed(ctx, record);
 		return id;
 	},
 });

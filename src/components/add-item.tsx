@@ -272,7 +272,7 @@ function AddItem({
 												i === active && "bg-paper-2",
 											)}
 										>
-											<Art src={r.image} kind={r.kind} alt="" className="w-10" />
+											<Art image={r.image} kind={r.kind} alt="" sizes="40px" className="w-10" />
 											<div className="min-w-0 flex-1">
 												<p className="truncate font-bold">
 													{r.title}

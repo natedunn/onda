@@ -30,6 +30,28 @@ export const vLayout = v.union(
 	v.literal("grid-lg"),
 );
 
+const pinned = {
+	// Set by hand (an editor or agent); source refreshes leave the image alone.
+	pinned: v.optional(v.boolean()),
+};
+
+export const vSourceImage = v.object({
+	host: v.union(v.literal("tmdb"), v.literal("igdb"), v.literal("caa"), v.literal("openlibrary")),
+	id: v.string(),
+	...pinned,
+});
+
+// Pointers, not URLs; convex/shared/images.ts turns them into src/srcset.
+export const vImage = v.union(
+	vSourceImage,
+	v.object({
+		host: v.literal("r2"),
+		files: v.array(v.object({ path: v.string(), width: v.number(), height: v.number() })),
+		from: v.optional(vSourceImage),
+		...pinned,
+	}),
+);
+
 export const recordFields = {
 	kind: vKind,
 	source: vSource,
@@ -39,7 +61,9 @@ export const recordFields = {
 	subtitle: v.optional(v.string()),
 	creators: v.array(v.string()),
 	year: v.optional(v.number()),
-	image: v.optional(v.string()),
+	// Plain strings are URLs saved before images were pointers; drop once
+	// images:migrateUrls has run on every deployment.
+	image: v.optional(v.union(v.string(), vImage)),
 	url: v.optional(v.string()),
 	// Books: the Open Library edition (OL…M) whose title and cover we show.
 	editionId: v.optional(v.string()),

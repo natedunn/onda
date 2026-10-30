@@ -59,7 +59,8 @@ function Privacy() {
 				<li>GitHub, Google and Discord handle sign-in when you choose them.</li>
 				<li>
 					Searches and item details come from TMDB, Open Library, MusicBrainz and IGDB. Lookups are
-					made from our servers, but cover art may load directly from their image hosts.
+					made from our servers, and we keep copies of most cover art, but movie and show posters
+					load directly from TMDB's image host.
 				</li>
 			</ul>
 

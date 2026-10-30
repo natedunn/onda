@@ -79,7 +79,7 @@ function tmdb(path: string, params: Record<string, string> = {}) {
 	});
 }
 
-const poster = (path?: string | null) => (path ? `https://image.tmdb.org/t/p/w500${path}` : undefined);
+const poster = (path?: string | null) => (path ? ({ host: "tmdb", id: path }) as const : undefined);
 
 function movieRecord(m: any, creators: string[]): RecordInput {
 	return {
@@ -191,7 +191,7 @@ const shows: Provider = {
 const BOOK_LANG = "en";
 const EDITION_FIELDS = "editions,editions.key,editions.title,editions.subtitle,editions.cover_i,editions.language";
 
-const olCover = (id?: number) => (id && id > 0 ? `https://covers.openlibrary.org/b/id/${id}-L.jpg` : undefined);
+const olCover = (id?: number) => (id && id > 0 ? ({ host: "openlibrary", id: String(id) }) as const : undefined);
 const olText = (text: any): string | undefined => (typeof text === "string" ? text : text?.value);
 
 /** The edition Open Library chose for a search hit, if it's in our language or unlabeled. */
@@ -309,7 +309,7 @@ function albumRecord(g: any): RecordInput {
 		subtitle: g["primary-type"] === "EP" ? "EP" : undefined,
 		creators: [artistCredit(g["artist-credit"])].filter(Boolean),
 		year: yearOf(g["first-release-date"]),
-		image: `https://coverartarchive.org/release-group/${g.id}/front-500`,
+		image: { host: "caa", id: g.id },
 		url: `https://musicbrainz.org/release-group/${g.id}`,
 	};
 }
@@ -428,9 +428,7 @@ function gameRecord(g: any): RecordInput {
 			.filter(Boolean)
 			.slice(0, 2),
 		year: yearOf(g.first_release_date),
-		image: g.cover?.image_id
-			? `https://images.igdb.com/igdb/image/upload/t_cover_big_2x/${g.cover.image_id}.jpg`
-			: undefined,
+		image: g.cover?.image_id ? { host: "igdb", id: g.cover.image_id } : undefined,
 		url: g.url,
 	};
 }

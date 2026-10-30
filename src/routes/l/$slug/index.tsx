@@ -217,13 +217,23 @@ function Title({ record }: { record: Doc<"records"> }) {
 	);
 }
 
+// Art for the first few items loads right away instead of waiting to scroll into view.
+const ABOVE_FOLD = 8;
+
 function ListItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean; mixed: boolean }) {
 	return (
 		<ol>
 			{items.map((item, i) => (
 				<li key={item._id} className="flex gap-4 border-b border-rule py-4 first:pt-0">
 					{ranked && <Rank n={i + 1} className="w-9 shrink-0 text-right text-4xl leading-none" />}
-					<Art src={item.record.image} kind={item.record.kind} alt="" className="w-16 sm:w-20" />
+					<Art
+						image={item.record.image}
+						kind={item.record.kind}
+						alt=""
+						sizes="(min-width: 640px) 80px, 64px"
+						priority={i < ABOVE_FOLD}
+						className="w-16 sm:w-20"
+					/>
 					<div className="min-w-0 flex-1">
 						<p className="text-[15px] font-bold leading-snug">
 							<Title record={item.record} />
@@ -266,21 +276,26 @@ function CompactItems({ items, ranked, mixed }: { items: Item[]; ranked: boolean
 
 // Columns, gaps, text and rank badge for each grid size. Column counts hold at every width, so art
 // shrinks with the screen instead of growing as columns drop; only the gaps tighten on mobile.
+// `sizes` is how wide art renders: a share of the screen, capped once the layout column stops
+// growing (about 1090px wide at 1152px).
 const GRID_SIZES = {
 	"grid-sm": {
 		grid: "grid-cols-7 gap-x-2 gap-y-6 sm:gap-x-5 sm:gap-y-8",
+		sizes: "(min-width: 1152px) 140px, 13vw",
 		title: "text-[12px]",
 		meta: "text-[10px]",
 		rank: "-top-1.5 -left-1.5 min-w-6 text-base leading-6",
 	},
 	grid: {
 		grid: "grid-cols-5 gap-x-3 gap-y-8 sm:gap-x-7 sm:gap-y-10",
+		sizes: "(min-width: 1152px) 200px, 18vw",
 		title: "",
 		meta: "text-[11px]",
 		rank: "-top-2 -left-2 min-w-8 text-xl leading-7",
 	},
 	"grid-lg": {
 		grid: "grid-cols-3 gap-x-4 gap-y-10 sm:gap-x-10 sm:gap-y-12",
+		sizes: "(min-width: 1152px) 340px, 31vw",
 		title: "text-[15px]",
 		meta: "text-[12px]",
 		rank: "-top-2.5 -left-2.5 min-w-10 text-3xl leading-9",
@@ -297,7 +312,14 @@ function GridItems({ items, ranked, mixed, size }: { items: Item[]; ranked: bool
 				// any gap that leaves is filled with a faint halftone (none when the art fills the cell).
 				<li key={item._id} className="flex min-w-0 flex-col">
 					<div className="relative">
-						<Art src={item.record.image} kind={item.record.kind} alt={item.record.title} className="w-full" />
+						<Art
+							image={item.record.image}
+							kind={item.record.kind}
+							alt={item.record.title}
+							sizes={size.sizes}
+							priority={i < ABOVE_FOLD}
+							className="w-full"
+						/>
 						{ranked && (
 							<Rank n={i + 1} className={cn("absolute grid place-items-center border border-ink bg-paper px-1", size.rank)} />
 						)}
@@ -360,7 +382,7 @@ function ArrangeItems({ items, ranked }: { items: Item[]; ranked: boolean }) {
 						⠿
 					</span>
 					<span className="w-6 pt-0.5 text-right font-mono text-[11px] text-muted">{ranked ? i + 1 : ""}</span>
-					<Art src={item.record.image} kind={item.record.kind} alt="" className="w-10" />
+					<Art image={item.record.image} kind={item.record.kind} alt="" sizes="40px" className="w-10" />
 					<div className="min-w-0 flex-1">
 						<p className="truncate font-bold">{item.record.title}</p>
 						{editing === item._id ? (

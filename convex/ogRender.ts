@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import satori from "satori";
 import { internal } from "./_generated/api";
 import { action } from "./_generated/server";
+import { imageUrl } from "./shared/images";
 import { meshGradient } from "./shared/themes";
 
 const WIDTH = 1200;
@@ -39,7 +40,8 @@ function loadFonts() {
 	return fontCache;
 }
 
-async function toDataUri(url: string) {
+async function toDataUri(url: string | undefined) {
+	if (!url) return null;
 	try {
 		const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
 		const type = res.headers.get("content-type") ?? "";
@@ -86,7 +88,7 @@ export const listImageUrl = action({
 
 		const [fonts, covers] = await Promise.all([
 			loadFonts(),
-			Promise.all(list.covers.map(async (c) => ({ kind: c.kind, src: await toDataUri(c.image) }))),
+			Promise.all(list.covers.map(async (c) => ({ kind: c.kind, src: await toDataUri(imageUrl(c.image, 200)) }))),
 		]);
 		const gradient = meshGradient(list.theme, list.seed);
 

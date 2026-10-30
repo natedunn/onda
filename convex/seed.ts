@@ -8,6 +8,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalAction, internalMutation } from "./_generated/server";
+import { copyWhenListed } from "./images";
 import { enabledKinds, PROVIDERS, type RecordInput } from "./providers";
 import { vLayout, vVisibility } from "./schema";
 import type { Kind, Layout, Visibility } from "./shared/constants";
@@ -617,6 +618,8 @@ export const write = internalMutation({
 				});
 				for (const [position, item] of listItems.entries()) {
 					await ctx.db.insert("items", { listId, recordId: item.recordId, position, note: item.note });
+					const record = await ctx.db.get(item.recordId);
+					if (record) await copyWhenListed(ctx, record);
 				}
 				lists++;
 				items += listItems.length;

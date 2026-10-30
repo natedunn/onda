@@ -1,0 +1,21 @@
+{
+	"name": "onda-images",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev",
+		"check": "tsc --noEmit",
+		"deploy": "wrangler deploy"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20261026.1",
+		"typescript": "~5.9.3",
+		"wrangler": "^4.153.0"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"workerd"
+		]
+	}
+}

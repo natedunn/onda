@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { action, internalMutation, internalQuery, type MutationCtx, query } from "./_generated/server";
+import { copyWhenListed, mergeImage } from "./images";
 import { enabledKinds, PROVIDERS, type RecordInput } from "./providers";
 import { recordFields, vKind } from "./schema";
 
@@ -99,13 +100,15 @@ export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 	const merged = {
 		...record,
 		creators: record.creators.length ? record.creators : existing.creators,
-		image: record.image ?? existing.image,
+		image: mergeImage(existing.image, record.image),
 		year: record.year ?? existing.year,
 		...settled,
 	};
 	const patch = { ...merged, searchText: searchTextOf(merged) };
 	await ctx.db.patch(existing._id, patch);
-	return { ...existing, ...patch };
+	const updated = { ...existing, ...patch };
+	if (JSON.stringify(updated.image) !== JSON.stringify(existing.image)) await copyWhenListed(ctx, updated);
+	return updated;
 }
 
 export const upsert = internalMutation({
