@@ -220,9 +220,10 @@ const titleKey = (title: string) =>
 	title
 		.toLowerCase()
 		.normalize("NFD")
-		.replace(/[̀-ͯ]/g, "")
+		.replace(/\p{M}/gu, "")
 		.replace(/^(the|a|an)\s+/, "")
-		.replace(/[^a-z0-9]/g, "");
+		// Any script's letters, so "春の庭" isn't empty (a prefix of every title).
+		.replace(/[^\p{L}\p{N}]/gu, "");
 
 /**
  * The edition's title when it's a different title (a translation), else the
