@@ -13,7 +13,6 @@ import {
 	COPIED_HOSTS,
 	COPIED_SIZES,
 	type Image,
-	parseImageUrl,
 	SOURCE_SIZES,
 	type SourceImage,
 	sameSourceImage,
@@ -25,16 +24,16 @@ const USER_AGENT = "Onda/0.1 (https://github.com/natedunn/onda)";
 type RecordImage = Doc<"records">["image"];
 
 const isCopyable = (image: RecordImage): image is SourceImage =>
-	typeof image === "object" && image.host !== "r2" && COPIED_HOSTS.includes(image.host);
+	image !== undefined && image.host !== "r2" && COPIED_HOSTS.includes(image.host);
 
 /**
  * The image a refreshed record should keep. A hand-set image stays; so does
  * our copy of the image the source still points at.
  */
 export function mergeImage(existing: RecordImage, incoming: RecordImage): RecordImage {
-	if (!existing || typeof existing === "string") return incoming ?? existing;
+	if (!existing) return incoming;
 	if (existing.pinned || !incoming) return existing;
-	if (existing.host === "r2" && typeof incoming === "object" && incoming.host !== "r2") {
+	if (existing.host === "r2" && incoming.host !== "r2") {
 		if (sameSourceImage(existing.from, incoming)) return existing;
 	}
 	return incoming;
@@ -124,26 +123,6 @@ export const setImage = internalMutation({
 		const next: Image | undefined = image ? { ...image, pinned: true } : undefined;
 		await ctx.db.patch(recordId, { image: next });
 		if (next) await copyWhenListed(ctx, { ...record, image: next });
-	},
-});
-
-/**
- * Turns URL images into pointers and copies listed records' art to R2. Safe to
- * rerun. `npx convex run images:migrateUrls`
- */
-export const migrateUrls = internalMutation({
-	args: { cursor: v.optional(v.union(v.string(), v.null())) },
-	handler: async (ctx, { cursor }) => {
-		const page = await ctx.db.query("records").paginate({ cursor: cursor ?? null, numItems: 100 });
-		for (const record of page.page) {
-			let image = record.image;
-			if (typeof image === "string") {
-				image = parseImageUrl(image) ?? image;
-				if (image !== record.image) await ctx.db.patch(record._id, { image });
-			}
-			await copyWhenListed(ctx, { ...record, image });
-		}
-		if (!page.isDone) await ctx.scheduler.runAfter(0, internal.images.migrateUrls, { cursor: page.continueCursor });
 	},
 });
 

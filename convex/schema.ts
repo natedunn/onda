@@ -61,9 +61,7 @@ export const recordFields = {
 	subtitle: v.optional(v.string()),
 	creators: v.array(v.string()),
 	year: v.optional(v.number()),
-	// Plain strings are URLs saved before images were pointers; drop once
-	// images:migrateUrls has run on every deployment.
-	image: v.optional(v.union(v.string(), vImage)),
+	image: v.optional(vImage),
 	url: v.optional(v.string()),
 	// Books: the Open Library edition (OL…M) whose title and cover we show.
 	editionId: v.optional(v.string()),

@@ -1,4 +1,4 @@
-import type { AnyImage } from "@convex/shared/images";
+import type { Image } from "@convex/shared/images";
 import { Link } from "@tanstack/react-router";
 import { Art } from "@/components/art";
 import { ListCover } from "@/components/list-cover";
@@ -16,7 +16,7 @@ type Row = {
 	updatedAt: number;
 	visibility: string;
 	description?: string;
-	covers: { image: AnyImage; kind: string; title: string }[];
+	covers: { image: Image; kind: string; title: string }[];
 	owner?: { username: string } | null;
 };
 
