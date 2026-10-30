@@ -204,6 +204,27 @@ function bookEdition(b: any) {
 	return edition;
 }
 
+const titleKey = (title: string) =>
+	title
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[̀-ͯ]/g, "")
+		.replace(/^(the|a|an)\s+/, "")
+		.replace(/[^a-z0-9]/g, "");
+
+/**
+ * The edition's title when it's a different title (a translation), else the
+ * work's: edition titles are typed per printing, so the same title often comes
+ * with a series note, caps or a dropped "The" ("A HOUSE DIVIDED").
+ */
+function bookTitle(work: { title: string; subtitle?: string }, edition?: { title?: string; subtitle?: string } | null) {
+	const variant = !edition?.title || titleKey(edition.title).startsWith(titleKey(work.title));
+	const { title, subtitle } = variant ? work : { title: edition.title!, subtitle: edition.subtitle };
+	// MARC imports end titles with catalogue punctuation ("Baño de damas.--", "Title /").
+	const trim = (s?: string) => s?.replace(/[\s.:;,/-]+$/, "") || undefined;
+	return { title: trim(title) ?? title, subtitle: trim(subtitle) };
+}
+
 /** Our-language edition of a work, independent of any query. */
 async function defaultEdition(workId: string) {
 	const url = new URL("https://openlibrary.org/search.json");
@@ -239,8 +260,7 @@ const books: Provider = {
 				kind: "book",
 				source: "openlibrary",
 				sourceId: String(b.key).replace("/works/", ""),
-				title: edition?.title ?? b.title,
-				subtitle: edition ? edition.subtitle : b.subtitle,
+				...bookTitle(b, edition),
 				creators: (b.author_name ?? []).slice(0, 3),
 				year: yearOf(b.first_publish_year),
 				image: olCover(edition?.cover_i) ?? olCover(b.cover_i),
@@ -274,8 +294,7 @@ const books: Provider = {
 				kind: "book",
 				source: "openlibrary",
 				sourceId: id,
-				title: edition?.title ?? work.title,
-				subtitle: edition ? edition.subtitle : work.subtitle,
+				...bookTitle(work, edition),
 				creators: authors.filter((a): a is string => Boolean(a)),
 				year: yearOf(work.first_publish_date),
 				image: olCover(edition?.covers?.find((c: number) => c > 0)) ?? olCover(work.covers?.find((c: number) => c > 0)),
