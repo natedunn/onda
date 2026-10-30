@@ -13,14 +13,17 @@ function Experimental() {
 
 			<h2 id="language-selector">🌐 Language selector</h2>
 			<p>
-				Turn it on in <a href="/settings#experimental">settings</a> and the add dialog gets a language
-				select. Pick Español and movies and shows come from The Movie Database with their Spanish
-				titles and posters, and books come from Open Library's Spanish editions. Albums and games look the
-				same in any language, so they don't get the select.
+				The language selector lets you add movies, shows and books in Spanish. Search results come back
+				with Spanish titles and covers, when The Movie Database or Open Library has them. Albums and games
+				search the same way in either language.
 			</p>
 			<p>
-				Things keep the language they were added in, so everyone sees your list the way you made it. The
-				rest of onda is still only in English.
+				Each item stays in the language you added it in, and your list shows it that way to everyone. The
+				rest of onda is only in English for now.
+			</p>
+			<p>
+				To turn it on, go to Settings and check Language selector under Experimental. The add dialog will
+				then have a language menu next to the item type.
 			</p>
 
 			<h2>📕 Book search</h2>
