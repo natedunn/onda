@@ -202,7 +202,8 @@ function ListPage() {
 				/>
 			)}
 
-			<div className="mt-6">
+			{/* List — Large's first halftone band starts right under the control strip. */}
+			<div className={cn(!(layout === "list-lg" && !editing && items.length > 0) && "mt-6")}>
 				{items.length === 0 ? (
 					<p className="py-10 text-muted">
 						{isOwner ? (
