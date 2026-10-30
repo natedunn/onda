@@ -26,10 +26,7 @@ export const KIND_LABELS: Record<Kind, { one: string; many: string; title: strin
 export const LAYOUTS = ["minimal", "list", "list-lg", "grid-sm", "grid", "grid-lg"] as const;
 export type Layout = (typeof LAYOUTS)[number];
 
-/**
- * Renamed views, by their old ID. Lists saved with one are rewritten by migrations:layoutIds;
- * old `?view=` links keep working through toLayout.
- */
+/** Renamed views, by their old ID, so old `?view=` links keep working through toLayout. */
 export const OLD_LAYOUTS = { compact: "minimal", journal: "list-lg" } as const satisfies Record<string, Layout>;
 
 /** A view ID, old or new, as a current view (undefined if it isn't one). */
