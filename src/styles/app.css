@@ -160,8 +160,11 @@
 		cursor: pointer;
 		text-decoration: none;
 		white-space: nowrap;
+		/* The lift isn't transitioned. While a transform animates, Chrome assumes the button
+		   overlaps everything painted after it and moves that content onto a temporary layer.
+		   At a fractional pixel ratio (browser zoom, display scaling) that layer redraws fine
+		   dot screens like .bg-halftone differently, so they flashed on every hover. */
 		transition:
-			transform 90ms ease-out,
 			box-shadow 90ms ease-out,
 			background-color 90ms ease-out;
 	}
