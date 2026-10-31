@@ -9,6 +9,7 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { AddItemDialog } from "@/components/add-item";
 import { Art } from "@/components/art";
+import { ItemDialog } from "@/components/item-dialog";
 import { ListCover } from "@/components/list-cover";
 import { Markdown, stripMarkdown } from "@/components/markdown";
 import { ControlStrip, PageHero } from "@/components/page-hero";
@@ -415,39 +416,50 @@ const GRID_SIZES = {
 type GridSize = (typeof GRID_SIZES)[keyof typeof GRID_SIZES];
 
 function GridItems({ items, ranked, mixed, size }: { items: Item[]; ranked: boolean; mixed: boolean; size: GridSize }) {
+	// The grids leave the note out, so the art and title open the item in a modal instead.
+	const [open, setOpen] = useState<number | null>(null);
 	return (
-		<ol className={cn("grid", size.grid)}>
-			{items.map((item, i) => (
-				// The text sits at the bottom of its cell, so titles in a row line up even under shorter (square) art;
-				// any gap that leaves is filled with a faint halftone (none when the art fills the cell).
-				<li key={item._id} className="flex min-w-0 flex-col">
-					<div className="relative">
-						<Art
-							image={item.record.image}
-							kind={item.record.kind}
-							alt={item.record.title}
-							sizes={size.sizes}
-							priority={i < ABOVE_FOLD}
-							className="w-full"
-						/>
-						{ranked && (
-							<Rank n={i + 1} className={cn("absolute grid place-items-center border border-edge bg-paper px-1.5", size.rank)} />
-						)}
-					</div>
-					<div aria-hidden className="relative flex-1">
-						<div className="halftone-fill absolute inset-x-0 top-2 bottom-0" />
-					</div>
-					<div className="pt-2">
-						<p className={cn("truncate font-bold", size.title)}>
-							<Title record={item.record} />
-						</p>
-						<p className={cn("truncate", size.meta)}>
-							<Meta record={item.record} mixed={mixed} />
-						</p>
-					</div>
-				</li>
-			))}
-		</ol>
+		<>
+			<ol className={cn("grid", size.grid)}>
+				{items.map((item, i) => (
+					// The text sits at the bottom of its cell, so titles in a row line up even under shorter (square) art;
+					// any gap that leaves is filled with a faint halftone (none when the art fills the cell).
+					<li key={item._id} className="flex min-w-0 flex-col">
+						<button type="button" className="relative block cursor-pointer text-left" tabIndex={-1} onClick={() => setOpen(i)}>
+							<Art
+								image={item.record.image}
+								kind={item.record.kind}
+								alt={item.record.title}
+								sizes={size.sizes}
+								priority={i < ABOVE_FOLD}
+								className="w-full"
+							/>
+							{ranked && (
+								<Rank n={i + 1} className={cn("absolute grid place-items-center border border-edge bg-paper px-1.5", size.rank)} />
+							)}
+						</button>
+						<div aria-hidden className="relative flex-1">
+							<div className="halftone-fill absolute inset-x-0 top-2 bottom-0" />
+						</div>
+						<div className="pt-2">
+							<p className={cn("truncate font-bold", size.title)}>
+								<button type="button" className="max-w-full cursor-pointer truncate text-left hover:underline" onClick={() => setOpen(i)}>
+									{item.record.title}
+								</button>
+							</p>
+							<p className={cn("truncate", size.meta)}>
+								<Meta record={item.record} mixed={mixed} />
+							</p>
+						</div>
+					</li>
+				))}
+			</ol>
+			<ItemDialog
+				item={open === null ? null : (items[open] ?? null)}
+				rank={ranked && open !== null ? open + 1 : undefined}
+				onClose={() => setOpen(null)}
+			/>
+		</>
 	);
 }
 
