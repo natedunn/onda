@@ -145,6 +145,27 @@ export default defineSchema({
 		.index("by_list", ["listId", "position"])
 		.index("by_record", ["recordId"]),
 
+	// The release calendar: what's coming out, one row per record, refreshed daily by
+	// releases.sync. Dates are strings as exact as the source knows (shared/releases.ts).
+	releases: defineTable({
+		recordId: v.id("records"),
+		kind: vKind,
+		date: v.string(),
+		precision: v.union(v.literal("day"), v.literal("month"), v.literal("quarter"), v.literal("year")),
+		// The date before the last time it moved, for "moved from Oct 12".
+		previousDate: v.optional(v.string()),
+		detail: v.optional(v.string()),
+		// The source's anticipation measure (TMDB popularity, IGDB hypes); per kind only.
+		score: v.number(),
+		indie: v.boolean(),
+		// The last sync that found it; rows unseen for a few days are dropped.
+		seenAt: v.number(),
+	})
+		.index("by_record", ["recordId"])
+		.index("by_kind_date", ["kind", "date"])
+		.index("by_kind_precision", ["kind", "precision", "date"])
+		.index("by_kind_seen", ["kind", "seenAt"]),
+
 	ogImages: defineTable({
 		listId: v.id("lists"),
 		// Changes whenever anything shown in the image changes.

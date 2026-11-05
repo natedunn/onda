@@ -2,8 +2,22 @@
 // returns the fuller record shown on an item's own page.
 import type { Doc } from "./_generated/dataModel";
 import type { Kind, Language } from "./shared/constants";
+import { isoDay } from "./shared/releases";
 
 export type RecordInput = Omit<Doc<"records">, "_id" | "_creationTime" | "searchText">;
+
+/** Something coming out, for the release calendar. */
+export type Release = {
+	record: RecordInput;
+	/** As exact as the source knows: "2026-11-19", "2027-03", "2027-Q1" or "2027". */
+	date: string;
+	/** A short note shown with the date: platforms, "Limited". */
+	detail?: string;
+	/** The source's own measure of anticipation; only compared within a kind. */
+	score: number;
+	indie: boolean;
+};
+
 // `language` asks the source for its titles, art and editions in that language. Providers
 // whose sources aren't localized (albums, games) ignore it.
 export type Provider = {
@@ -14,6 +28,11 @@ export type Provider = {
 	details: (sourceId: string, current?: RecordInput | null, language?: Language) => Promise<RecordInput | null>;
 	/** Shape check for ids arriving from URLs. */
 	idPattern: RegExp;
+	/**
+	 * Releases dated from `from` (a day, "2026-10-20") on, for the release calendar.
+	 * Records come with details, so their pages open without another fetch.
+	 */
+	upcoming?: (from: string) => Promise<Release[]>;
 };
 
 /** How a record stores a language: absent for English. */
@@ -134,29 +153,108 @@ const movies: Provider = {
 		);
 	},
 	details: (id, _current, language) =>
-		orNull(async () => {
-			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits" }, language);
+		orNull(async () => movieDetails(await tmdb(`/movie/${id}`, { append_to_response: "credits" }, language))),
+	upcoming: upcomingMovies,
+};
+
+/** The full record from /movie/{id} with credits appended. */
+function movieDetails(m: any): RecordInput {
+	return {
+		...movieRecord(m, directors(m.credits)),
+		description: clean(m.overview),
+		genres: (m.genres ?? []).map((g: any) => g.name),
+		facts: [
+			m.runtime ? { label: "Runtime", value: `${m.runtime} min` } : null,
+			m.release_date ? { label: "Released", value: m.release_date } : null,
+			m.credits?.cast?.length
+				? {
+						label: "Starring",
+						value: m.credits.cast
+							.slice(0, 4)
+							.map((c: any) => c.name)
+							.join(", "),
+					}
+				: null,
+		].filter((f) => f !== null),
+		detailsFetchedAt: Date.now(),
+	};
+}
+
+// Release types on TMDB: 1 premiere, 2 limited, 3 theatrical, 4 digital, 5 physical, 6 TV.
+const MOVIE_RELEASE_TYPES: Record<number, string | undefined> = { 2: "Limited", 3: undefined, 4: "Digital" };
+// A movie made by none of these counts as indie. Matched against production company names.
+const MAJOR_STUDIOS =
+	/\b(walt disney|disney|pixar|marvel studios|lucasfilm|20th century|warner bros|new line|dc studios|universal pictures|illumination|dreamworks|paramount|columbia pictures|sony pictures|tristar|netflix|amazon|mgm|apple|lionsgate|legendary)\b/i;
+const MOVIE_PAGES_PER_MONTH = 3;
+// Straight-to-digital titles below this are mostly unknown. TMDB popularity climbs as a
+// date nears, so one that catches on comes back. Limited and theatrical releases skip this.
+const MIN_DIGITAL_POPULARITY = 1;
+
+/**
+ * US releases (limited, theatrical or digital) from `from` through the next
+ * twelve months: the most popular few pages of each month, then each movie's own
+ * US dates, so a re-release or a digital release of an older film is left out.
+ */
+async function upcomingMovies(from: string): Promise<Release[]> {
+	const ids = new Set<number>();
+	const start = new Date(`${from}T00:00:00Z`);
+	for (let i = 0; i <= 12; i++) {
+		const first = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+		const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0));
+		for (let page = 1; page <= MOVIE_PAGES_PER_MONTH; page++) {
+			const { results = [], total_pages = 0 } = await tmdb("/discover/movie", {
+				region: "US",
+				"release_date.gte": i === 0 ? from : isoDay(first.getTime()),
+				"release_date.lte": isoDay(last.getTime()),
+				with_release_type: "2|3|4",
+				sort_by: "popularity.desc",
+				include_adult: "false",
+				page: String(page),
+			});
+			for (const m of results) ids.add(m.id);
+			if (page >= total_pages) break;
+		}
+	}
+	return compact(
+		await inBatches([...ids], 8, async (id): Promise<Release | null> => {
+			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits,release_dates" });
+			const us = (m.release_dates?.results ?? []).find((r: any) => r.iso_3166_1 === "US")?.release_dates ?? [];
+			const first = us
+				.filter((r: any) => r.type in MOVIE_RELEASE_TYPES)
+				.map((r: any) => ({ date: String(r.release_date).slice(0, 10), type: r.type as number }))
+				.sort((a: any, b: any) => a.date.localeCompare(b.date))[0];
+			if (!first || first.date < from) return null;
+			if (first.type === 4 && (m.popularity ?? 0) < MIN_DIGITAL_POPULARITY) return null;
 			return {
-				...movieRecord(m, directors(m.credits)),
-				description: clean(m.overview),
-				genres: (m.genres ?? []).map((g: any) => g.name),
-				facts: [
-					m.runtime ? { label: "Runtime", value: `${m.runtime} min` } : null,
-					m.release_date ? { label: "Released", value: m.release_date } : null,
-					m.credits?.cast?.length
-						? {
-								label: "Starring",
-								value: m.credits.cast
-									.slice(0, 4)
-									.map((c: any) => c.name)
-									.join(", "),
-							}
-						: null,
-				].filter((f) => f !== null),
-				detailsFetchedAt: Date.now(),
+				record: movieDetails(m),
+				date: first.date,
+				detail: MOVIE_RELEASE_TYPES[first.type],
+				score: m.popularity ?? 0,
+				indie: !(m.production_companies ?? []).some((c: any) => MAJOR_STUDIOS.test(c.name)),
 			};
 		}),
-};
+	);
+}
+
+/** Runs `fn` over `items`, `size` at a time; a failed item is logged and dropped. */
+async function inBatches<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<(R | null)[]> {
+	const out: (R | null)[] = [];
+	for (let i = 0; i < items.length; i += size) {
+		out.push(
+			...(await Promise.all(
+				items.slice(i, i + size).map((item) =>
+					fn(item).catch((error) => {
+						console.warn("upcoming: skipped one", item, error);
+						return null;
+					}),
+				),
+			)),
+		);
+	}
+	return out;
+}
+
+const compact = <T>(items: (T | null)[]) => items.filter((x): x is T => x !== null);
 
 const shows: Provider = {
 	idPattern: /^\d{1,10}$/,
@@ -473,20 +571,83 @@ const games: Provider = {
 	},
 	async details(id) {
 		const [g] = await igdb(`fields ${GAME_FIELDS}; where id = ${Number(id)};`);
-		if (!g) return null;
-		return {
-			...gameRecord(g),
-			description: clean(g.summary),
-			genres: (g.genres ?? []).map((x: any) => x.name),
-			facts: [
-				g.platforms?.length
-					? { label: "Platforms", value: g.platforms.map((p: any) => p.abbreviation).filter(Boolean).join(", ") }
-					: null,
-			].filter((f) => f !== null),
-			detailsFetchedAt: Date.now(),
-		};
+		return g ? gameDetails(g) : null;
 	},
+	upcoming: upcomingGames,
 };
+
+function gameDetails(g: any): RecordInput {
+	return {
+		...gameRecord(g),
+		description: clean(g.summary),
+		genres: (g.genres ?? []).map((x: any) => x.name),
+		facts: [
+			g.platforms?.length
+				? { label: "Platforms", value: g.platforms.map((p: any) => p.abbreviation).filter(Boolean).join(", ") }
+				: null,
+		].filter((f) => f !== null),
+		detailsFetchedAt: Date.now(),
+	};
+}
+
+// IGDB game types worth a calendar: main games, standalone expansions, remakes,
+// remasters and expanded editions. DLC, ports and bundles are left out.
+const CALENDAR_GAME_TYPES = "(0,4,8,9,10)";
+// IGDB's release_dates.date_format: 0 exact day, 1 month, 2 year, 3–6 Q1–Q4, 7 TBD.
+// Vague dates are stored on the last day of their span (Q1 2027 → 2027-03-31).
+function gameDate(seconds: number, format: number) {
+	const day = isoDay(seconds * 1000);
+	if (format === 0) return day;
+	if (format === 1) return day.slice(0, 7);
+	if (format >= 3 && format <= 6) return `${day.slice(0, 4)}-Q${format - 2}`;
+	return day.slice(0, 4);
+}
+
+// IGDB "hypes": follows before release. One is mostly the developer; at two the
+// vague-dated ones are mostly games still being worked on.
+const MIN_GAME_HYPES = 2;
+
+/**
+ * Hyped games whose first release is from the start of `from`'s month through the
+ * end of next year, so games dated only "this month" or "2027" are included.
+ */
+async function upcomingGames(from: string): Promise<Release[]> {
+	const start = Math.floor(Date.parse(`${from.slice(0, 7)}-01T00:00:00Z`) / 1000);
+	const end = Math.floor(Date.UTC(Number(from.slice(0, 4)) + 2, 0, 1) / 1000);
+	const fields = `${GAME_FIELDS},hypes,release_dates.date,release_dates.date_format,release_dates.platform.abbreviation`;
+	const games: any[] = [];
+	for (let offset = 0; offset < 2000; offset += 500) {
+		const page = await igdb(
+			`fields ${fields}; where first_release_date >= ${start} & first_release_date < ${end} & game_type = ${CALENDAR_GAME_TYPES} & hypes >= ${MIN_GAME_HYPES}; sort hypes desc; limit 500; offset ${offset};`,
+		);
+		games.push(...page);
+		if (page.length < 500) break;
+	}
+	const thisMonth = isoDay(Date.now()).slice(0, 7);
+	return compact(
+		games.map((g): Release | null => {
+			const dates = (g.release_dates ?? []).filter((r: any) => r.date === g.first_release_date);
+			const date = gameDate(g.first_release_date, dates[0]?.date_format ?? 0);
+			// Days from `from` on (recent releases stay a while); a month only until it's over.
+			if (date.length === 10 ? date < from : date.length === 7 && date < thisMonth) return null;
+			const platforms = [
+				...new Set<string>(
+					(g.release_dates ?? [])
+						.filter((r: any) => r.date >= g.first_release_date)
+						.map((r: any) => r.platform?.abbreviation)
+						.filter(Boolean),
+				),
+			];
+			return {
+				record: gameDetails(g),
+				date,
+				detail: platforms.slice(0, 4).join(" · ") || undefined,
+				score: g.hypes ?? 0,
+				indie: (g.genres ?? []).some((x: any) => x.name === "Indie"),
+			};
+		}),
+	);
+}
 
 export const PROVIDERS: Record<Kind, Provider> = { movie: movies, show: shows, book: books, album: albums, game: games };
 

@@ -21,6 +21,8 @@ import { Route as AtChar123usernameChar125IndexRouteImport } from './routes/@{$u
 import { Route as AuthRefreshRouteImport } from './routes/auth/refresh'
 import { Route as AuthSigninRouteImport } from './routes/auth/signin'
 import { Route as AuthSignoutRouteImport } from './routes/auth/signout'
+import { Route as ReleasesIndexRouteImport } from './routes/releases/index'
+import { Route as ReleasesKindRouteImport } from './routes/releases/$kind'
 import { Route as OgLChar123slugChar125DotpngRouteImport } from './routes/og/l/{$slug}[.]png'
 import { Route as AtChar123usernameChar125LSlugIndexRouteImport } from './routes/@{$username}/l/$slug/index'
 import { Route as AtChar123usernameChar125LSlugSettingsRouteImport } from './routes/@{$username}/l/$slug/settings'
@@ -86,6 +88,16 @@ const AuthSignoutRoute = AuthSignoutRouteImport.update({
   path: '/auth/signout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReleasesIndexRoute = ReleasesIndexRouteImport.update({
+  id: '/releases/',
+  path: '/releases/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReleasesKindRoute = ReleasesKindRouteImport.update({
+  id: '/releases/$kind',
+  path: '/releases/$kind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OgLChar123slugChar125DotpngRoute =
   OgLChar123slugChar125DotpngRouteImport.update({
     id: '/og/l/{$slug}.png',
@@ -117,7 +129,9 @@ export interface FileRoutesByFullPath {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
+  '/releases/$kind': typeof ReleasesKindRoute
   '/@{$username}/': typeof AtChar123usernameChar125IndexRoute
+  '/releases/': typeof ReleasesIndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
   '/@{$username}/l/$slug/': typeof AtChar123usernameChar125LSlugIndexRoute
@@ -134,7 +148,9 @@ export interface FileRoutesByTo {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
+  '/releases/$kind': typeof ReleasesKindRoute
   '/@{$username}': typeof AtChar123usernameChar125IndexRoute
+  '/releases': typeof ReleasesIndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
   '/@{$username}/l/$slug': typeof AtChar123usernameChar125LSlugIndexRoute
@@ -152,7 +168,9 @@ export interface FileRoutesById {
   '/auth/refresh': typeof AuthRefreshRoute
   '/auth/signin': typeof AuthSigninRoute
   '/auth/signout': typeof AuthSignoutRoute
+  '/releases/$kind': typeof ReleasesKindRoute
   '/@{$username}/': typeof AtChar123usernameChar125IndexRoute
+  '/releases/': typeof ReleasesIndexRoute
   '/og/l/{$slug}.png': typeof OgLChar123slugChar125DotpngRoute
   '/@{$username}/l/$slug/settings': typeof AtChar123usernameChar125LSlugSettingsRoute
   '/@{$username}/l/$slug/': typeof AtChar123usernameChar125LSlugIndexRoute
@@ -171,7 +189,9 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
+    | '/releases/$kind'
     | '/@{$username}/'
+    | '/releases/'
     | '/og/l/{$slug}.png'
     | '/@{$username}/l/$slug/settings'
     | '/@{$username}/l/$slug/'
@@ -188,7 +208,9 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
+    | '/releases/$kind'
     | '/@{$username}'
+    | '/releases'
     | '/og/l/{$slug}.png'
     | '/@{$username}/l/$slug/settings'
     | '/@{$username}/l/$slug'
@@ -205,7 +227,9 @@ export interface FileRouteTypes {
     | '/auth/refresh'
     | '/auth/signin'
     | '/auth/signout'
+    | '/releases/$kind'
     | '/@{$username}/'
+    | '/releases/'
     | '/og/l/{$slug}.png'
     | '/@{$username}/l/$slug/settings'
     | '/@{$username}/l/$slug/'
@@ -223,7 +247,9 @@ export interface RootRouteChildren {
   AuthRefreshRoute: typeof AuthRefreshRoute
   AuthSigninRoute: typeof AuthSigninRoute
   AuthSignoutRoute: typeof AuthSignoutRoute
+  ReleasesKindRoute: typeof ReleasesKindRoute
   AtChar123usernameChar125IndexRoute: typeof AtChar123usernameChar125IndexRoute
+  ReleasesIndexRoute: typeof ReleasesIndexRoute
   OgLChar123slugChar125DotpngRoute: typeof OgLChar123slugChar125DotpngRoute
   AtChar123usernameChar125LSlugSettingsRoute: typeof AtChar123usernameChar125LSlugSettingsRoute
   AtChar123usernameChar125LSlugIndexRoute: typeof AtChar123usernameChar125LSlugIndexRoute
@@ -315,6 +341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/releases/': {
+      id: '/releases/'
+      path: '/releases'
+      fullPath: '/releases/'
+      preLoaderRoute: typeof ReleasesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/releases/$kind': {
+      id: '/releases/$kind'
+      path: '/releases/$kind'
+      fullPath: '/releases/$kind'
+      preLoaderRoute: typeof ReleasesKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/og/l/{$slug}.png': {
       id: '/og/l/{$slug}.png'
       path: '/og/l/{$slug}.png'
@@ -351,7 +391,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRefreshRoute: AuthRefreshRoute,
   AuthSigninRoute: AuthSigninRoute,
   AuthSignoutRoute: AuthSignoutRoute,
+  ReleasesKindRoute: ReleasesKindRoute,
   AtChar123usernameChar125IndexRoute: AtChar123usernameChar125IndexRoute,
+  ReleasesIndexRoute: ReleasesIndexRoute,
   OgLChar123slugChar125DotpngRoute: OgLChar123slugChar125DotpngRoute,
   AtChar123usernameChar125LSlugSettingsRoute:
     AtChar123usernameChar125LSlugSettingsRoute,
