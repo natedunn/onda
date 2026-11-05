@@ -96,28 +96,33 @@ the deployment's own callbacks.
 
 ## Upstream tracking
 
-Last checked: **2026-11-02** against `2.0.0-beta.0` (npm `beta` tag; no newer
-release since 2026-10-15). `reboot` head `0c99276e` (2026-11-02), 2 commits
-since `db15c82e` (#781, #783). CHANGELOG/KNOWN_ISSUES unchanged. None of our
-patch targets (`lib/oauth/dbHelpers`, `components/{github,google,oauth}/convex.config`)
-changed, so the patch should still apply. No `ssr/*` or client changes.
+Last checked: **2026-11-05** against `2.0.0-beta.0` (npm `beta` tag; no newer
+release since 2026-10-15). `reboot` head `a7bdf81d` (2026-11-04), 5 commits
+since `07911f86` (#800, #761, #784, #801, #798). CHANGELOG/KNOWN_ISSUES
+unchanged. None of our patch targets (`lib/oauth/dbHelpers`,
+`components/{github,google,oauth}/convex.config`) changed, so the patch should
+still apply. Shared `ssr/*` is unchanged; `ssr/nextjs` and `react/*` changed for
+#761 (see the checklist).
 
 **Merged since beta.0 (land in the next beta). Upgrade checklist:**
 
 | Item | Link | Affects |
 |---|---|---|
 | **Deployment-issued JWTs**: no `AUTH_PRIVATE_KEY`/`AUTH_JWKS`; JWKS served by the deployment; **needs `convex@^1.48`** (peer dep) | PR #787 | bump `convex` (we have `^1.47`); drop both from `convex/convex.config.ts` (app env + `app.use(auth)` env), `scripts/dev-seed.sh` check (`AUTH_JWKS`), env docs, and the vars on every deployment; everyone re-signs in |
-| `convexAuthProvider()` helper for `auth.config.ts` | PR #788 | replace our hand-written `customJwt` provider in `convex/auth.config.ts` (its `/auth/.well-known/jwks.json` URL goes away with #787) |
+| `convexAuthProvider()` helper for `auth.config.ts` | PR #788 | replace our hand-written `customJwt` provider in `convex/auth.config.ts` (its `/auth/.well-known/jwks.json` URL goes away with #787; the helper also covers the new audience, #800) |
 | **Stateful sessions**: JWT `sub` is the session id; `getAuthUserId` looks up a live session (optional component-ref arg; default `auth` matches ours) | PR #757 | `getAuthUserId` callers unchanged; revocation becomes immediate; old tokens invalid → re-sign-in |
 | **Session revocation**: `ctx.convexAuth.revokeOtherSessions`, component `listSessions`/`revokeSessions` | PR #759 | Deferred "sign out everywhere" — now doable without a patch |
 | `isAuthenticated` reads from the session | PR #760 | `convex/auth.ts` re-exports it; no code change |
+| **Reactive sign-out**: `SessionWatcher` inside `ConvexProviderWithAuth`; `ConvexAuthApi` gains `isAuthenticated` | PR #761 | adapter `provider.tsx` must render `<SessionWatcher isAuthenticated={api.auth.isAuthenticated} />` (export from `react/client`, reachable through `#convex-auth-react-internal`), or revoked sessions stay signed in until the next failed refresh |
+| JWT audience is `convex-auth` | PR #800 | invalidates existing tokens (same sign-out); handled by `convexAuthProvider()` |
+| Session expiry = sooner of `refreshInactivityTimeoutSeconds` and `sessionMaxLifetimeSeconds`; `refreshTokenTtlSeconds` renamed; TTL config validated at push | PRs #798, #801 | none (`convex/auth.ts` only sets `accessTokenTtlSeconds`); defaults keep the 30-day lifetime |
 | "sign-in method" wording in docs/comments/errors | PR #696 | none (no API renames) |
 | Remove `sessions.lastRefreshedAt` — **schema-breaking: clear the sessions table before upgrading** | PR #758 | upgrade step (everyone signed out once) |
 | Refresh-token expiry from issue time + current TTL; remove `refreshTokens.expiresAt` — **schema-breaking: clear `auth/refreshTokens` and `auth/sessions` before upgrading** | PR #781 | upgrade step (same sign-out as #758) |
 | Cap sessions per user at 100 (oldest revoked) | PR #783 | none |
 | Remove `accessTokenExpiresAt` from the token bundle | PR #777 | none (adapter only reads `accessToken`) |
 | Remove `authAction` from auth-method helpers | PR #776 | none |
-| Password-reset revocation; email+password secrets; Next.js clock; docs site; misc | #775, #779, #722, #726, #720, #748, #763, #790–#794, #747, #766, #762–#774 | none |
+| Password-reset revocation; email+password secrets; Next.js clock; docs site; misc | #775, #779, #722, #726, #720, #748, #763, #784, #790–#794, #747, #766, #762–#774 | none |
 
 **Open — tracked:**
 
@@ -125,8 +130,9 @@ changed, so the patch should still apply. No `ssr/*` or client changes.
 |---|---|---|---|
 | **`ambientSignIns` internal; `oauth` no longer exported from `methods/oauth/react`** (both providers register it by default) | PR #750 | open, active 10-29 | adapter `provider.tsx` imports `oauth` and passes `ambientSignIns` — if merged, drop both (our `AuthProvider` alias may need the default registration too) |
 | Rename public "provider" names (`GithubProviderOptions` → `GithubOptions`, `completeSignUp` → `…WithEmailPassword`, test helpers) | PR #749 | open, active 10-29 | none found in our code; check `convex/authDiscord.ts` types on upgrade |
-| Sign clients out reactively on revocation | PR #761 | open, ready | adapter (client) |
-| Erase expired sessions with a batch-worker loop | PR #785 | draft, active 11-02 | Deferred "cleanup" — sessions/refresh tokens (not OAuth flow rows) |
+| Erase expired sessions with a batch-worker loop | PR #785 | draft, active 11-04 | Deferred "cleanup" — sessions/refresh tokens (not OAuth flow rows) |
+| Erase a deleted session's refresh tokens in scheduled batches | PR #799 | open | Deferred "cleanup" |
+| Count every revoked session in `revokeOtherSessions` | PR #786 | open | Deferred "sign out everywhere" |
 | Re-run the Convex auth handshake when the signed-in user changes | PR #789 | draft | adapter uses the same `AuthProvider` — fixes guest→GitHub switching running as the old user |
 | Export `ConvexAuthNextjsProvider`; apps own the Convex client | PR #780 | draft | possible model for slimming our `provider.tsx` |
 | Component args instead of `.attachUserCallbacks` (exploration, "do not review") | PR #778 | draft | would change `convex/auth.ts` wiring if adopted |
