@@ -265,6 +265,33 @@
 		--halftone-offset: 4px;
 	}
 
+	/* Cover art that pops up off a halftone on hover; goes on a .halftone inside a link.
+	   The dots sit still right under the art, so lifting it is what reveals them. Don't use
+	   this where a dot band (.bg-halftone) paints after it, for the reason .btn's lift isn't
+	   animated. */
+	.art-lift {
+		isolation: isolate;
+	}
+	.art-lift::before {
+		transform: none;
+	}
+	.art-lift > * {
+		transition: transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	@media (hover: hover) {
+		a:hover .art-lift > * {
+			transform: translate(-6px, -6px);
+		}
+	}
+	a:focus-visible .art-lift > * {
+		transform: translate(-6px, -6px);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.art-lift > * {
+			transition: none;
+		}
+	}
+
 	/* The same dot screen as .halftone's shadow, kept faint, for filling empty space. */
 	.halftone-fill {
 		opacity: 0.3;

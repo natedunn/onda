@@ -1,20 +1,31 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import { KIND_LABELS } from "@convex/shared/constants";
-import { releaseLabel } from "@convex/shared/releases";
+import { RELEASE_SORT_LABELS, RELEASE_SORTS, releaseLabel, type ReleaseSort } from "@convex/shared/releases";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Art } from "@/components/art";
-import { Moved } from "@/components/release-rows";
+import { ControlStrip } from "@/components/page-hero";
+import { readReleaseSort, saveReleaseSort } from "@/lib/release-sort";
 
 export const Route = createFileRoute("/releases/")({
-	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(convexQuery(api.releases.overview, {}));
+	// Bad values have to be set to undefined; leaving them out keeps the raw one.
+	validateSearch: (search: Record<string, unknown>): { sort?: ReleaseSort } => ({
+		sort: RELEASE_SORTS.includes(search.sort as ReleaseSort) ? (search.sort as ReleaseSort) : undefined,
+	}),
+	// The URL always says what's showing, so it can be shared; a shared link wins over
+	// this device's saved sort, and only picking a sort changes what's saved.
+	beforeLoad: async ({ search }) => {
+		if (!search.sort) throw redirect({ to: "/releases", search: { sort: await readReleaseSort() }, replace: true });
+	},
+	loaderDeps: ({ search }) => ({ sort: search.sort }),
+	loader: async ({ context, deps }) => {
+		await context.queryClient.ensureQueryData(convexQuery(api.releases.overview, { sort: deps.sort! }));
 	},
 	head: () => ({
 		meta: [
 			{ title: "Coming soon · onda" },
-			{ name: "description", content: "Movies and games coming out soon." },
+			{ name: "description", content: "Movies, shows and games coming out soon." },
 		],
 	}),
 	component: Releases,
@@ -24,14 +35,37 @@ export const Route = createFileRoute("/releases/")({
 const POSTER_SIZES = "(min-width: 640px) 128px, 25vw";
 
 function Releases() {
-	const { data: sections } = useSuspenseQuery(convexQuery(api.releases.overview, {}));
+	const sort = Route.useSearch({ select: (search) => search.sort! });
+	const navigate = Route.useNavigate();
+	const { data: sections } = useSuspenseQuery(convexQuery(api.releases.overview, { sort }));
 
 	return (
 		<div>
 			<h1 className="font-serif text-[clamp(2.4rem,6vw,3.6rem)] leading-[0.95] tracking-tight">Coming soon</h1>
 			<p className="mt-3 text-[14px]">
-				The most anticipated releases of the next month. Dates move; this checks for changes every day.
+				See the most anticipated and upcoming releases.
 			</p>
+
+			<ControlStrip className="mt-6">
+				<label className="flex items-center gap-3">
+					<span className="label">Sort</span>
+					<select
+						className="field py-1 pl-2.5 text-[13px] leading-6 pointer-coarse:text-[16px]"
+						value={sort}
+						onChange={(e) => {
+							const next = e.target.value as ReleaseSort;
+							saveReleaseSort(next);
+							void navigate({ search: { sort: next }, replace: true, resetScroll: false });
+						}}
+					>
+						{RELEASE_SORTS.map((option) => (
+							<option key={option} value={option}>
+								{RELEASE_SORT_LABELS[option]}
+							</option>
+						))}
+					</select>
+				</label>
+			</ControlStrip>
 
 			{sections.length === 0 && <p className="mt-10 text-muted">The calendar isn't set up here yet.</p>}
 
@@ -56,15 +90,12 @@ function Releases() {
 											params={{ kind: record.kind, id: record.sourceId }}
 											className="plain group block"
 										>
-											<Art image={record.image} kind={record.kind} alt="" sizes={POSTER_SIZES} />
+											<div className="halftone art-lift">
+												<Art image={record.image} kind={record.kind} alt="" sizes={POSTER_SIZES} />
+											</div>
 											<p className="mt-2 text-[13px] font-bold">{releaseLabel(release.date)}</p>
 											<p className="line-clamp-2 text-[14px] leading-snug group-hover:underline">{record.title}</p>
 										</Link>
-										{release.previousDate && (
-											<p className="mt-1 text-[12px]">
-												<Moved release={release} />
-											</p>
-										)}
 									</li>
 								);
 							})}

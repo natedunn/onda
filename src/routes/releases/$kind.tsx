@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { ReleaseRow } from "@convex/releases";
-import { KIND_LABELS, KINDS, type Kind } from "@convex/shared/constants";
+import { INDIE_KINDS, KIND_LABELS, KINDS, type Kind } from "@convex/shared/constants";
 import { addMonths, CALENDAR_MONTHS, isoDay, monthName } from "@convex/shared/releases";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -63,7 +63,8 @@ function KindReleases() {
 	const months = calendarMonths();
 	const month = search.month ?? months[0];
 	const { data: all } = useSuspenseQuery(convexQuery(api.releases.month, { kind, month }));
-	const releases = search.indie ? all.filter((r) => r.indie) : all;
+	const indie = search.indie && INDIE_KINDS.includes(kind);
+	const releases = indie ? all.filter((r) => r.indie) : all;
 	const groups = groupReleases(releases);
 	const later = month === "later";
 	const labels = KIND_LABELS[kind];
@@ -84,7 +85,7 @@ function KindReleases() {
 					</>
 				) : (
 					<>
-						{plural(releases.length, `${search.indie ? "indie " : ""}${labels.one}`, `${search.indie ? "indie " : ""}${labels.many}`)}{" "}
+						{plural(releases.length, `${indie ? "indie " : ""}${labels.one}`, `${indie ? "indie " : ""}${labels.many}`)}{" "}
 						coming out in {monthName(month)}.
 					</>
 				)}
@@ -100,24 +101,29 @@ function KindReleases() {
 							</MonthLink>
 						</li>
 					))}
-					<li>
-						<MonthLink month="later" current={later}>
-							date TBA
-						</MonthLink>
-					</li>
+					{/* Only games get announced as "Q1 2027"; TMDB's dates are always days. */}
+					{kind === "game" && (
+						<li>
+							<MonthLink month="later" current={later}>
+								date TBA
+							</MonthLink>
+						</li>
+					)}
 				</ul>
-				<Link
-					to="."
-					search={(prev: Search) => ({ ...prev, indie: prev.indie ? undefined : (true as const) })}
-					className="linkish"
-				>
-					{search.indie ? "☑" : "☐"} indie only
-				</Link>
+				{INDIE_KINDS.includes(kind) && (
+					<Link
+						to="."
+						search={(prev: Search) => ({ ...prev, indie: prev.indie ? undefined : (true as const) })}
+						className="linkish"
+					>
+						{search.indie ? "☑" : "☐"} indie only
+					</Link>
+				)}
 			</ControlStrip>
 
 			{groups.length === 0 ? (
 				<p className="mt-8 text-muted">
-					Nothing {search.indie ? "indie " : ""}
+					Nothing {indie ? "indie " : ""}
 					{later ? "waiting on a date" : `dated for ${monthName(month)}`} yet.
 				</p>
 			) : (
@@ -125,9 +131,10 @@ function KindReleases() {
 			)}
 
 			<p className="mt-10 text-[11px] text-muted">
-				{kind === "game" ? "Dates are from IGDB" : "Dates are US releases from TMDB"}, checked daily.
+				{kind === "game" ? "Dates are from IGDB" : kind === "show" ? "Dates are from TMDB" : "Dates are US releases from TMDB"}.
 				{kind === "game" && " Games followed by at least a couple of people on IGDB."}
 				{kind === "movie" && " Indie means none of the big studios or streamers produced it."}
+				{kind === "show" && " New series and new seasons."}
 			</p>
 		</div>
 	);
