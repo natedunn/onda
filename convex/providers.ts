@@ -196,25 +196,10 @@ const MIN_DIGITAL_POPULARITY = 1;
  * US dates, so a re-release or a digital release of an older film is left out.
  */
 async function upcomingMovies(from: string): Promise<Release[]> {
-	const ids = new Set<number>();
-	const start = new Date(`${from}T00:00:00Z`);
-	for (let i = 0; i <= 12; i++) {
-		const first = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
-		const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0));
-		for (let page = 1; page <= MOVIE_PAGES_PER_MONTH; page++) {
-			const { results = [], total_pages = 0 } = await tmdb("/discover/movie", {
-				region: "US",
-				"release_date.gte": i === 0 ? from : isoDay(first.getTime()),
-				"release_date.lte": isoDay(last.getTime()),
-				with_release_type: "2|3|4",
-				sort_by: "popularity.desc",
-				include_adult: "false",
-				page: String(page),
-			});
-			for (const m of results) ids.add(m.id);
-			if (page >= total_pages) break;
-		}
-	}
+	const ids = await discoverByMonth("/discover/movie", "release_date", from, MOVIE_PAGES_PER_MONTH, {
+		region: "US",
+		with_release_type: "2|3|4",
+	});
 	return compact(
 		await inBatches([...ids], 8, async (id): Promise<Release | null> => {
 			const m = await tmdb(`/movie/${id}`, { append_to_response: "credits,release_dates" });
@@ -234,6 +219,35 @@ async function upcomingMovies(from: string): Promise<Release[]> {
 			};
 		}),
 	);
+}
+
+/** The ids on the most popular `pages` of a TMDB discover, one month at a time from `from`. */
+async function discoverByMonth(
+	path: string,
+	dateField: string,
+	from: string,
+	pages: number,
+	params: Record<string, string> = {},
+) {
+	const ids = new Set<number>();
+	const start = new Date(`${from}T00:00:00Z`);
+	for (let i = 0; i <= 12; i++) {
+		const first = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i, 1));
+		const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0));
+		for (let page = 1; page <= pages; page++) {
+			const { results = [], total_pages = 0 } = await tmdb(path, {
+				...params,
+				[`${dateField}.gte`]: i === 0 ? from : isoDay(first.getTime()),
+				[`${dateField}.lte`]: isoDay(last.getTime()),
+				sort_by: "popularity.desc",
+				include_adult: "false",
+				page: String(page),
+			});
+			for (const item of results) ids.add(item.id);
+			if (page >= total_pages) break;
+		}
+	}
+	return ids;
 }
 
 /** Runs `fn` over `items`, `size` at a time; a failed item is logged and dropped. */
@@ -267,27 +281,67 @@ const shows: Provider = {
 			}),
 		);
 	},
-	details: (id, _current, language) =>
-		orNull(async () => {
-			const s = await tmdb(`/tv/${id}`, {}, language);
+	details: (id, _current, language) => orNull(async () => showDetails(await tmdb(`/tv/${id}`, {}, language))),
+	upcoming: upcomingShows,
+};
+
+/** The full record from /tv/{id}. */
+function showDetails(s: any): RecordInput {
+	return {
+		...showRecord(s, (s.created_by ?? []).map((c: any) => c.name).slice(0, 2)),
+		description: clean(s.overview),
+		genres: (s.genres ?? []).map((g: any) => g.name),
+		facts: [
+			s.number_of_seasons ? { label: "Seasons", value: String(s.number_of_seasons) } : null,
+			s.first_air_date ? { label: "First aired", value: s.first_air_date } : null,
+			s.networks?.length ? { label: "Network", value: s.networks.map((n: any) => n.name).join(", ") } : null,
+			s.status ? { label: "Status", value: s.status } : null,
+		].filter((f) => f !== null),
+		detailsFetchedAt: Date.now(),
+	};
+}
+
+const SHOW_PREMIERE_PAGES_PER_MONTH = 3;
+// "Airing this month" is mostly episodes of running seasons, so it takes more pages
+// to reach the season premieres among them.
+const SHOW_AIRING_PAGES_PER_MONTH = 5;
+// Daily and year-round shows (wrestling, soaps, late night) start a new "season"
+// every January; a season this long means there's no real premiere to announce.
+const MAX_SEASON_EPISODES = 40;
+const SHOW_TYPES_WITHOUT_PREMIERES = ["News", "Talk Show"];
+// As with digital movies: popularity climbs as a premiere nears. Returning shows skip this.
+const MIN_NEW_SHOW_POPULARITY = 1;
+
+/**
+ * New series and new seasons from `from` on: each show's next season by air date,
+ * found among this year's premieres and the most popular shows airing each month.
+ */
+async function upcomingShows(from: string): Promise<Release[]> {
+	const [premieres, airing] = await Promise.all([
+		discoverByMonth("/discover/tv", "first_air_date", from, SHOW_PREMIERE_PAGES_PER_MONTH),
+		discoverByMonth("/discover/tv", "air_date", from, SHOW_AIRING_PAGES_PER_MONTH),
+	]);
+	return compact(
+		await inBatches([...new Set([...premieres, ...airing])], 8, async (id): Promise<Release | null> => {
+			const s = await tmdb(`/tv/${id}`);
+			if (SHOW_TYPES_WITHOUT_PREMIERES.includes(s.type)) return null;
+			// Season 0 is specials.
+			const seasons = (s.seasons ?? []).filter((x: any) => x.season_number > 0);
+			const next = seasons.find((x: any) => x.air_date && x.air_date >= from);
+			if (!next) return null;
+			const previous = seasons.find((x: any) => x.season_number === next.season_number - 1);
+			if ((previous?.episode_count ?? 0) >= MAX_SEASON_EPISODES) return null;
+			if (next.season_number === 1 && (s.popularity ?? 0) < MIN_NEW_SHOW_POPULARITY) return null;
 			return {
-				...showRecord(s, (s.created_by ?? []).map((c: any) => c.name).slice(0, 2)),
-				description: clean(s.overview),
-				genres: (s.genres ?? []).map((g: any) => g.name),
-				facts: [
-					s.number_of_seasons
-						? { label: "Seasons", value: String(s.number_of_seasons) }
-						: null,
-					s.first_air_date ? { label: "First aired", value: s.first_air_date } : null,
-					s.networks?.length
-						? { label: "Network", value: s.networks.map((n: any) => n.name).join(", ") }
-						: null,
-					s.status ? { label: "Status", value: s.status } : null,
-				].filter((f) => f !== null),
-				detailsFetchedAt: Date.now(),
+				record: showDetails(s),
+				date: next.air_date,
+				detail: next.season_number === 1 ? "New series" : `Season ${next.season_number}`,
+				score: s.popularity ?? 0,
+				indie: false,
 			};
 		}),
-};
+	);
+}
 
 // --- Open Library (books) --------------------------------------------------
 
