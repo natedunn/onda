@@ -25,7 +25,7 @@ export const Route = createFileRoute("/releases/")({
 	head: () => ({
 		meta: [
 			{ title: "Coming soon · onda" },
-			{ name: "description", content: "Movies, shows and games coming out soon." },
+			{ name: "description", content: "Movies, shows, albums and games coming out soon." },
 		],
 	}),
 	component: Releases,

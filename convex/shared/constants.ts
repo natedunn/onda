@@ -35,6 +35,9 @@ export const LOCALIZED_KINDS: Kind[] = ["movie", "show", "book"];
 // Kinds where the release calendar can tell what's indie; TMDB says nothing useful for shows.
 export const INDIE_KINDS: Kind[] = ["movie", "game"];
 
+// Kinds that can be announced with only a quarter or a year, so the calendar has a "date TBA" page.
+export const VAGUE_DATE_KINDS: Kind[] = ["album", "game"];
+
 // The medium size of each family goes by the bare name ("list", "grid").
 export const LAYOUTS = ["minimal", "list", "list-lg", "grid-sm", "grid", "grid-lg"] as const;
 export type Layout = (typeof LAYOUTS)[number];
