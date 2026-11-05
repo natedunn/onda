@@ -6,7 +6,7 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalAction, internalMutation, query, type QueryCtx } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, query, type QueryCtx } from "./_generated/server";
 import { upsertRecord } from "./media";
 import { enabledKinds, PROVIDERS } from "./providers";
 import { recordFields, vKind } from "./schema";
@@ -23,13 +23,15 @@ const OVERVIEW_COUNT = 8;
 const OVERVIEW_DAYS = 30;
 // "Soonest" skips releases scoring under these, or the next few days would be all
 // unknowns. Set from real scores; a kind's scale is its source's own.
-const SOONEST_FLOORS: Partial<Record<Kind, number>> = { movie: 10, show: 20, game: 10 };
+const SOONEST_FLOORS: Partial<Record<Kind, number>> = { movie: 10, show: 20, album: 5, game: 10 };
 // A month page shows everything; this is only a guard.
 const MONTH_LIMIT = 500;
 
 /** Kinds with a calendar: enabled, and their source can list upcoming releases. */
 export function calendarKinds(): Kind[] {
-	return enabledKinds().filter((kind) => PROVIDERS[kind].upcoming);
+	return enabledKinds().filter(
+		(kind) => PROVIDERS[kind].upcoming && (kind !== "album" || process.env.MUSIC_SEARCH_URL),
+	);
 }
 
 export const kinds = query({
@@ -46,9 +48,23 @@ export const sync = internalAction({
 		if (!calendarKinds().includes(kind)) return;
 		const startedAt = Date.now();
 		const from = isoDay(startedAt - RECENT_DAYS * DAY);
+		const listed = async () => {
+			const creators = new Set<string>();
+			let cursor: string | null = null;
+			for (let done = false; !done; ) {
+				const page: { creators: string[]; cursor: string; isDone: boolean } = await ctx.runQuery(
+					internal.releases.listedCreators,
+					{ kind, cursor },
+				);
+				for (const creator of page.creators) creators.add(creator.toLowerCase());
+				cursor = page.cursor;
+				done = page.isDone;
+			}
+			return creators;
+		};
 		let releases;
 		try {
-			releases = await PROVIDERS[kind].upcoming!(from);
+			releases = await PROVIDERS[kind].upcoming!(from, listed);
 		} catch (error) {
 			// Nothing is swept on a failed sync, so yesterday's calendar stays up.
 			console.error(`release sync ${kind} failed`, error);
@@ -63,6 +79,20 @@ export const sync = internalAction({
 		}
 		await ctx.runMutation(internal.releases.sweep, { kind, before: startedAt - UNSEEN_DAYS * DAY });
 		console.log(`release sync ${kind}: ${releases.length} releases`);
+	},
+});
+
+/** One page of the creators of a kind's records that are on a list. */
+export const listedCreators = internalQuery({
+	args: { kind: vKind, cursor: v.union(v.string(), v.null()) },
+	handler: async (ctx, { kind, cursor }) => {
+		const page = await ctx.db.query("items").paginate({ cursor, numItems: 500 });
+		const creators = new Set<string>();
+		for (const item of page.page) {
+			const record = await ctx.db.get(item.recordId);
+			if (record?.kind === kind) for (const creator of record.creators) creators.add(creator);
+		}
+		return { creators: [...creators], cursor: page.continueCursor, isDone: page.isDone };
 	},
 });
 

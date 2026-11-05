@@ -84,6 +84,18 @@ export const cached = internalQuery({
 const searchTextOf = (r: Pick<Doc<"records">, "title" | "subtitle" | "creators">) =>
 	[r.title, r.subtitle, ...r.creators].filter(Boolean).join(" ");
 
+// A refetch that changed nothing still moves detailsFetchedAt, at most this often, so
+// it can't age past the item page's refresh and refetch on every visit.
+const DETAILS_STAMP_INTERVAL = 7 * 24 * 60 * 60 * 1000;
+
+function unchanged(existing: Doc<"records">, patch: RecordInput & { searchText: string }) {
+	const { detailsFetchedAt, ...fields } = patch;
+	if (detailsFetchedAt && detailsFetchedAt - (existing.detailsFetchedAt ?? 0) >= DETAILS_STAMP_INTERVAL) return false;
+	return Object.entries(fields).every(
+		([key, value]) => JSON.stringify(existing[key as keyof typeof fields]) === JSON.stringify(value),
+	);
+}
+
 /** Insert or refresh a record, keeping richer data a lighter fetch didn't include. */
 export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 	const existing = await ctx.db
@@ -110,6 +122,9 @@ export async function upsertRecord(ctx: MutationCtx, record: RecordInput) {
 		...settled,
 	};
 	const patch = { ...merged, searchText: searchTextOf(merged) };
+	// Daily syncs mostly bring what's already here. Skipping those writes saves the
+	// bandwidth and spares every open query on this record a rerun.
+	if (unchanged(existing, patch)) return existing;
 	await ctx.db.patch(existing._id, patch);
 	const updated = { ...existing, ...patch };
 	if (JSON.stringify(updated.image) !== JSON.stringify(existing.image)) await copyWhenListed(ctx, updated);

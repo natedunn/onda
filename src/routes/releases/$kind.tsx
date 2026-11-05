@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { ReleaseRow } from "@convex/releases";
-import { INDIE_KINDS, KIND_LABELS, KINDS, type Kind } from "@convex/shared/constants";
+import { INDIE_KINDS, KIND_LABELS, KINDS, type Kind, VAGUE_DATE_KINDS } from "@convex/shared/constants";
 import { addMonths, CALENDAR_MONTHS, isoDay, monthName } from "@convex/shared/releases";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -54,6 +54,13 @@ export const Route = createFileRoute("/releases/$kind")({
 	component: KindReleases,
 });
 
+const SOURCE_NOTES: Partial<Record<Kind, string>> = {
+	movie: "Dates are US releases from TMDB.",
+	show: "Dates are from TMDB.",
+	album: "Dates are from MusicBrainz.",
+	game: "Dates are from IGDB.",
+};
+
 // Undated ("later") groups can run to hundreds; they show the most anticipated this many until asked.
 const GROUP_PREVIEW = 24;
 
@@ -101,8 +108,7 @@ function KindReleases() {
 							</MonthLink>
 						</li>
 					))}
-					{/* Only games get announced as "Q1 2027"; TMDB's dates are always days. */}
-					{kind === "game" && (
+					{VAGUE_DATE_KINDS.includes(kind) && (
 						<li>
 							<MonthLink month="later" current={later}>
 								date TBA
@@ -131,7 +137,7 @@ function KindReleases() {
 			)}
 
 			<p className="mt-10 text-[11px] text-muted">
-				{kind === "game" ? "Dates are from IGDB" : kind === "show" ? "Dates are from TMDB" : "Dates are US releases from TMDB"}.
+				{SOURCE_NOTES[kind]}
 				{kind === "game" && " Games followed by at least a couple of people on IGDB."}
 				{kind === "movie" && " Indie means none of the big studios or streamers produced it."}
 				{kind === "show" && " New series and new seasons."}

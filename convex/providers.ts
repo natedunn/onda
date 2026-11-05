@@ -30,9 +30,10 @@ export type Provider = {
 	idPattern: RegExp;
 	/**
 	 * Releases dated from `from` (a day, "2026-10-20") on, for the release calendar.
-	 * Records come with details, so their pages open without another fetch.
+	 * Records usually come with details, so their pages open without another fetch.
+	 * `listed` gets the lowercased creators on someone's list, to keep them past a cut.
 	 */
-	upcoming?: (from: string) => Promise<Release[]>;
+	upcoming?: (from: string, listed: () => Promise<Set<string>>) => Promise<Release[]>;
 };
 
 /** How a record stores a language: absent for English. */
@@ -545,6 +546,40 @@ async function searchMusicBrainz(query: string): Promise<RecordInput[]> {
 		.map(albumRecord);
 }
 
+// The highest score of an artist's albums on our mirror (see workers/music). Below this
+// they're mostly unknown; artists on someone's list are kept anyway.
+const MIN_ALBUM_SCORE = 3;
+
+/** Albums and EPs from the mirror, which MusicBrainz's twice-weekly dumps keep up to date. */
+async function upcomingAlbums(from: string, listed: () => Promise<Set<string>>): Promise<Release[]> {
+	const url = new URL("/upcoming", process.env.MUSIC_SEARCH_URL);
+	url.searchParams.set("from", from);
+	const res = await fetch(url, {
+		signal: AbortSignal.timeout(15_000),
+		headers: { Authorization: `Bearer ${process.env.MUSIC_SEARCH_TOKEN}` },
+	});
+	if (!res.ok) throw new Error(`music mirror responded ${res.status}`);
+	const { albums } = (await res.json()) as {
+		albums: { id: string; title: string; artist: string; date: string; type: string; score: number }[];
+	};
+	const artists = await listed();
+	return albums
+		.filter((a) => a.score >= MIN_ALBUM_SCORE || artists.has(a.artist.toLowerCase()))
+		.map((a) => ({
+			record: albumRecord({
+				id: a.id,
+				title: a.title,
+				"primary-type": a.type,
+				"artist-credit": [{ name: a.artist }],
+				"first-release-date": a.date,
+			}),
+			date: a.date,
+			detail: a.type === "EP" ? "EP" : undefined,
+			score: a.score,
+			indie: false,
+		}));
+}
+
 const albums: Provider = {
 	idPattern: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
 	async search(query) {
@@ -555,6 +590,7 @@ const albums: Provider = {
 	},
 	// The mirror is up to a few days behind; this finds this week's releases.
 	searchLive: searchMusicBrainz,
+	upcoming: upcomingAlbums,
 	details: (id) =>
 		orNull(async () => {
 			const g = await getJson<any>(

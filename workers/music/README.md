@@ -7,6 +7,9 @@ falls back to the MusicBrainz API if the mirror fails or finds nothing. The add
 dialog's "Not here? Search MusicBrainz directly" asks the API too, for releases
 newer than the last dump. Album pages still fetch details from the API.
 
+`GET /upcoming?from=2026-10-22` serves the release calendar: albums and EPs
+dated from that day on, most notable first. Convex's daily album sync reads it.
+
 - Worker: `onda-music` at `https://onda-music.hello-fc8.workers.dev`
 - D1: `onda-music` (`a85e0e6c-eb2e-4b65-9a11-3548e1d95e73`)
 
@@ -23,6 +26,12 @@ Only CC0 core data is stored: id, title, artist credit, year, type. Tags,
 genres and ratings are CC BY-NC-SA, so they only feed a numeric `boost`
 (notability) and aren't stored. Rows are inserted most notable first, which is
 what lets broad queries rank only their first 1000 matches.
+
+Each slot has a small `upcoming_a` / `upcoming_b` table with the albums and EPs
+dated two weeks ago or later, leaving out compilations, live albums, remixes and
+the like. A new album has few votes of its own, so its `score` is the highest
+`boost` of anything by its credited artists. Dumps come out twice a week, so
+dates can lag by a few days.
 
 `.github/workflows/music-import.yml` runs it daily (and on demand, with
 "force" to reload the same dump). It needs the repo secret

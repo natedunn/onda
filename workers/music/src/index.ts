@@ -11,14 +11,16 @@ export interface Env {
 }
 
 export type Album = { id: string; title: string; artist: string; year: number | null; type: string };
+export type UpcomingAlbum = { id: string; title: string; artist: string; date: string; type: string; score: number };
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
 		if (url.pathname === "/") return json(200, { service: "Onda album search" });
-		if (url.pathname !== "/search") return json(404, { error: "Not found" });
+		if (url.pathname !== "/search" && url.pathname !== "/upcoming") return json(404, { error: "Not found" });
 		if (request.method !== "GET") return json(405, { error: "Method not allowed" });
 		if (!(await authorized(request, env.SEARCH_TOKEN))) return json(401, { error: "Unauthorized" });
+		if (url.pathname === "/upcoming") return await upcoming(url, env);
 
 		const match = toMatch(url.searchParams.get("q") ?? "");
 		if (!match) return json(200, { albums: [] });
@@ -39,6 +41,27 @@ export default {
 		return json(200, { albums: results });
 	},
 } satisfies ExportedHandler<Env>;
+
+/** Albums dated `from` (a day) or later, most notable first, for the release calendar. */
+async function upcoming(url: URL, env: Env) {
+	const from = url.searchParams.get("from") ?? "";
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return json(400, { error: "from must be a day" });
+	const table = await activeTable(env.DB);
+	if (!table) return json(503, { error: "Mirror not loaded" });
+	try {
+		// Dates compare as strings, so "2026-12" and "2027" count as after their days.
+		const { results } = await env.DB.prepare(
+			`SELECT id, title, artist, date, type, score FROM ${table.replace("albums", "upcoming")} WHERE date >= ?1 ORDER BY score DESC LIMIT 5000`,
+		)
+			.bind(from)
+			.all<UpcomingAlbum>();
+		return json(200, { albums: results });
+	} catch (error) {
+		// The slot was loaded before the calendar existed; the next import adds its table.
+		console.warn("upcoming table unavailable", error);
+		return json(503, { error: "Upcoming albums not loaded" });
+	}
+}
 
 /**
  * A user's query as an FTS5 expression: every word must match, the last as a
