@@ -18,6 +18,14 @@ export const vSource = v.union(
 
 export const vLanguage = v.union(v.literal("en"), v.literal("es"));
 
+export const vRunStatus = v.union(
+	v.literal("running"),
+	v.literal("ok"),
+	// Ended early on purpose, like a source being down.
+	v.literal("stopped"),
+	v.literal("failed"),
+);
+
 export const vVisibility = v.union(
 	v.literal("public"),
 	v.literal("unlisted"),
@@ -160,11 +168,28 @@ export default defineSchema({
 		indie: v.boolean(),
 		// The last sync that found it; rows unseen for a few days are dropped.
 		seenAt: v.number(),
+		// Copying the cover to R2 (albums only); see releaseArt.ts.
+		artStatus: v.optional(v.union(v.literal("pending"), v.literal("missing"), v.literal("copied"))),
+		artCheckAfter: v.optional(v.number()),
+		artCheckedAt: v.optional(v.number()),
 	})
 		.index("by_record", ["recordId"])
+		.index("by_art", ["artStatus", "artCheckAfter"])
 		.index("by_kind_date", ["kind", "date"])
 		.index("by_kind_precision", ["kind", "precision", "date"])
 		.index("by_kind_seen", ["kind", "seenAt"]),
+
+	// A log of scheduled job runs, for the admin page; kept for a month.
+	jobRuns: defineTable({
+		job: v.string(),
+		startedAt: v.number(),
+		finishedAt: v.optional(v.number()),
+		status: vRunStatus,
+		summary: v.optional(v.string()),
+		error: v.optional(v.string()),
+	})
+		.index("by_started", ["startedAt"])
+		.index("by_job", ["job", "startedAt"]),
 
 	ogImages: defineTable({
 		listId: v.id("lists"),

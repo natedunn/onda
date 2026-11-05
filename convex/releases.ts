@@ -8,9 +8,11 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery, query, type QueryCtx } from "./_generated/server";
 import { upsertRecord } from "./media";
+import { tracked } from "./jobs";
 import { enabledKinds, PROVIDERS } from "./providers";
 import { recordFields, vKind } from "./schema";
 import type { Kind } from "./shared/constants";
+import type { JobId } from "./shared/jobs";
 import { isoDay, precisionOf, RECENT_DAYS, RELEASE_SORTS } from "./shared/releases";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -62,23 +64,21 @@ export const sync = internalAction({
 			}
 			return creators;
 		};
-		let releases;
-		try {
-			releases = await PROVIDERS[kind].upcoming!(from, listed);
-		} catch (error) {
-			// Nothing is swept on a failed sync, so yesterday's calendar stays up.
-			console.error(`release sync ${kind} failed`, error);
-			return;
-		}
-		for (let i = 0; i < releases.length; i += SAVE_BATCH) {
-			await ctx.runMutation(internal.releases.save, {
-				kind,
-				seenAt: startedAt,
-				releases: releases.slice(i, i + SAVE_BATCH),
-			});
-		}
-		await ctx.runMutation(internal.releases.sweep, { kind, before: startedAt - UNSEEN_DAYS * DAY });
-		console.log(`release sync ${kind}: ${releases.length} releases`);
+		// A throw skips the sweep, so a failed sync leaves yesterday's calendar up.
+		await tracked(ctx, `sync:${kind}` as JobId, async () => {
+			const releases = await PROVIDERS[kind].upcoming!(from, listed);
+			let moved = 0;
+			for (let i = 0; i < releases.length; i += SAVE_BATCH) {
+				moved += await ctx.runMutation(internal.releases.save, {
+					kind,
+					seenAt: startedAt,
+					releases: releases.slice(i, i + SAVE_BATCH),
+				});
+			}
+			await ctx.runMutation(internal.releases.sweep, { kind, before: startedAt - UNSEEN_DAYS * DAY });
+			console.log(`release sync ${kind}: ${releases.length} releases`);
+			return { status: "ok", summary: `${releases.length} releases, ${moved} dates moved` };
+		});
 	},
 });
 
@@ -111,6 +111,8 @@ export const save = internalMutation({
 		),
 	},
 	handler: async (ctx, { kind, seenAt, releases }) => {
+		let movedCount = 0;
+		const today = isoDay(seenAt);
 		for (const { record: input, ...release } of releases) {
 			if (input.kind !== kind) throw new ConvexError(`Expected a ${kind}, got a ${input.kind}`);
 			const record = await upsertRecord(ctx, input);
@@ -119,18 +121,29 @@ export const save = internalMutation({
 				.withIndex("by_record", (q) => q.eq("recordId", record._id))
 				.unique();
 			const row = { ...release, kind, recordId: record._id, precision: precisionOf(release.date), seenAt };
+			const art = artQueue(record, release.date, today, seenAt, existing?.artStatus);
 			if (!existing) {
-				await ctx.db.insert("releases", row);
+				await ctx.db.insert("releases", { ...row, ...art });
 			} else {
 				const moved = existing.date !== release.date;
+				if (moved) movedCount++;
 				await ctx.db.patch(existing._id, {
 					...row,
+					...art,
 					previousDate: moved ? existing.date : existing.previousDate,
 				});
 			}
 		}
+		return movedCount;
 	},
 });
+
+/** Where a release joins the cover queue (releaseArt.ts): unreleased albums, the first time they're seen. */
+function artQueue(record: Doc<"records">, date: string, today: string, now: number, status: Doc<"releases">["artStatus"]) {
+	if (record.kind !== "album" || status || date < today.slice(0, date.length)) return {};
+	if (record.image?.host === "r2" && record.image.files.length) return { artStatus: "copied" as const };
+	return { artStatus: "pending" as const, artCheckAfter: now };
+}
 
 /** Drops a kind's releases that no sync has found since `before`. */
 export const sweep = internalMutation({

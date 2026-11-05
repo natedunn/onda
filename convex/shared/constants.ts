@@ -1,3 +1,6 @@
+/** Who can open /admin; compared with the verified email on `users`. */
+export const ADMIN_EMAIL = "hello@natedunn.net";
+
 export const LIMITS = {
 	listsPerUser: 50,
 	itemsPerList: 100,
