@@ -20,9 +20,11 @@ import type * as og from "../og.js";
 import type * as ogRender from "../ogRender.js";
 import type * as providers from "../providers.js";
 import type * as records from "../records.js";
+import type * as releases from "../releases.js";
 import type * as seed from "../seed.js";
 import type * as shared_constants from "../shared/constants.js";
 import type * as shared_images from "../shared/images.js";
+import type * as shared_releases from "../shared/releases.js";
 import type * as shared_themes from "../shared/themes.js";
 import type * as users from "../users.js";
 
@@ -45,9 +47,11 @@ declare const fullApi: ApiFromModules<{
   ogRender: typeof ogRender;
   providers: typeof providers;
   records: typeof records;
+  releases: typeof releases;
   seed: typeof seed;
   "shared/constants": typeof shared_constants;
   "shared/images": typeof shared_images;
+  "shared/releases": typeof shared_releases;
   "shared/themes": typeof shared_themes;
   users: typeof users;
 }>;

@@ -25,7 +25,12 @@ export const page = query({
 	args: { kind: vKind, sourceId: v.string(), language: recordFields.language },
 	handler: async (ctx, { kind, sourceId, language }) => {
 		const record = await findRecord(ctx, kind, sourceId, language);
-		if (!record) return { record: null, lists: [], hasOtherLanguage: false };
+		if (!record) return { record: null, lists: [], hasOtherLanguage: false, release: null };
+		// On the release calendar, if it's coming out soon.
+		const release = await ctx.db
+			.query("releases")
+			.withIndex("by_record", (q) => q.eq("recordId", record._id))
+			.unique();
 		// Experimental: whether the same thing is also saved in another language.
 		const versions = await ctx.db
 			.query("records")
@@ -65,7 +70,12 @@ export const page = query({
 			if (lists.length >= 30) break;
 		}
 		lists.sort((a, b) => b.updatedAt - a.updatedAt);
-		return { record, lists, hasOtherLanguage };
+		return {
+			record,
+			lists,
+			hasOtherLanguage,
+			release: release && { date: release.date, previousDate: release.previousDate, detail: release.detail },
+		};
 	},
 });
 

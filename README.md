@@ -20,18 +20,20 @@ Works the same in any git worktree, each with its own URL and data; see
 
 ```
 convex/
-  schema.ts           users, lists, items, records (media cache), ogImages
+  schema.ts           users, lists, items, records (media cache), releases, ogImages
   auth.ts             Convex Auth v2 setup: GitHub (+ dev-only guest)
   users.ts lists.ts items.ts
   providers.ts        source APIs: TMDB, Open Library, MusicBrainz/Cover Art Archive, IGDB
   media.ts            search + record cache upserts
   records.ts          public item pages; details fetched on first visit, refreshed every 30 days
+  releases.ts         release calendar: daily sync per kind (crons.ts) from each provider's `upcoming`
   og.ts ogRender.ts   OG images: satori + resvg in a Node action, cached in storage
   shared/             code shared with the frontend (themes, gradient, limits)
 src/
   routes/             /, /sign-in, /@{username}, /settings, /@{username}/l/{slug},
                       /@{username}/l/{slug}/settings,
                       /{kind}/{sourceId} (item pages, e.g. /movie/603),
+                      /releases, /releases/{kind}?month=2026-12 (release calendar),
                       /privacy, /terms, /og/l/{slug}.png, /auth/* (auth proxy)
   lib/convex-auth-start/  stopgap TanStack Start adapter for Convex Auth (see its README)
 ```

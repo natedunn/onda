@@ -2,12 +2,14 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
 import type { Doc, Id } from "@convex/_generated/dataModel";
 import { KIND_LABELS, KINDS, type Kind, LOCALIZED_KINDS, SOURCE_LABELS } from "@convex/shared/constants";
+import { isoDay, precisionOf, releaseLabel } from "@convex/shared/releases";
 import { imageUrl } from "@convex/shared/images";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useAction, useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { Art } from "@/components/art";
+import { Moved } from "@/components/release-rows";
 import { ListCover } from "@/components/list-cover";
 import { errorMessage, plural } from "@/lib/utils";
 
@@ -143,6 +145,7 @@ function ItemPage() {
 						<p className="mt-1 font-serif text-xl text-muted italic">{record.subtitle}</p>
 					)}
 					{record.creators.length > 0 && <p className="mt-2 text-[14px]">by {record.creators.join(", ")}</p>}
+					{data.release && <ReleaseNote kind={record.kind} release={data.release} />}
 				</div>
 			</header>
 
@@ -258,5 +261,28 @@ function AddToList({ record }: { record: Doc<"records"> }) {
 			</button>
 			{message && <span className="text-muted">{message}</span>}
 		</form>
+	);
+}
+
+/** "Out Nov 19, 2026" for things on the release calendar, linking to its month. */
+function ReleaseNote({ kind, release }: { kind: Kind; release: { date: string; previousDate?: string; detail?: string } }) {
+	const { date } = release;
+	const precision = precisionOf(date);
+	const out = precision === "day" && date <= isoDay(Date.now());
+	// Undated releases live on the calendar's "date TBA" page; the rest on their month.
+	const month = precision === "day" || precision === "month" ? date.slice(0, 7) : "later";
+	return (
+		<p className="mt-3 flex flex-wrap items-baseline gap-x-2 text-[12px]">
+			<span className="bg-mark px-1 font-bold text-ink">
+				{out ? "Out" : "Coming"} {releaseLabel(date, true)}
+			</span>
+			{release.detail && <span className="text-muted">{release.detail}</span>}
+			<Moved release={release} />
+			{!out && (
+				<Link to="/releases/$kind" params={{ kind }} search={{ month }}>
+					more {KIND_LABELS[kind].many} coming
+				</Link>
+			)}
+		</p>
 	);
 }

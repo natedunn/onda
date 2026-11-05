@@ -14,6 +14,7 @@ export function SiteHeader() {
 				<span className="shimmer not-italic [--shimmer-base:var(--muted)] [--shimmer-delay:0.3s]">∿</span>
 			</Link>
 			<nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] [&_a:visited]:text-(--link)">
+				<Link to="/releases">coming soon</Link>
 				{viewer ? (
 					<>
 						<NewListButton className="linkish">new list</NewListButton>
