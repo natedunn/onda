@@ -27,11 +27,13 @@ export const Route = createFileRoute("/releases/$kind")({
 		stringify: ({ kind }) => ({ kind }),
 	},
 	// `month` is "2026-12" or "later" (dated only to a quarter or year); absent is this month.
+	// Bad values have to be set to undefined; leaving them out keeps the raw one.
 	validateSearch: (search: Record<string, unknown>): Search => ({
-		...(typeof search.month === "string" && (search.month === "later" || calendarMonths().includes(search.month))
-			? { month: search.month }
-			: {}),
-		...(search.indie === true || search.indie === "true" ? { indie: true as const } : {}),
+		month:
+			typeof search.month === "string" && (search.month === "later" || calendarMonths().includes(search.month))
+				? search.month
+				: undefined,
+		indie: search.indie === true || search.indie === "true" ? true : undefined,
 	}),
 	loaderDeps: ({ search }) => ({ month: search.month }),
 	loader: async ({ context, params, deps }) => {
