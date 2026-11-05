@@ -23,6 +23,13 @@ export function addMonths(month: string, n: number) {
 	return new Date(Date.UTC(year, m - 1 + n, 1)).toISOString().slice(0, 7);
 }
 
+// How the overview picks: the next releases that clear a popularity floor, or the
+// most anticipated of the next month.
+export const RELEASE_SORTS = ["soonest", "popular"] as const;
+export type ReleaseSort = (typeof RELEASE_SORTS)[number];
+export const DEFAULT_RELEASE_SORT: ReleaseSort = "soonest";
+export const RELEASE_SORT_LABELS: Record<ReleaseSort, string> = { soonest: "Soonest", popular: "Most anticipated" };
+
 /** How many months the calendar pages step through, starting with this one. */
 export const CALENDAR_MONTHS = 12;
 

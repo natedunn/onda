@@ -11,7 +11,7 @@ import { upsertRecord } from "./media";
 import { enabledKinds, PROVIDERS } from "./providers";
 import { recordFields, vKind } from "./schema";
 import type { Kind } from "./shared/constants";
-import { isoDay, precisionOf, RECENT_DAYS } from "./shared/releases";
+import { isoDay, precisionOf, RECENT_DAYS, RELEASE_SORTS } from "./shared/releases";
 
 const DAY = 24 * 60 * 60 * 1000;
 // A release missing from this many days of syncs is gone (moved out of range,
@@ -21,6 +21,9 @@ const SAVE_BATCH = 40;
 // The overview shows this many per kind, from the next few weeks.
 const OVERVIEW_COUNT = 8;
 const OVERVIEW_DAYS = 30;
+// "Soonest" skips releases scoring under these, or the next few days would be all
+// unknowns. Set from real scores; a kind's scale is its source's own.
+const SOONEST_FLOORS: Partial<Record<Kind, number>> = { movie: 10, show: 20, game: 10 };
 // A month page shows everything; this is only a guard.
 const MONTH_LIMIT = 500;
 
@@ -160,10 +163,15 @@ async function publicListCount(ctx: QueryCtx, recordId: Id<"records">) {
 	return count;
 }
 
-/** The most anticipated few of each kind coming out in the next month. */
+const bySoonest = (a: Doc<"releases">, b: Doc<"releases">) => a.date.localeCompare(b.date) || b.score - a.score;
+
+/**
+ * A few of each kind from the next month, in date order: the next ones that clear
+ * the kind's floor, or with `sort: "popular"` the highest scoring.
+ */
 export const overview = query({
-	args: {},
-	handler: async (ctx) => {
+	args: { sort: v.union(...RELEASE_SORTS.map((sort) => v.literal(sort))) },
+	handler: async (ctx, { sort }) => {
 		const today = isoDay(Date.now());
 		const until = isoDay(Date.now() + OVERVIEW_DAYS * DAY);
 		const sections = [];
@@ -172,10 +180,11 @@ export const overview = query({
 				.query("releases")
 				.withIndex("by_kind_date", (q) => q.eq("kind", kind).gte("date", today).lte("date", until))
 				.take(MONTH_LIMIT);
-			const top = soon
-				.sort((a, b) => b.score - a.score)
-				.slice(0, OVERVIEW_COUNT)
-				.sort((a, b) => a.date.localeCompare(b.date));
+			const picks =
+				sort === "popular"
+					? soon.sort((a, b) => b.score - a.score)
+					: soon.filter((r) => r.score >= (SOONEST_FLOORS[kind] ?? 0)).sort(bySoonest);
+			const top = picks.slice(0, OVERVIEW_COUNT).sort(bySoonest);
 			sections.push({ kind, releases: await withRecords(ctx, top) });
 		}
 		return sections;
@@ -213,7 +222,7 @@ export const month = query({
 				.withIndex("by_kind_date", (q) => q.eq("kind", kind).gte("date", month).lt("date", `${month}~`))
 				.take(MONTH_LIMIT);
 		}
-		rows.sort((a, b) => a.date.localeCompare(b.date) || b.score - a.score);
+		rows.sort(bySoonest);
 		return await withRecords(ctx, rows);
 	},
 });

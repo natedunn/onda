@@ -23,7 +23,9 @@ export function ReleaseItem({ release }: { release: ReleaseRow }) {
 	return (
 		<li className="flex items-center gap-4 border-b border-rule py-3.5 sm:gap-5">
 			<Link to="/$kind/$id" params={params} className="plain w-16 shrink-0 sm:w-20" tabIndex={-1}>
-				<Art image={record.image} kind={record.kind} alt="" sizes="(min-width: 640px) 80px, 64px" />
+				<div className="halftone art-lift">
+					<Art image={record.image} kind={record.kind} alt="" sizes="(min-width: 640px) 80px, 64px" />
+				</div>
 			</Link>
 			<div className="min-w-0 flex-1">
 				<Link to="/$kind/$id" params={params} className="font-serif text-[1.65rem] leading-[1.1] tracking-tight [overflow-wrap:anywhere] sm:text-[1.9rem]">

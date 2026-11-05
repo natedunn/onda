@@ -131,7 +131,7 @@ function KindReleases() {
 			)}
 
 			<p className="mt-10 text-[11px] text-muted">
-				{kind === "game" ? "Dates are from IGDB" : kind === "show" ? "Dates are from TMDB" : "Dates are US releases from TMDB"}, checked daily.
+				{kind === "game" ? "Dates are from IGDB" : kind === "show" ? "Dates are from TMDB" : "Dates are US releases from TMDB"}.
 				{kind === "game" && " Games followed by at least a couple of people on IGDB."}
 				{kind === "movie" && " Indie means none of the big studios or streamers produced it."}
 				{kind === "show" && " New series and new seasons."}
