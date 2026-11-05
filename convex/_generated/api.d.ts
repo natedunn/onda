@@ -8,22 +8,26 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as authDiscord from "../authDiscord.js";
 import type * as authGateway from "../authGateway.js";
 import type * as crons from "../crons.js";
 import type * as images from "../images.js";
 import type * as items from "../items.js";
+import type * as jobs from "../jobs.js";
 import type * as lists from "../lists.js";
 import type * as media from "../media.js";
 import type * as og from "../og.js";
 import type * as ogRender from "../ogRender.js";
 import type * as providers from "../providers.js";
 import type * as records from "../records.js";
+import type * as releaseArt from "../releaseArt.js";
 import type * as releases from "../releases.js";
 import type * as seed from "../seed.js";
 import type * as shared_constants from "../shared/constants.js";
 import type * as shared_images from "../shared/images.js";
+import type * as shared_jobs from "../shared/jobs.js";
 import type * as shared_releases from "../shared/releases.js";
 import type * as shared_themes from "../shared/themes.js";
 import type * as users from "../users.js";
@@ -35,22 +39,26 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   auth: typeof auth;
   authDiscord: typeof authDiscord;
   authGateway: typeof authGateway;
   crons: typeof crons;
   images: typeof images;
   items: typeof items;
+  jobs: typeof jobs;
   lists: typeof lists;
   media: typeof media;
   og: typeof og;
   ogRender: typeof ogRender;
   providers: typeof providers;
   records: typeof records;
+  releaseArt: typeof releaseArt;
   releases: typeof releases;
   seed: typeof seed;
   "shared/constants": typeof shared_constants;
   "shared/images": typeof shared_images;
+  "shared/jobs": typeof shared_jobs;
   "shared/releases": typeof shared_releases;
   "shared/themes": typeof shared_themes;
   users: typeof users;

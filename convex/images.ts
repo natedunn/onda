@@ -61,47 +61,63 @@ export const copyTarget = internalQuery({
 export const copy = internalAction({
 	args: { recordId: v.id("records") },
 	handler: async (ctx, { recordId }) => {
-		const base = process.env.IMAGES_UPLOAD_URL;
-		const token = process.env.IMAGES_UPLOAD_TOKEN;
 		// Not configured (e.g. a fresh local backend): records keep the source's URLs.
-		if (!base || !token) return;
+		if (!process.env.IMAGES_UPLOAD_URL || !process.env.IMAGES_UPLOAD_TOKEN) return;
 		const target = await ctx.runQuery(internal.images.copyTarget, { recordId });
 		if (!target) return;
-		const { image } = target;
-
-		const downloads: { bytes: ArrayBuffer; type: string }[] = [];
-		for (const size of SOURCE_SIZES[image.host].filter((s) => COPIED_SIZES[image.host]!.includes(s.width))) {
-			let url = size.url(image.id);
-			// Open Library answers a missing cover with a blank 1×1 image unless asked not to.
-			if (image.host === "openlibrary") url += "?default=false";
-			const res = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { "User-Agent": USER_AGENT } });
-			const type = res.headers.get("content-type")?.split(";")[0] ?? "";
-			// The source has no art at this size; keep whichever smaller sizes it had.
-			if (res.status === 404) break;
-			if (!res.ok || !type.startsWith("image/")) throw new Error(`${new URL(url).host} responded ${res.status} ${type}`);
-			downloads.push({ bytes: await res.arrayBuffer(), type });
-		}
-
-		// Name files after the largest one's content, so a new picture gets new
-		// URLs and caches never serve an old one.
-		const largest = downloads.at(-1);
-		const hash = largest ? hex(await crypto.subtle.digest("SHA-256", largest.bytes)).slice(0, 12) : "";
-		const files: StoredImage["files"] = [];
-		for (const { bytes, type } of downloads) {
-			const size = imageSize(new Uint8Array(bytes));
-			if (!size) throw new Error(`unreadable ${type} from ${image.host}/${image.id}`);
-			const path = `${target.kind}/${target.sourceId}/${hash}-${size.width}.${EXTENSIONS[type] ?? "img"}`;
-			const res = await fetch(`${base}/objects/${path}`, {
-				method: "PUT",
-				headers: { Authorization: `Bearer ${token}`, "Content-Type": type },
-				body: bytes,
-			});
-			if (!res.ok) throw new Error(`image upload responded ${res.status}`);
-			files.push({ path, ...size });
-		}
-		await ctx.runMutation(internal.images.saveCopy, { recordId, image: { host: "r2", files, from: image } });
+		const files = await storeCopies(target);
+		await ctx.runMutation(internal.images.saveCopy, { recordId, image: { host: "r2", files, from: target.image } });
 	},
 });
+
+/** The source is down or refusing right now, as opposed to having no art. */
+export class SourceUnavailable extends Error {}
+
+/** Downloads a source image's copied sizes and stores them in R2; empty if the source has no art. */
+export async function storeCopies(target: { kind: string; sourceId: string; image: SourceImage }) {
+	const base = process.env.IMAGES_UPLOAD_URL;
+	const token = process.env.IMAGES_UPLOAD_TOKEN;
+	if (!base || !token) throw new Error("Image uploads aren't configured");
+	const { image } = target;
+
+	const downloads: { bytes: ArrayBuffer; type: string }[] = [];
+	for (const size of SOURCE_SIZES[image.host].filter((s) => COPIED_SIZES[image.host]!.includes(s.width))) {
+		let url = size.url(image.id);
+		// Open Library answers a missing cover with a blank 1×1 image unless asked not to.
+		if (image.host === "openlibrary") url += "?default=false";
+		const host = new URL(url).host;
+		const res = await fetch(url, { signal: AbortSignal.timeout(15_000), headers: { "User-Agent": USER_AGENT } }).catch(
+			(error) => {
+				throw new SourceUnavailable(`${host}: ${error}`);
+			},
+		);
+		const type = res.headers.get("content-type")?.split(";")[0] ?? "";
+		// The source has no art at this size; keep whichever smaller sizes it had.
+		if (res.status === 404) break;
+		if (res.status === 429 || res.status >= 500) throw new SourceUnavailable(`${new URL(res.url || url).host} responded ${res.status}`);
+		if (!res.ok || !type.startsWith("image/")) throw new Error(`${host} responded ${res.status} ${type}`);
+		downloads.push({ bytes: await res.arrayBuffer(), type });
+	}
+
+	// Name files after the largest one's content, so a new picture gets new
+	// URLs and caches never serve an old one.
+	const largest = downloads.at(-1);
+	const hash = largest ? hex(await crypto.subtle.digest("SHA-256", largest.bytes)).slice(0, 12) : "";
+	const files: StoredImage["files"] = [];
+	for (const { bytes, type } of downloads) {
+		const size = imageSize(new Uint8Array(bytes));
+		if (!size) throw new Error(`unreadable ${type} from ${image.host}/${image.id}`);
+		const path = `${target.kind}/${target.sourceId}/${hash}-${size.width}.${EXTENSIONS[type] ?? "img"}`;
+		const res = await fetch(`${base}/objects/${path}`, {
+			method: "PUT",
+			headers: { Authorization: `Bearer ${token}`, "Content-Type": type },
+			body: bytes,
+		});
+		if (!res.ok) throw new Error(`image upload responded ${res.status}`);
+		files.push({ path, ...size });
+	}
+	return files;
+}
 
 export const saveCopy = internalMutation({
 	args: { recordId: v.id("records"), image: vImage },

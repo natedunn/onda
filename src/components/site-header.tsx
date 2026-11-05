@@ -1,5 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@convex/_generated/api";
+import { ADMIN_EMAIL } from "@convex/shared/constants";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { NewListButton } from "@/components/new-list-button";
@@ -22,6 +23,7 @@ export function SiteHeader() {
 							@{viewer.username}
 						</Link>
 						<Link to="/settings">settings</Link>
+						{viewer.email === ADMIN_EMAIL && <Link to="/admin">admin</Link>}
 					</>
 				) : (
 					<Link to="/sign-in">sign in</Link>

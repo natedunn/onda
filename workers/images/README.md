@@ -15,7 +15,8 @@ Records store an image pointer, not a URL (`convex/shared/images.ts`):
 
 - `{ host: "tmdb", id }`: posters stay on TMDB's CDN.
 - `{ host: "igdb" | "caa" | "openlibrary", id }`: copied to R2 once the
-  record is on a list, two sizes each, then replaced by
+  record is on a list, or for albums, once they're on the release calendar
+  (`convex/releaseArt.ts`), two sizes each, then replaced by
 - `{ host: "r2", files, from }`: our copy; `from` is the source image, so a
   refresh that still points there keeps the copy.
 
