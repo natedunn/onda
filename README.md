@@ -14,7 +14,8 @@ pnpm dev            # local Convex backend + the app at https://onda.localhost:1
 
 Works the same in any git worktree, each with its own URL and data; see
 `docs/local-dev.md`. Deploys: `docs/deploy.md`. Sign-in setup:
-`docs/auth-environments.md`.
+`docs/auth-environments.md`. Release calendar and its known issues:
+`docs/release-calendar.md`.
 
 ## Layout
 
