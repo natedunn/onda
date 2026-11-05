@@ -5,7 +5,8 @@
 //   pending   not tried yet
 //   missing   the source had no cover; tried again at artCheckAfter
 //   copied    done
-// An outage leaves the queue alone: the run stops and tomorrow's picks it up.
+// One failed cover is skipped and retried tomorrow; several in a row mean the source
+// is down, so the run stops there rather than trying the rest.
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -30,6 +31,9 @@ const RUN_MS = 8 * 60 * 1000;
 const SOON_DAYS = 14;
 const RECHECK_DAYS = 7;
 const RECHECK_SOON_DAYS = 2;
+const STOP_AFTER_FAILURES = 5;
+// Under a day, so a daily run always retries it.
+const RETRY_MS = 12 * 60 * 60 * 1000;
 
 /** The source image to copy: a record's own, or the one behind an empty copy of it. */
 function sourceOf(record: Doc<"records">): SourceImage | undefined {
@@ -99,7 +103,7 @@ export const saveResult = internalMutation({
 		const now = Date.now();
 		const done = { artStatus: "copied" as const, artCheckAfter: undefined, artCheckedAt: now };
 		if (result.outcome === "missing") await markMissing(ctx, row);
-		else if (result.outcome === "failed") await ctx.db.patch(row._id, { artCheckedAt: now, artCheckAfter: now + DAY });
+		else if (result.outcome === "failed") await ctx.db.patch(row._id, { artCheckedAt: now, artCheckAfter: now + RETRY_MS });
 		else if (result.outcome === "settled") await ctx.db.patch(row._id, done);
 		else {
 			const record = await ctx.db.get(row.recordId);
@@ -122,6 +126,7 @@ const summarize = ({ copied, missing, failed }: Tally) => `${copied} copied, ${m
 /** Works through the queue, one batch per pass, until it's empty or the source is down. */
 async function pass(ctx: ActionCtx, runId: Id<"jobRuns">, tally: Tally, max?: number): Promise<RunResult | null> {
 	const startedAt = Date.now();
+	let streak = 0;
 	for (;;) {
 		const batch = await ctx.runQuery(internal.releaseArt.due, { limit: BATCH });
 		if (max !== undefined) batch.splice(max - attempts(tally));
@@ -135,17 +140,18 @@ async function pass(ctx: ActionCtx, runId: Id<"jobRuns">, tally: Tally, max?: nu
 				const files = await storeCopies({ kind: item.kind, sourceId: item.sourceId, image: item.image });
 				const outcome = files.length ? ("copied" as const) : ("missing" as const);
 				tally[outcome]++;
+				streak = 0;
 				await ctx.runMutation(internal.releaseArt.saveResult, {
 					releaseId: item.releaseId,
 					result: outcome === "copied" ? { outcome, from: item.image, files } : { outcome },
 				});
 			} catch (error) {
-				if (error instanceof SourceUnavailable) {
-					return { status: "stopped", summary: `${summarize(tally)}. Stopped: ${error.message}` };
-				}
 				console.error(`art ${item.sourceId} failed`, error);
 				tally.failed++;
 				await ctx.runMutation(internal.releaseArt.saveResult, { releaseId: item.releaseId, result: { outcome: "failed" } });
+				if (error instanceof SourceUnavailable && ++streak >= STOP_AFTER_FAILURES) {
+					return { status: "stopped", summary: `${summarize(tally)}. Stopped: ${error.message}` };
+				}
 			}
 		}
 		if (Date.now() - startedAt > RUN_MS) {
