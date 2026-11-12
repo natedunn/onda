@@ -96,18 +96,30 @@ the deployment's own callbacks.
 
 ## Upstream tracking
 
-Last checked: **2026-11-05** against `2.0.0-beta.0` (npm `beta` tag; no newer
-release since 2026-10-15). `reboot` head `a7bdf81d` (2026-11-04), 5 commits
-since `07911f86` (#800, #761, #784, #801, #798). CHANGELOG/KNOWN_ISSUES
-unchanged. None of our patch targets (`lib/oauth/dbHelpers`,
-`components/{github,google,oauth}/convex.config`) changed, so the patch should
-still apply. Shared `ssr/*` is unchanged; `ssr/nextjs` and `react/*` changed for
-#761 (see the checklist).
+Last checked: **2026-11-12** against `2.0.0-beta.0` (npm `beta` tag; no newer
+v2 release since 2026-10-15; `latest` is v1 `0.0.98`, a fix for
+GHSA-hmvv-g278-4x95, which covers v1 email/phone codes only, `<0.0.98`, and
+doesn't apply to us). **v2 moved from `reboot` to `main`** (#880; `reboot` is
+deleted, and releases now publish from `main`). `main` head `ce759739`
+(2026-11-12), 77 commits since `a7bdf81d`. CHANGELOG has an "Unreleased"
+section with **breaking schema and API changes** (below). Our patch targets
+changed (`lib/oauth/dbHelpers` gains account helpers, and
+`components/oauth/convex.config` is now `@internal`), so expect to regenerate
+the patch. Shared `ssr/*` is unchanged.
 
 **Merged since beta.0 (land in the next beta). Upgrade checklist:**
 
 | Item | Link | Affects |
 |---|---|---|
+| **Custom OAuth hidden**: `methods/oauth/server` and `components/oauth/convex.config` removed from the package exports (`@internal` "until the API for custom OAuth providers is stable") | PR #836 | **Discord sign-in** (`convex/auth.ts` `setupOauth`, `convex/authDiscord.ts` `OauthCatalog`, `convex/convex.config.ts` `authOauth`) stops resolving. Options: add the two exports back in our patch (the dist files still ship), or wait for the return (open #849, #848) |
+| **Anonymous method hidden** from the exports (returns with account linking) | PR #827 | dev-only guest sign-in (`setupAnonymous`, `authAnonymous`): re-export it via our patch, or drop guest sign-in |
+| **Accounts move into the components**: each OAuth component (and anonymous) keeps its own `accounts`; core `auth/accounts` goes away; `resolveUserId`/`getUserIdByAccount` removed | PRs #818, #819 | **prod data migration**: copy each OAuth row of `auth/accounts` into the `accounts` table of `authGithub`/`authGoogle`/`authDiscord`, or the user gets a new onda user on the next sign-in (our verified-email match in `convex/users.ts` would catch most, but not unverified Discord emails). Then clear `authAnonymous/accounts`, delete `auth/accounts`, and clear `auth/sessions` + `auth/refreshTokens` (CHANGELOG "Unreleased" steps) |
+| **User callbacks**: `provider: { name, accountId, profile }` → `method: { name, profile }` (no `accountId`; for OAuth use `profile.id`) | PRs #860, #889 | `convex/users.ts`: `providerArgs` validators and every `createFrom*`/`on*SignIn` handler |
+| `sessions.provider` → `component`; core tracks the users it created | PRs #861, #869 | schema (covered by clearing `auth/sessions`) |
+| Core must be mounted as `auth`; `componentName` option removed | PR #842 | none (ours is `auth`) |
+| Unsafe component functions renamed `_internal_dangerous_*` (e.g. OAuth `createAuthorizationRequest`, core `signIn`) | PRs #877, #881 | none directly (`viaGateway` wraps the method's `startSignIn`, not the component); recheck when regenerating the patch |
+| Public "provider" names renamed (`GithubProviderOptions` → `GithubOptions`, …) | PR #749 | none found; recheck types on upgrade |
+| `npx @convex-dev/auth` CLI removed; refuse OAuth sign-in without `httpPrefix`; TTL/URL validation at setup; error codes; passkey/password/docs work | #821, #742, #736, #822, #838, #839, #871, #799, #803–#814, #875, #873, #891, #892–#895 | none |
 | **Deployment-issued JWTs**: no `AUTH_PRIVATE_KEY`/`AUTH_JWKS`; JWKS served by the deployment; **needs `convex@^1.48`** (peer dep) | PR #787 | bump `convex` (we have `^1.47`); drop both from `convex/convex.config.ts` (app env + `app.use(auth)` env), `scripts/dev-seed.sh` check (`AUTH_JWKS`), env docs, and the vars on every deployment; everyone re-signs in |
 | `convexAuthProvider()` helper for `auth.config.ts` | PR #788 | replace our hand-written `customJwt` provider in `convex/auth.config.ts` (its `/auth/.well-known/jwks.json` URL goes away with #787; the helper also covers the new audience, #800) |
 | **Stateful sessions**: JWT `sub` is the session id; `getAuthUserId` looks up a live session (optional component-ref arg; default `auth` matches ours) | PR #757 | `getAuthUserId` callers unchanged; revocation becomes immediate; old tokens invalid → re-sign-in |
@@ -128,33 +140,25 @@ still apply. Shared `ssr/*` is unchanged; `ssr/nextjs` and `react/*` changed for
 
 | Item | Link | Status | Affects |
 |---|---|---|---|
-| **`ambientSignIns` internal; `oauth` no longer exported from `methods/oauth/react`** (both providers register it by default) | PR #750 | open, active 10-29 | adapter `provider.tsx` imports `oauth` and passes `ambientSignIns` — if merged, drop both (our `AuthProvider` alias may need the default registration too) |
-| Rename public "provider" names (`GithubProviderOptions` → `GithubOptions`, `completeSignUp` → `…WithEmailPassword`, test helpers) | PR #749 | open, active 10-29 | none found in our code; check `convex/authDiscord.ts` types on upgrade |
-| Erase expired sessions with a batch-worker loop | PR #785 | draft, active 11-04 | Deferred "cleanup" — sessions/refresh tokens (not OAuth flow rows) |
-| Erase a deleted session's refresh tokens in scheduled batches | PR #799 | open | Deferred "cleanup" |
-| Count every revoked session in `revokeOtherSessions` | PR #786 | open | Deferred "sign out everywhere" |
-| Re-run the Convex auth handshake when the signed-in user changes | PR #789 | draft | adapter uses the same `AuthProvider` — fixes guest→GitHub switching running as the old user |
-| Export `ConvexAuthNextjsProvider`; apps own the Convex client | PR #780 | draft | possible model for slimming our `provider.tsx` |
-| Component args instead of `.attachUserCallbacks` (exploration, "do not review") | PR #778 | draft | would change `convex/auth.ts` wiring if adopted |
-| `getToken` stops throwing on refresh failure | PR #729 | draft | adapter `try/catch` |
-| Generic OAuth / Discord docs | PR #731 | draft | Discord setup |
-| Shared `createUser` across providers | PR #733 | draft | email linking |
-| Deploying OAuth docs (separate dev/prod apps) | PR #735 | draft | gateway design |
-| http OAuth endpoints on localhost | PR #744 | draft | local backends |
-| Ignore unrequested `id_token` | PR #746 | draft | Google/OAuth |
-| Authorization params / provider tokens (`state`, `redirect_uri` reserved) | PR #751 | draft, WIP | gateway patch |
-| Expired-token `isAuthenticated` docs | PR #723 | draft | SSR checks |
-| Better Auth → v2 migration path + TanStack Start SSR via public APIs (third party) | issue #796 | open, new | adapter — watch for a maintainer answer on #126/#350 |
+| **`ambientSignIns` internal; `oauth` no longer exported from `methods/oauth/react`** (both providers register it by default) | PR #750 | open, active 11-10 | adapter `provider.tsx` imports `oauth` and passes `ambientSignIns` — if merged, drop both (our `AuthProvider` alias may need the default registration too) |
+| Custom OAuth settings from the component env; tickets redeemed in the components with user attestations | PRs #849, #848 | open | the path back for Discord on the generic OAuth component |
+| Attestations (components sign facts; sessions created from them); anonymous on attestations | PRs #841, #843, #847 | open | `completeSignIn` args will change again; anonymous may return |
+| Erase expired sessions with a batch-worker loop | PR #785 | draft, active 11-11 | Deferred "cleanup" |
+| Count every revoked session in `revokeOtherSessions` | PR #786 | draft | Deferred "sign out everywhere" |
+| `getToken` throws on refresh failure | PR #729 | **closed unmerged** 11-10 | keep our `try/catch` in the adapter |
+| Better Auth → v2 migration path + TanStack Start SSR via public APIs (third party) | issue #796 | open, no reply | adapter |
 | OAuth redirect proxy / configurable callback | issue #1 | open, dormant | gateway patch |
 | Framework-agnostic SSR adapter | issues #350, #126 | open, no activity | adapter |
-| Account linking prototype | PR #429 | draft, stale | linking |
-| KNOWN_ISSUES: rate limiting, OAuth flow cleanup, one pending flow per browser | `KNOWN_ISSUES.md` on `reboot` | open | rate limiting, cleanup |
+| KNOWN_ISSUES: rate limiting, OAuth flow cleanup, one pending flow per browser | `KNOWN_ISSUES.md` on `main` | open | rate limiting, cleanup |
+
+Closed unmerged on 11-07/11-10 (upstream draft cleanup), dropped from tracking:
+#789, #780, #778, #731, #733, #735, #744, #746, #751, #723, #429.
 
 ### How to run the check
 
 1. `npm view @convex-dev/auth dist-tags versions --json` — new beta/alpha/stable?
-2. `gh api repos/convex/convex-auth/commits?sha=reboot&since=<last checked>` and
-   the `reboot` `CHANGELOG.md` / `KNOWN_ISSUES.md` diffs since last check.
+2. `gh api repos/convex/convex-auth/commits?sha=main&since=<last checked>` and
+   the `main` `CHANGELOG.md` / `KNOWN_ISSUES.md` diffs (v2 lives on `main` since 2026-11-11; `reboot` is gone) since last check.
 3. Status of every item in the table above, plus new issues/PRs mentioning:
    callback, redirect_uri, proxy, state, tanstack, ssr, rate limit, cleanup,
    linking, discord, google, revoke, sessions.
