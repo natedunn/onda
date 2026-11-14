@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as authDiscord from "../authDiscord.js";
 import type * as authGateway from "../authGateway.js";
+import type * as authMigration from "../authMigration.js";
 import type * as crons from "../crons.js";
 import type * as images from "../images.js";
 import type * as items from "../items.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authDiscord: typeof authDiscord;
   authGateway: typeof authGateway;
+  authMigration: typeof authMigration;
   crons: typeof crons;
   images: typeof images;
   items: typeof items;

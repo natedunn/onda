@@ -8,8 +8,6 @@ import { v } from "convex/values";
 
 const app = defineApp({
 	env: {
-		AUTH_PRIVATE_KEY: v.string(),
-		AUTH_JWKS: v.string(),
 		AUTH_GITHUB_CLIENT_ID: v.string(),
 		AUTH_GITHUB_CLIENT_SECRET: v.string(),
 		AUTH_GOOGLE_CLIENT_ID: v.string(),
@@ -25,13 +23,7 @@ const app = defineApp({
 	},
 });
 
-app.use(auth, {
-	httpPrefix: "/auth",
-	env: {
-		AUTH_PRIVATE_KEY: app.env.AUTH_PRIVATE_KEY,
-		AUTH_JWKS: app.env.AUTH_JWKS,
-	},
-});
+app.use(auth);
 app.use(authGithub, {
 	httpPrefix: "/oauth/github",
 	env: {

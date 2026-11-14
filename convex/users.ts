@@ -76,13 +76,15 @@ async function refreshOnSignIn(ctx: MutationCtx, userId: Id<"users">, image: str
 	if (user && image && user.image !== image) await ctx.db.patch(userId, { image });
 }
 
-const providerArgs = <Name extends string, P extends Validator<any, "required", any>>(name: Name, profile: P) =>
-	v.object({ name: v.literal(name), accountId: v.string(), profile });
+// What Convex Auth passes the user callbacks. For OAuth, `profile.id` is the
+// provider account id.
+const methodArgs = <Name extends string, P extends Validator<any, "required", any>>(name: Name, profile: P) =>
+	v.object({ name: v.literal(name), profile });
 
 export const createFromGithub = internalMutation({
-	args: { provider: providerArgs("github", vGithubProfile) },
+	args: { method: methodArgs("github", vGithubProfile) },
 	returns: v.id("users"),
-	handler: async (ctx, { provider: { profile } }) =>
+	handler: async (ctx, { method: { profile } }) =>
 		await createOrLink(ctx, {
 			username: profile.login,
 			name: profile.name,
@@ -93,18 +95,18 @@ export const createFromGithub = internalMutation({
 });
 
 export const onGithubSignIn = internalMutation({
-	args: { provider: providerArgs("github", vGithubProfile), userId: v.id("users") },
+	args: { method: methodArgs("github", vGithubProfile), userId: v.id("users") },
 	returns: v.null(),
-	handler: async (ctx, { provider: { profile }, userId }) => {
+	handler: async (ctx, { method: { profile }, userId }) => {
 		await refreshOnSignIn(ctx, userId, profile.avatarUrl);
 		return null;
 	},
 });
 
 export const createFromGoogle = internalMutation({
-	args: { provider: providerArgs("google", vGoogleProfile) },
+	args: { method: methodArgs("google", vGoogleProfile) },
 	returns: v.id("users"),
-	handler: async (ctx, { provider: { profile } }) =>
+	handler: async (ctx, { method: { profile } }) =>
 		await createOrLink(ctx, {
 			// Google has no handle; start from the email's local part.
 			username: profile.email?.split("@")[0] ?? profile.name ?? "user",
@@ -116,18 +118,18 @@ export const createFromGoogle = internalMutation({
 });
 
 export const onGoogleSignIn = internalMutation({
-	args: { provider: providerArgs("google", vGoogleProfile), userId: v.id("users") },
+	args: { method: methodArgs("google", vGoogleProfile), userId: v.id("users") },
 	returns: v.null(),
-	handler: async (ctx, { provider: { profile }, userId }) => {
+	handler: async (ctx, { method: { profile }, userId }) => {
 		await refreshOnSignIn(ctx, userId, profile.picture);
 		return null;
 	},
 });
 
 export const createFromDiscord = internalMutation({
-	args: { provider: providerArgs("discord", vDiscordProfile) },
+	args: { method: methodArgs("discord", vDiscordProfile) },
 	returns: v.id("users"),
-	handler: async (ctx, { provider: { profile } }) =>
+	handler: async (ctx, { method: { profile } }) =>
 		await createOrLink(ctx, {
 			username: profile.username,
 			name: profile.name,
@@ -138,9 +140,9 @@ export const createFromDiscord = internalMutation({
 });
 
 export const onDiscordSignIn = internalMutation({
-	args: { provider: providerArgs("discord", vDiscordProfile), userId: v.id("users") },
+	args: { method: methodArgs("discord", vDiscordProfile), userId: v.id("users") },
 	returns: v.null(),
-	handler: async (ctx, { provider: { profile }, userId }) => {
+	handler: async (ctx, { method: { profile }, userId }) => {
 		await refreshOnSignIn(ctx, userId, profile.avatarUrl);
 		return null;
 	},
@@ -148,11 +150,7 @@ export const onDiscordSignIn = internalMutation({
 
 export const createFromGuest = internalMutation({
 	args: {
-		provider: v.object({
-			name: v.literal("anonymous"),
-			accountId: v.string(),
-			profile: v.object({}),
-		}),
+		method: methodArgs("anonymous", v.object({})),
 	},
 	returns: v.id("users"),
 	handler: async (ctx) => {

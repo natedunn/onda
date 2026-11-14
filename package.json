@@ -14,7 +14,7 @@
 		"cf-typegen": "wrangler types"
 	},
 	"dependencies": {
-		"@convex-dev/auth": "2.0.0-beta.0",
+		"@convex-dev/auth": "2.0.0",
 		"@convex-dev/react-query": "^0.1.0",
 		"@resvg/resvg-js": "^2.6.2",
 		"@tailwindcss/vite": "^4.3.3",
@@ -23,7 +23,7 @@
 		"@tanstack/react-router-ssr-query": "^1.167.3",
 		"@tanstack/react-start": "^1.169.2",
 		"clsx": "^2.1.1",
-		"convex": "^1.47.0",
+		"convex": "^1.48.0",
 		"react": "^19.3.1",
 		"react-dom": "^19.3.1",
 		"satori": "^0.62.0",
@@ -49,7 +49,7 @@
 			"workerd"
 		],
 		"patchedDependencies": {
-			"@convex-dev/auth": "patches/@convex-dev__auth.patch"
+			"@convex-dev/auth@2.0.0": "patches/@convex-dev__auth@2.0.0.patch"
 		}
 	}
 }

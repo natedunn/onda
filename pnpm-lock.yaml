@@ -5,20 +5,20 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@convex-dev/auth':
-    hash: 29833bf1fb1e89ec5f45e478665b22b65edbda3ef9d02ee54062af67a1ee2efa
-    path: patches/@convex-dev__auth.patch
+  '@convex-dev/auth@2.0.0':
+    hash: 4c182b56c152e0753628c8dff35c094143922d7b6b6882610826d7eb6e374c9f
+    path: patches/@convex-dev__auth@2.0.0.patch
 
 importers:
 
   .:
     dependencies:
       '@convex-dev/auth':
-        specifier: 2.0.0-beta.0
-        version: 2.0.0-beta.0(patch_hash=29833bf1fb1e89ec5f45e478665b22b65edbda3ef9d02ee54062af67a1ee2efa)(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
+        specifier: 2.0.0
+        version: 2.0.0(patch_hash=4c182b56c152e0753628c8dff35c094143922d7b6b6882610826d7eb6e374c9f)(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
       '@convex-dev/react-query':
         specifier: ^0.1.0
-        version: 0.1.0(@tanstack/react-query@5.104.3(react@19.3.1))(convex@1.47.0(react@19.3.1))
+        version: 0.1.0(@tanstack/react-query@5.104.3(react@19.3.1))(convex@1.50.0(react@19.3.1))
       '@resvg/resvg-js':
         specifier: ^2.6.2
         version: 2.6.2
@@ -41,8 +41,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       convex:
-        specifier: ^1.47.0
-        version: 1.47.0(react@19.3.1)
+        specifier: ^1.48.0
+        version: 1.50.0(react@19.3.1)
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -206,12 +206,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@convex-dev/auth@2.0.0-beta.0':
-    resolution: {integrity: sha512-GNIYITbRvLg8Ev5YW3j/rJ71Dft/fGYO5kkTJigVwuYCcn3WOeVY9+1IpKDntzMOZou1uDZwlPnR0BcWZWGaKg==}
-    hasBin: true
+  '@convex-dev/auth@2.0.0':
+    resolution: {integrity: sha512-x8tj4BeEkm9R/SlrrVvGS4jvHle4okGM2Ldni7q0KK1lKTpX0QCMDrULagqLUVTepyik23T+TXzcAurNXL1EEg==}
     peerDependencies:
       '@convex-dev/resend': ^0.2.8
-      convex: ^1.46.0
+      convex: ^1.48.0
       next: ^16.0.0
       react: ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -1312,16 +1311,9 @@ packages:
       oxc-transform-react:
         optional: true
 
-  ansi-regex@6.4.0:
-    resolution: {integrity: sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw==}
-    engines: {node: '>=12'}
-
   ansis@4.4.0:
     resolution: {integrity: sha512-9k3v7xcHwgdO/DruxGIg4HtjvlAZlcnsX/mzqUb1t3NkYnl9kK2UJ+Gq0io+vQf7iT//BD/HB/NBkUR1LWxoeA==}
     engines: {node: '>=14'}
-
-  argon2id-wasm@0.0.0-alpha.2:
-    resolution: {integrity: sha512-Bxa3aVWUbpg/hKTyHdjeLT68mJXNLftm1W3tXVXu/X83vmpTJ3zzgOhNMzu33Th2iNDxMU1kU4/MEGgW5udMgQ==}
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -1356,21 +1348,9 @@ packages:
   caniuse-lite@1.0.30001816:
     resolution: {integrity: sha512-+8Yx7BXCoqk6IF8yTicjfUR6D/ldJzdlsodlEOiOSPmhK844WIgk67/zIQaGAOxNkZyyvBlrRFnLvqKIoqbAFw==}
 
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
-
   chokidar@5.0.0:
     resolution: {integrity: sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw==}
     engines: {node: '>= 20.19.0'}
-
-  cli-cursor@5.0.0:
-    resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==}
-    engines: {node: '>=18'}
-
-  cli-spinners@3.4.0:
-    resolution: {integrity: sha512-bXfOC4QcT1tKXGorxL3wbJm6XJPDqEnij2gQ2m7ESQuE+/z9YFIWnl/5RpTiKWbMq3EVKR4fRLJGn6DVfu0mpw==}
-    engines: {node: '>=18.20'}
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -1378,10 +1358,6 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  commander@14.0.3:
-    resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
-    engines: {node: '>=20'}
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
@@ -1408,9 +1384,9 @@ packages:
       zod:
         optional: true
 
-  convex@1.47.0:
-    resolution: {integrity: sha512-B1z/lOmex7i09NASq8+2WG9rZLzGXXOSkpwGOpaNIvOs4awyW4RMgpVBjt8r2wvvHwhEBEsOr2pGYpulnmAxYQ==}
-    engines: {node: '>=20.0.0', npm: '>=7.0.0'}
+  convex@1.50.0:
+    resolution: {integrity: sha512-WzzCad5hyzU4zzW0ChyUGB3Mil4LgRYMYii9cyQtC24WQnfaRgkZB0IKyhIIgRm1a2IXiGJoZnVYYSfttiap3Q==}
+    engines: {node: '>=22.0.0', npm: '>=7.0.0'}
     hasBin: true
     peerDependencies:
       '@auth0/auth0-react': ^2.0.1
@@ -1529,10 +1505,6 @@ packages:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
 
-  get-east-asian-width@1.7.0:
-    resolution: {integrity: sha512-XjH1AECxf0giL2V1aU8vKyRR2ppRUb5c0EvT7zuJTokQ74bNo52zOtghqdWIqrhUD79fo3x0WfKZdOqxF6LG1Q==}
-    engines: {node: '>=18'}
-
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
@@ -1542,14 +1514,6 @@ packages:
   hex-rgb@4.3.0:
     resolution: {integrity: sha512-Ox1pJVrDCyGHMG9CFg1tmrRUMRPRsAWYc/PinY0XzJU4K7y7vjNoLKIQ7BR5UJMCxNN8EM1MNDmHWA/B3aZUuw==}
     engines: {node: '>=6'}
-
-  is-interactive@2.0.0:
-    resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
-    engines: {node: '>=12'}
-
-  is-unicode-supported@2.1.0:
-    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
-    engines: {node: '>=18'}
 
   isbot@5.2.2:
     resolution: {integrity: sha512-iQcBXcd+Rv/pkubRyGh2utW2j1oPG5hZY6TUhVPpqK4G+o3IbxpJNx04hgksjc/N7GK5pEorUxDeg31cFgEk/w==}
@@ -1734,19 +1698,11 @@ packages:
   linebreak@1.1.0:
     resolution: {integrity: sha512-MHp03UImeVhB7XZtjd0E4n6+3xr5Dq/9xI/5FptGk5FrbDR3zagPa2DS6U8ks/3HjbKWG9Q1M2ufOzxV2qLYSQ==}
 
-  log-symbols@7.0.1:
-    resolution: {integrity: sha512-ja1E3yCr9i/0hmBVaM0bfwDjnGy8I/s6PP4DFp+yP+a+mrHO4Rm7DtmnqROTUkHIkqffC84YY7AeqX6oFk0WFg==}
-    engines: {node: '>=18'}
-
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  mimic-function@5.0.1:
-    resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==}
-    engines: {node: '>=18'}
 
   miniflare@5.20261012.0-beta:
     resolution: {integrity: sha512-Cjrs+vHHQ7krLO4HYELYpYBJBuMhcnNZD/Z5z/UcQSnFqWSQY3DhtTCFalXgI1/yO1iK+YrRKK8EYkumrEopxg==}
@@ -1768,19 +1724,14 @@ packages:
     resolution: {integrity: sha512-5qr2okC4ItAI0hG5SaV0HoYMpnM/Y6+Oqr7AmPYy/2uEoGvS+GbSKLeRxSS1uAdu59yz0ouzcuXievSgg///WA==}
     engines: {node: '>=18'}
 
-  onetime@7.0.0:
-    resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
-    engines: {node: '>=18'}
-
-  ora@9.4.1:
-    resolution: {integrity: sha512-6VlU9MLXbjVQD04AZCMX28hVtA5bUoadvUqO76MUCVA0ilwJbMiHsITRPfyVm6p/BC0Av/BXMujx39WCe1LEqw==}
-    engines: {node: '>=20'}
-
   pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
 
   parse-css-color@0.2.1:
     resolution: {integrity: sha512-bwS/GGIFV3b6KS4uwpzCFj4w297Yl3uqnSgIPsoQkx7GMLROXfMnWvxfNkL0oh8HVhZA4hvJoEoEIqonfJ3BWg==}
+
+  password-hash-wasm@0.0.0:
+    resolution: {integrity: sha512-SpVGWB4mMf8VuHM1LqrZWLPtH7B4K2vVqAZ6pAnL/eeTLtPqewwnt0DD7428xUPSDrEWd2SDoLoU4z61gj9sYw==}
 
   path-to-regexp@6.3.0:
     resolution: {integrity: sha512-Yhpw4T9C6hPpgPeA28us07OJeqZ5EzQTkbfwuhsUg0c237RomFoETJgmp2sa3F/41gfLE6G5cqcYwznmeEeOlQ==}
@@ -1836,10 +1787,6 @@ packages:
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
-  restore-cursor@5.1.0:
-    resolution: {integrity: sha512-oMA2dcrw6u0YfxJQXm342bFKX/E4sG9rbTzO9ptUcR/e8A33cHuvStiYOwH7fszkZlZ1z/ta9AAoPk2F4qIOHA==}
-    engines: {node: '>=18'}
-
   rolldown@1.2.14:
     resolution: {integrity: sha512-eTBTTqMR6uHKLgcUqpJP8ntzDI6V4LYA8negAMBEI7gkgVvOdrx6VsvS2Ym+83KhOPdLCHWJu0w7UQFJZhHKNw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1880,10 +1827,6 @@ packages:
       '@types/node':
         optional: true
 
-  signal-exit@4.1.0:
-    resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
-    engines: {node: '>=14'}
-
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
@@ -1897,20 +1840,8 @@ packages:
     engines: {node: '>=20.16.0'}
     hasBin: true
 
-  stdin-discarder@0.3.2:
-    resolution: {integrity: sha512-eCPu1qRxPVkl5605OTWF8Wz40b4Mf45NY5LQmVPQ599knfs5QhASUm9GbJ5BDMDOXgrnh0wyEdvzmL//YMlw0A==}
-    engines: {node: '>=18'}
-
-  string-width@8.3.0:
-    resolution: {integrity: sha512-ZbmZM0JCihQN91dWnxoipT2KOEyHqEyfRXUyjuRhW8b/xnqPDoq4gWEVApTVa9db2wN8mmoikgFBbjh71+cGeQ==}
-    engines: {node: '>=20'}
-
   string.prototype.codepointat@0.2.1:
     resolution: {integrity: sha512-2cBVCj6I4IOvEnjgO/hWqXjqBGsY+zwPmHl12Srk9IXSZ56Jwwmy+66XO5Iut/oQVR7t5ihYdLB0GMa4alEUcg==}
-
-  strip-ansi@7.2.0:
-    resolution: {integrity: sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==}
-    engines: {node: '>=12'}
 
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
@@ -2099,10 +2030,6 @@ packages:
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
-  yoctocolors@2.2.0:
-    resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
-    engines: {node: '>=18'}
-
   youch-core@0.3.3:
     resolution: {integrity: sha512-ho7XuGjLaJ2hWHoK8yFnsUGy2Y5uDpqSTq1FkHLK4/oqKtyUU1AFbOOxY4IpC9f0fTLjwYbslUz0Po5BpD1wrA==}
 
@@ -2251,20 +2178,16 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20261012.1':
     optional: true
 
-  '@convex-dev/auth@2.0.0-beta.0(patch_hash=29833bf1fb1e89ec5f45e478665b22b65edbda3ef9d02ee54062af67a1ee2efa)(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)':
+  '@convex-dev/auth@2.0.0(patch_hash=4c182b56c152e0753628c8dff35c094143922d7b6b6882610826d7eb6e374c9f)(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)':
     dependencies:
-      '@babel/code-frame': 7.29.7
-      '@convex-dev/batch-worker': 0.3.6(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
-      '@convex-dev/rate-limiter': 0.3.2(convex@1.47.0(react@19.3.1))(react@19.3.1)
+      '@convex-dev/batch-worker': 0.3.6(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
+      '@convex-dev/rate-limiter': 0.3.2(convex@1.50.0(react@19.3.1))(react@19.3.1)
       '@simplewebauthn/browser': 14.0.0
       '@simplewebauthn/server': 14.0.3
-      argon2id-wasm: 0.0.0-alpha.2
-      chalk: 5.6.2
-      commander: 14.0.3
-      convex: 1.47.0(react@19.3.1)
+      convex: 1.50.0(react@19.3.1)
       cookie: 1.1.1
       jose: 5.10.0
-      ora: 9.4.1
+      password-hash-wasm: 0.0.0
     optionalDependencies:
       react: 19.3.1
     transitivePeerDependencies:
@@ -2273,10 +2196,10 @@ snapshots:
       - typescript
       - zod
 
-  '@convex-dev/batch-worker@0.3.6(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)':
+  '@convex-dev/batch-worker@0.3.6(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)':
     dependencies:
-      convex: 1.47.0(react@19.3.1)
-      convex-helpers: 0.1.128(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
+      convex: 1.50.0(react@19.3.1)
+      convex-helpers: 0.1.128(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7)
     transitivePeerDependencies:
       - '@standard-schema/spec'
       - hono
@@ -2284,16 +2207,16 @@ snapshots:
       - typescript
       - zod
 
-  '@convex-dev/rate-limiter@0.3.2(convex@1.47.0(react@19.3.1))(react@19.3.1)':
+  '@convex-dev/rate-limiter@0.3.2(convex@1.50.0(react@19.3.1))(react@19.3.1)':
     dependencies:
-      convex: 1.47.0(react@19.3.1)
+      convex: 1.50.0(react@19.3.1)
     optionalDependencies:
       react: 19.3.1
 
-  '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.3(react@19.3.1))(convex@1.47.0(react@19.3.1))':
+  '@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.3(react@19.3.1))(convex@1.50.0(react@19.3.1))':
     dependencies:
       '@tanstack/react-query': 5.104.3(react@19.3.1)
-      convex: 1.47.0(react@19.3.1)
+      convex: 1.50.0(react@19.3.1)
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
@@ -3180,11 +3103,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)
 
-  ansi-regex@6.4.0: {}
-
   ansis@4.4.0: {}
-
-  argon2id-wasm@0.0.0-alpha.2: {}
 
   argparse@2.0.1: {}
 
@@ -3221,35 +3140,25 @@ snapshots:
 
   caniuse-lite@1.0.30001816: {}
 
-  chalk@5.6.2: {}
-
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.1.1
-
-  cli-cursor@5.0.0:
-    dependencies:
-      restore-cursor: 5.1.0
-
-  cli-spinners@3.4.0: {}
 
   clsx@2.1.1: {}
 
   color-name@1.1.4: {}
 
-  commander@14.0.3: {}
-
   convert-source-map@2.0.0: {}
 
-  convex-helpers@0.1.128(convex@1.47.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7):
+  convex-helpers@0.1.128(convex@1.50.0(react@19.3.1))(react@19.3.1)(typescript@5.9.3)(zod@4.6.7):
     dependencies:
-      convex: 1.47.0(react@19.3.1)
+      convex: 1.50.0(react@19.3.1)
     optionalDependencies:
       react: 19.3.1
       typescript: 5.9.3
       zod: 4.6.7
 
-  convex@1.47.0(react@19.3.1):
+  convex@1.50.0(react@19.3.1):
     dependencies:
       esbuild: 0.27.0
       prettier: 3.9.10
@@ -3376,17 +3285,11 @@ snapshots:
 
   gensync@1.0.0-beta.2: {}
 
-  get-east-asian-width@1.7.0: {}
-
   graceful-fs@4.2.11: {}
 
   harfbuzzjs@0.10.0: {}
 
   hex-rgb@4.3.0: {}
-
-  is-interactive@2.0.0: {}
-
-  is-unicode-supported@2.1.0: {}
 
   isbot@5.2.2: {}
 
@@ -3509,11 +3412,6 @@ snapshots:
       base64-js: 0.0.8
       unicode-trie: 2.0.0
 
-  log-symbols@7.0.1:
-    dependencies:
-      is-unicode-supported: 2.1.0
-      yoctocolors: 2.2.0
-
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -3521,8 +3419,6 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
-
-  mimic-function@5.0.1: {}
 
   miniflare@5.20261012.0-beta(@types/node@26.6.5):
     dependencies:
@@ -3556,27 +3452,14 @@ snapshots:
 
   node-releases@2.0.59: {}
 
-  onetime@7.0.0:
-    dependencies:
-      mimic-function: 5.0.1
-
-  ora@9.4.1:
-    dependencies:
-      chalk: 5.6.2
-      cli-cursor: 5.0.0
-      cli-spinners: 3.4.0
-      is-interactive: 2.0.0
-      is-unicode-supported: 2.1.0
-      log-symbols: 7.0.1
-      stdin-discarder: 0.3.2
-      string-width: 8.3.0
-
   pako@0.2.9: {}
 
   parse-css-color@0.2.1:
     dependencies:
       color-name: 1.1.4
       hex-rgb: 4.3.0
+
+  password-hash-wasm@0.0.0: {}
 
   path-to-regexp@6.3.0: {}
 
@@ -3614,11 +3497,6 @@ snapshots:
   readdirp@5.1.1: {}
 
   reflect-metadata@0.2.2: {}
-
-  restore-cursor@5.1.0:
-    dependencies:
-      onetime: 7.0.0
-      signal-exit: 4.1.0
 
   rolldown@1.2.14:
     dependencies:
@@ -3701,26 +3579,13 @@ snapshots:
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 26.6.5
 
-  signal-exit@4.1.0: {}
-
   source-map-js@1.2.2: {}
 
   source-map@0.7.6: {}
 
   srvx@1.0.5: {}
 
-  stdin-discarder@0.3.2: {}
-
-  string-width@8.3.0:
-    dependencies:
-      get-east-asian-width: 1.7.0
-      strip-ansi: 7.2.0
-
   string.prototype.codepointat@0.2.1: {}
-
-  strip-ansi@7.2.0:
-    dependencies:
-      ansi-regex: 6.4.0
 
   supports-color@10.2.2: {}
 
@@ -3836,8 +3701,6 @@ snapshots:
       js-yaml: 4.3.2
 
   yallist@3.1.1: {}
-
-  yoctocolors@2.2.0: {}
 
   youch-core@0.3.3:
     dependencies:
