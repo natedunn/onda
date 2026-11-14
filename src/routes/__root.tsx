@@ -90,7 +90,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 function RootComponent() {
 	const { convex, token } = Route.useRouteContext();
 	return (
-		<ConvexAuthStartProvider client={convex} initialToken={token}>
+		<ConvexAuthStartProvider client={convex} initialToken={token} isAuthenticated={api.auth.isAuthenticated}>
 			<AuthSync />
 			<TopStrip />
 			{/* One column, centered, ruled on both sides down the full height of the window. main grows so the footer sits at the bottom on short pages. */}

@@ -1,9 +1,10 @@
 import { AuthClient, defaultStorage } from "@convex-dev/auth/browser";
 import { oauth } from "@convex-dev/auth/methods/oauth/react";
-import { AuthProvider, type AuthSignInApi, useAuth } from "#convex-auth-react-internal";
+import { AuthProvider, type AuthSignInApi, SessionWatcher, useAuth } from "#convex-auth-react-internal";
 import { useRouter } from "@tanstack/react-router";
 import { ConvexHttpClient } from "convex/browser";
 import { ConvexProviderWithAuth, type ConvexReactClient } from "convex/react";
+import type { FunctionReference } from "convex/server";
 import { type ReactNode, useState } from "react";
 
 type AuthSessionResponse = { tokens: { accessToken: string } | null };
@@ -20,11 +21,14 @@ async function postAuth(route: string): Promise<AuthSessionResponse> {
 export function ConvexAuthStartProvider({
 	client,
 	initialToken,
+	isAuthenticated,
 	children,
 }: {
 	client: ConvexReactClient;
 	/** The access token read during SSR, so the client hydrates authenticated. */
 	initialToken: string | null;
+	/** The app's `isAuthenticated` query (from setupConvexAuth): signs the client out once its session is revoked. */
+	isAuthenticated: FunctionReference<"query", "public", Record<string, never>, boolean>;
 	children: ReactNode;
 }) {
 	const router = useRouter();
@@ -75,6 +79,7 @@ export function ConvexAuthStartProvider({
 	return (
 		<AuthProvider authClient={authClient} signInApi={signInApi}>
 			<ConvexProviderWithAuth client={client} useAuth={useAuth}>
+				<SessionWatcher isAuthenticated={isAuthenticated} />
 				{children}
 			</ConvexProviderWithAuth>
 		</AuthProvider>

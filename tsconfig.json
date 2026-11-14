@@ -11,11 +11,14 @@
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"types": ["vite/client", "node"],
+		// Resolve @convex-dev/auth to its full types: the custom OAuth (Discord) and
+		// anonymous APIs our patch re-exports are @internal in the public ones.
+		"customConditions": ["convex-auth-internal-types"],
 		"paths": {
 			"@/*": ["./src/*"],
 			"@convex/*": ["./convex/*"],
 			// Convex Auth v2 doesn't export its React context yet; see src/lib/convex-auth-start.
-			"#convex-auth-react-internal": ["./node_modules/@convex-dev/auth/dist/react/client"]
+			"#convex-auth-react-internal": ["./node_modules/@convex-dev/auth/dist/internal-types/react/client"]
 		}
 	},
 	"include": ["src", "convex", "vite.config.ts", "worker-configuration.d.ts"],

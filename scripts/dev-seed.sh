@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Run by scripts/dev.sh once the local backend is up. A new backend gets the
-# dev settings (OAuth apps, dev gateway, signing keys, API keys) copied from
+# dev settings (OAuth apps, dev gateway, API keys) copied from
 # cloud dev, grandiose-yak-969; every run sets SITE_URL to this checkout's URL,
 # the one origin sign-in may return to. Until the settings are in, Convex
 # holds the first push and retries it by itself.
@@ -16,11 +16,11 @@ until curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$cloud/version"; do
 	sleep 1
 done
 
-if ! npx convex env list 2>/dev/null | grep -q '^AUTH_JWKS='; then
+if ! npx convex env list 2>/dev/null | grep -q '^AUTH_GITHUB_CLIENT_ID='; then
 	umask 077
 	file="$(mktemp)"
 	trap 'rm -f "$file"' EXIT
-	npx convex env list --deployment grandiose-yak-969 | grep -v '^SITE_URL=' > "$file"
+	npx convex env list --include-values --deployment grandiose-yak-969 | grep -vE '^(SITE_URL|AUTH_PRIVATE_KEY|AUTH_JWKS)=' > "$file"
 	npx convex env set --from-file "$file" > /dev/null
 	echo "dev-seed: copied dev settings from grandiose-yak-969"
 fi
