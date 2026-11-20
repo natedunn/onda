@@ -4,7 +4,8 @@
 month. A daily cron per kind (`convex/crons.ts`) runs `releases.sync`, which calls
 that provider's `upcoming` in `convex/providers.ts`. Releases are saved as ordinary
 records, so item pages and adding to lists work, plus one `releases` row with the
-date. Rows no sync has found for 3 days are dropped.
+date. Rows no sync has found for 3 days are dropped. `/admin` shows each job's
+recent runs, the cover queue, and dates that moved.
 
 | Kind | Source | Cut | Score |
 |---|---|---|---|
@@ -47,8 +48,19 @@ Scores only compare within a kind. Numbers below are from November 2026.
 - **Dates lag by a few days.** MusicBrainz dumps come out on Wednesdays and Saturdays.
 - **Months further out are thin**, because coverage depends on what MusicBrainz
   editors have added.
-- **Some covers are missing.** 26 of 30 sampled upcoming albums had art; the rest
-  show the placeholder.
+- **Many upcoming albums have no cover yet**, because nobody has added one to Cover
+  Art Archive. They show the placeholder. A daily job (`releaseArt.copyDue`) copies
+  covers to R2 once they appear, so the calendar doesn't depend on archive.org
+  staying up. It checks for a missing cover again after 7 days, or after 2 days when
+  the release is within 2 weeks. In late November 2026, about 250 albums were copied
+  and about 35 were waiting.
+- **Albums already out when first seen keep loading from Cover Art Archive.** The
+  job only queues unreleased albums, so during an archive.org outage those covers
+  disappear from the current month. Including them would be a small change to
+  `artQueue` in `convex/releases.ts`.
+- **A failed copy waits 12 hours.** archive.org storage nodes sometimes return
+  errors for one file. The job skips that album and stops only after 5 failures in a
+  row, so an outage ends the run early and the next day's run continues.
 - **There's no indie toggle.** Nothing in the data says what's indie.
 - **The list lookup reads every list item once a day** (`releases.listedCreators`).
   That's fine now, but worth revisiting if `items` gets very large.
